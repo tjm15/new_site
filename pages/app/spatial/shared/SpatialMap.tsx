@@ -1,0 +1,190 @@
+import React, { useState } from 'react';
+import { motion } from 'framer-motion';
+import { Allocation } from '../../../../data/types';
+import { useMediaQuery } from '../../../../hooks/useMediaQuery';
+
+interface SpatialMapProps {
+  boroughOutline: string;
+  constraints?: string[];
+  centres?: string[];
+  allocations?: Allocation[];
+  selectedSite?: string | null;
+  onSiteSelect?: (siteId: string) => void;
+  showConstraints?: boolean;
+  showCentres?: boolean;
+  showAllocations?: boolean;
+}
+
+export const SpatialMap: React.FC<SpatialMapProps> = ({
+  boroughOutline,
+  constraints = [],
+  centres = [],
+  allocations = [],
+  selectedSite = null,
+  onSiteSelect,
+  showConstraints = true,
+  showCentres = true,
+  showAllocations = true,
+}) => {
+  const [hoveredSite, setHoveredSite] = useState<string | null>(null);
+  const [viewMode, setViewMode] = useState<'map' | 'list'>('list');
+  const isMobile = useMediaQuery('(max-width: 768px)');
+
+  if (isMobile && viewMode === 'list') {
+    return (
+      <div className="space-y-4">
+        <div className="flex justify-between items-center">
+          <h3 className="text-lg font-semibold text-[color:var(--ink)]">Sites</h3>
+          <button
+            onClick={() => setViewMode('map')}
+            className="text-sm text-[color:var(--accent)] hover:underline"
+          >
+            View Map →
+          </button>
+        </div>
+        <div className="space-y-3 max-h-[400px] overflow-y-auto">
+          {allocations.map((site) => (
+            <motion.div
+              key={site.id}
+              whileHover={{ x: 4 }}
+              onClick={() => onSiteSelect?.(site.id)}
+              className={`p-4 rounded-lg border cursor-pointer transition-colors ${
+                selectedSite === site.id
+                  ? 'bg-[color:var(--accent)]/10 border-[color:var(--accent)]'
+                  : 'bg-[color:var(--panel)] border-[color:var(--edge)] hover:border-[color:var(--accent)]/50'
+              }`}
+            >
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex-1">
+                  <h4 className="font-semibold text-[color:var(--ink)] mb-1">{site.name}</h4>
+                  {site.description && (
+                    <p className="text-sm text-[color:var(--muted)] mb-2">{site.description}</p>
+                  )}
+                  <div className="flex flex-wrap gap-2">
+                    {site.area && (
+                      <span className="text-xs px-2 py-1 rounded-full bg-[color:var(--surface)] text-[color:var(--muted)]">
+                        {site.area} ha
+                      </span>
+                    )}
+                    <span className="text-xs px-2 py-1 rounded-full bg-[color:var(--surface)] text-[color:var(--muted)]">
+                      {site.capacity}
+                    </span>
+                  </div>
+                </div>
+                {selectedSite === site.id && (
+                  <span className="text-[color:var(--accent)] text-xl">✓</span>
+                )}
+              </div>
+            </motion.div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="relative">
+      {isMobile && (
+        <button
+          onClick={() => setViewMode('list')}
+          className="absolute top-4 right-4 z-10 px-4 py-2 bg-[color:var(--panel)] border border-[color:var(--edge)] rounded-lg text-sm text-[color:var(--ink)] shadow-lg"
+        >
+          ← Back to List
+        </button>
+      )}
+      <svg
+        viewBox="0 0 800 600"
+        className="w-full h-auto bg-[color:var(--surface)] rounded-xl border border-[color:var(--edge)]"
+      >
+        {/* Borough outline */}
+        <path
+          d={boroughOutline}
+          fill="var(--panel)"
+          stroke="var(--edge)"
+          strokeWidth="2"
+        />
+
+        {/* Constraints layer (e.g., green belt, flood zones) */}
+        {showConstraints && constraints.map((path, idx) => (
+          <path
+            key={`constraint-${idx}`}
+            d={path}
+            fill="rgba(239, 68, 68, 0.1)"
+            stroke="rgba(239, 68, 68, 0.3)"
+            strokeWidth="1"
+            strokeDasharray="4,4"
+          />
+        ))}
+
+        {/* Town centres */}
+        {showCentres && centres.map((path, idx) => (
+          <path
+            key={`centre-${idx}`}
+            d={path}
+            fill="rgba(59, 130, 246, 0.2)"
+            stroke="rgba(59, 130, 246, 0.6)"
+            strokeWidth="2"
+          />
+        ))}
+
+        {/* Site allocations */}
+        {showAllocations && allocations.map((site) => (
+          <g key={site.id}>
+            <path
+              d={site.path}
+              fill={
+                selectedSite === site.id
+                  ? 'rgba(16, 185, 129, 0.4)'
+                  : hoveredSite === site.id
+                  ? 'rgba(16, 185, 129, 0.3)'
+                  : 'rgba(16, 185, 129, 0.2)'
+              }
+              stroke={
+                selectedSite === site.id
+                  ? 'rgb(16, 185, 129)'
+                  : 'rgba(16, 185, 129, 0.6)'
+              }
+              strokeWidth={selectedSite === site.id ? '3' : '2'}
+              className="cursor-pointer transition-all"
+              onClick={() => onSiteSelect?.(site.id)}
+              onMouseEnter={() => setHoveredSite(site.id)}
+              onMouseLeave={() => setHoveredSite(null)}
+            />
+            {(hoveredSite === site.id || selectedSite === site.id) && (
+              <text
+                x={site.labelX || site.center.x}
+                y={site.labelY || site.center.y}
+                fontSize="12"
+                fill="var(--ink)"
+                textAnchor="middle"
+                className="pointer-events-none font-semibold"
+                style={{ textShadow: '0 0 4px var(--panel), 0 0 4px var(--panel)' }}
+              >
+                {site.name}
+              </text>
+            )}
+          </g>
+        ))}
+      </svg>
+
+      {/* Map Legend */}
+      <div className="absolute bottom-4 left-4 bg-white/95 backdrop-blur-sm rounded-lg border border-[color:var(--edge)] shadow-lg p-3 text-xs">
+        <div className="font-semibold text-[color:var(--ink)] mb-2">Legend</div>
+        <div className="space-y-1.5">
+          <div className="flex items-center gap-2">
+            <div className="w-4 h-4 rounded" style={{ backgroundColor: 'rgba(76, 175, 80, 0.3)' }}></div>
+            <span className="text-[color:var(--muted)]">Open Space</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-4 h-4 rounded" style={{ backgroundColor: 'rgba(16, 185, 129, 0.2)' }}></div>
+            <span className="text-[color:var(--muted)]">Allocation</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-4 h-4 rounded bg-[color:var(--accent)]"></div>
+            <span className="text-[color:var(--muted)]">Selected Site</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
