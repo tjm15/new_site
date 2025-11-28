@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CouncilData } from '../../../../data/types';
 import { PromptFunctions } from '../../../../prompts';
@@ -16,6 +16,7 @@ export const SiteAssessmentTool: React.FC<SiteAssessmentToolProps> = ({ councilD
   const [selectedSite, setSelectedSite] = useState<string | null>(null);
   const [appraisal, setAppraisal] = useState('');
   const [loading, setLoading] = useState(false);
+  const [details, setDetails] = useState<{ constraints?: string[]; opportunities?: string[]; policies?: string[] } | null>(null);
 
   const assessSite = async (siteId: string) => {
     setSelectedSite(siteId);
@@ -27,6 +28,11 @@ export const SiteAssessmentTool: React.FC<SiteAssessmentToolProps> = ({ councilD
         const prompt = prompts.siteAppraisalPrompt(site);
         const result = await callGemini(prompt);
         setAppraisal(result || 'No appraisal generated.');
+        // Derive simple structured details
+        const constraints = councilData.spatialData.constraints.slice(0,3).map(c=>c.label);
+        const opportunities = ['Brownfield regeneration', 'Transit proximity', 'Town centre vitality'];
+        const policies = councilData.policies.filter(p=>p.topics.includes(site.category)).slice(0,3).map(p=>`${p.reference} ${p.title}`);
+        setDetails({ constraints, opportunities, policies });
       }
     } catch (error) {
       setAppraisal('Error generating appraisal. Please try again.');
@@ -34,6 +40,15 @@ export const SiteAssessmentTool: React.FC<SiteAssessmentToolProps> = ({ councilD
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    // Select first site on load for instant appraisal
+    const first = councilData.spatialData.allocations[0]?.id;
+    if (first) {
+      assessSite(first);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const selectedSiteData = selectedSite
     ? councilData.spatialData.allocations.find(s => s.id === selectedSite)
@@ -113,6 +128,28 @@ export const SiteAssessmentTool: React.FC<SiteAssessmentToolProps> = ({ councilD
               {selectedSiteData.description}
             </p>
           )}
+          {details && (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+              <div className="bg-[color:var(--panel)] border border-[color:var(--edge)] rounded-lg p-4">
+                <div className="font-semibold text-[color:var(--ink)] mb-2">Constraints</div>
+                <ul className="text-sm text-[color:var(--muted)] list-disc pl-5">
+                  {details.constraints?.map((c, idx) => (<li key={idx}>{c}</li>))}
+                </ul>
+              </div>
+              <div className="bg-[color:var(--panel)] border border-[color:var(--edge)] rounded-lg p-4">
+                <div className="font-semibold text-[color:var(--ink)] mb-2">Opportunities</div>
+                <ul className="text-sm text-[color:var(--muted)] list-disc pl-5">
+                  {details.opportunities?.map((c, idx) => (<li key={idx}>{c}</li>))}
+                </ul>
+              </div>
+              <div className="bg-[color:var(--panel)] border border-[color:var(--edge)] rounded-lg p-4">
+                <div className="font-semibold text-[color:var(--ink)] mb-2">Relevant Policies</div>
+                <ul className="text-sm text-[color:var(--muted)] list-disc pl-5">
+                  {details.policies?.map((c, idx) => (<li key={idx}>{c}</li>))}
+                </ul>
+              </div>
+            </div>
+          )}
         </motion.div>
       )}
 
@@ -139,9 +176,7 @@ export const SiteAssessmentTool: React.FC<SiteAssessmentToolProps> = ({ councilD
             <h3 className="text-lg font-semibold text-[color:var(--ink)] mb-4">
               Site Appraisal
             </h3>
-            <div className="prose prose-sm max-w-none text-[color:var(--muted)] whitespace-pre-wrap">
-              {appraisal}
-            </div>
+            <MarkdownContent content={appraisal} />
           </motion.div>
         )}
       </AnimatePresence>

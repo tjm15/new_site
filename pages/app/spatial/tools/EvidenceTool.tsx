@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CouncilData } from '../../../../data/types';
 import { PromptFunctions } from '../../../../prompts';
@@ -15,7 +15,7 @@ interface EvidenceToolProps {
 export const EvidenceTool: React.FC<EvidenceToolProps> = ({ councilData, prompts }) => {
   const [query, setQuery] = useState('');
   const [selectedTopics, setSelectedTopics] = useState<string[]>([]);
-  const [response, setResponse] = useState('');
+  const [cards, setCards] = useState<{ title: string; content: string; question?: string }[]>([]);
   const [loading, setLoading] = useState(false);
 
   const toggleTopic = (topicId: string) => {
@@ -26,19 +26,34 @@ export const EvidenceTool: React.FC<EvidenceToolProps> = ({ councilData, prompts
     );
   };
 
-  const handleQuery = async () => {
-    if (!query.trim()) return;
-
+  const runPreset = async (title: string, question: string, topics: string[]) => {
     setLoading(true);
     try {
-      const prompt = prompts.evidencePrompt(query, selectedTopics);
+      const prompt = prompts.evidencePrompt(question, topics);
       const result = await callGemini(prompt);
-      setResponse(result || 'No response generated.');
+      setCards(prev => [{ title, content: result || 'No response generated.', question }, ...prev]);
     } catch (error) {
-      setResponse('Error generating response. Please try again.');
+      setCards(prev => [{ title, content: 'Error generating response. Please try again.', question }, ...prev]);
     } finally {
       setLoading(false);
     }
+  };
+
+  useEffect(() => {
+    // Auto-run instant plan scans on mount
+    const housingTopics = councilData.topics.filter(t => t.id.includes('housing')).map(t => t.id);
+    const transportTopics = councilData.topics.filter(t => t.id.includes('transport')).map(t => t.id);
+    const environmentTopics = councilData.topics.filter(t => t.id.includes('environment') || t.id.includes('climate')).map(t => t.id);
+
+    runPreset('Housing Need & Delivery', 'Summarise housing pressures, delivery targets and affordability for this LPA.', housingTopics);
+    runPreset('Spatial Distribution of Growth', 'Describe how growth is distributed across places and centres.', transportTopics);
+    runPreset('Environmental Constraints', 'Outline key environmental constraints affecting development.', environmentTopics);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const handleQuery = async () => {
+    if (!query.trim()) return;
+    await runPreset('Custom Analysis', query, selectedTopics);
   };
 
   return (
@@ -71,11 +86,16 @@ export const EvidenceTool: React.FC<EvidenceToolProps> = ({ councilData, prompts
         </div>
       </div>
 
-      {/* Query input */}
+      {/* Preset deepen actions */}
+      <div className="flex flex-wrap gap-3">
+        <button onClick={() => runPreset('Deepen Housing Analysis', 'Provide a deeper analysis of housing need, delivery pipeline, and affordability challenges.', councilData.topics.filter(t=>t.id.includes('housing')).map(t=>t.id))} className="px-4 py-2 rounded-lg bg-[color:var(--accent)] text-white">Deepen Housing Analysis</button>
+        <button onClick={() => runPreset('Deepen Transport Analysis', 'Assess transport capacity, active travel priorities, and station-led intensification opportunities.', councilData.topics.filter(t=>t.id.includes('transport')).map(t=>t.id))} className="px-4 py-2 rounded-lg bg-[color:var(--panel)] border border-[color:var(--edge)] text-[color:var(--ink)]">Deepen Transport Analysis</button>
+        <button onClick={() => runPreset('Deepen Environment Analysis', 'Analyse climate constraints, flood risk, and nature recovery opportunities.', councilData.topics.filter(t=>t.id.includes('environment')||t.id.includes('climate')).map(t=>t.id))} className="px-4 py-2 rounded-lg bg-[color:var(--panel)] border border-[color:var(--edge)] text-[color:var(--ink)]">Deepen Environment Analysis</button>
+      </div>
+
+      {/* Query input (optional) */}
       <div>
-        <label className="block text-sm font-medium text-[color:var(--ink)] mb-2">
-          Your Question
-        </label>
+        <label className="block text-sm font-medium text-[color:var(--ink)] mb-2">Custom question (optional)</label>
         <textarea
           value={query}
           onChange={(e) => setQuery(e.target.value)}
@@ -94,7 +114,7 @@ export const EvidenceTool: React.FC<EvidenceToolProps> = ({ councilData, prompts
         {loading ? 'Analyzing...' : 'Query Evidence Base'}
       </button>
 
-      {/* Response */}
+      {/* Cards */}
       <AnimatePresence mode="wait">
         {loading && (
           <motion.div
@@ -106,19 +126,16 @@ export const EvidenceTool: React.FC<EvidenceToolProps> = ({ councilData, prompts
             <LoadingSpinner />
           </motion.div>
         )}
-
-        {!loading && response && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            className="bg-[color:var(--panel)] border border-[color:var(--edge)] rounded-xl p-6"
-          >
-            <h3 className="text-lg font-semibold text-[color:var(--ink)] mb-4">
-              Evidence Summary
-            </h3>
-            <MarkdownContent content={response} />
-          </motion.div>
+        {!loading && cards.length > 0 && (
+          <div className="grid grid-cols-1 gap-4">
+            {cards.map((card, idx) => (
+              <motion.div key={idx} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="bg-[color:var(--panel)] border border-[color:var(--edge)] rounded-xl p-6">
+                <h3 className="text-lg font-semibold text-[color:var(--ink)] mb-2">{card.title}</h3>
+                {card.question && <p className="text-xs text-[color:var(--muted)] mb-3">Question used: {card.question}</p>}
+                <MarkdownContent content={card.content} />
+              </motion.div>
+            ))}
+          </div>
         )}
       </AnimatePresence>
     </div>

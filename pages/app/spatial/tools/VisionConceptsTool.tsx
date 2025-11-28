@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CouncilData } from '../../../../data/types';
 import { PromptFunctions } from '../../../../prompts';
@@ -15,9 +15,15 @@ interface VisionConceptsToolProps {
 export const VisionConceptsTool: React.FC<VisionConceptsToolProps> = ({ councilData, prompts }) => {
   const [areaDescription, setAreaDescription] = useState('');
   const [visionText, setVisionText] = useState('');
+  const [highlightsText, setHighlightsText] = useState('');
   const [conceptImage, setConceptImage] = useState('');
   const [loadingText, setLoadingText] = useState(false);
   const [loadingImage, setLoadingImage] = useState(false);
+  const presetAreas = [
+    `${councilData.name} station-led intensification corridor`,
+    `${councilData.name} high street renewal zone`,
+    `${councilData.name} mixed-use warehouse quarter`
+  ];
 
   const generateVision = async () => {
     if (!areaDescription.trim()) return;
@@ -27,6 +33,8 @@ export const VisionConceptsTool: React.FC<VisionConceptsToolProps> = ({ councilD
       const prompt = prompts.visionPrompt(areaDescription);
       const result = await callGemini(prompt);
       setVisionText(result || 'No vision generated.');
+      const highlights = await callGemini(`Summarise concept highlights as 5 concise bullets for: ${areaDescription}`);
+      setHighlightsText(highlights || '');
     } catch (error) {
       setVisionText('Error generating vision. Please try again.');
     } finally {
@@ -49,6 +57,30 @@ export const VisionConceptsTool: React.FC<VisionConceptsToolProps> = ({ councilD
     }
   };
 
+  useEffect(() => {
+    // Prefill demo area and auto-generate on load
+    const demo = `${councilData.name} growth corridor`;
+    setAreaDescription(demo);
+    (async () => {
+      setLoadingText(true);
+      try {
+        const prompt = prompts.visionPrompt(demo);
+        const result = await callGemini(prompt);
+        setVisionText(result || '');
+        const highlights = await callGemini(`Summarise concept highlights as 5 concise bullets for: ${demo}`);
+        setHighlightsText(highlights || '');
+      } finally {
+        setLoadingText(false);
+      }
+    })();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const runPresetArea = async (text: string) => {
+    setAreaDescription(text);
+    await generateVision();
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -61,11 +93,16 @@ export const VisionConceptsTool: React.FC<VisionConceptsToolProps> = ({ councilD
         </p>
       </div>
 
-      {/* Area description input */}
+      {/* Preset concept buttons */}
+      <div className="flex flex-wrap gap-3">
+        <Button onClick={() => runPresetArea(presetAreas[0])} variant="primary">Station-led intensification</Button>
+        <Button onClick={() => runPresetArea(presetAreas[1])} variant="secondary">High street renewal</Button>
+        <Button onClick={() => runPresetArea(presetAreas[2])} variant="secondary">Mixed-use warehouse quarter</Button>
+      </div>
+
+      {/* Area description input (optional) */}
       <div>
-        <label className="block text-sm font-medium text-[color:var(--ink)] mb-2">
-          Describe the Area or Development Opportunity
-        </label>
+        <label className="block text-sm font-medium text-[color:var(--ink)] mb-2">Describe a custom area or opportunity (optional)</label>
         <textarea
           value={areaDescription}
           onChange={(e) => setAreaDescription(e.target.value)}
@@ -117,6 +154,17 @@ export const VisionConceptsTool: React.FC<VisionConceptsToolProps> = ({ councilD
               Vision Statement
             </h3>
             <MarkdownContent content={visionText} />
+          </motion.div>
+        )}
+        {!loadingText && highlightsText && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            className="bg-[color:var(--panel)] border border-[color:var(--edge)] rounded-xl p-6"
+          >
+            <h3 className="text-lg font-semibold text-[color:var(--ink)] mb-4">Concept Highlights</h3>
+            <MarkdownContent content={highlightsText} />
           </motion.div>
         )}
       </AnimatePresence>

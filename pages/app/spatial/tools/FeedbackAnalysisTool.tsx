@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { PromptFunctions } from '../../../../prompts';
 import { callGemini } from '../../../../utils/gemini';
@@ -22,6 +22,12 @@ export const FeedbackAnalysisTool: React.FC<FeedbackAnalysisToolProps> = ({ prom
   const [themes, setThemes] = useState<Theme[]>([]);
   const [loading, setLoading] = useState(false);
 
+  useEffect(() => {
+    // Pre-fill with sample block (lightweight demo text)
+    const sample = `Theme 1: Affordable housing\nSentiment: positive\nMentions: 24\nA strong desire to see genuinely affordable homes delivered in town centre sites, with support for higher density near transit.\n\nTheme 2: Tall buildings\nSentiment: negative\nMentions: 18\nConcerns about height and massing in certain locations, preference for mid-rise typologies with good design and sunlight.\n\nTheme 3: Active travel\nSentiment: positive\nMentions: 30\nSupport for safer cycling and walking routes, street improvements, and car-free development policies.`;
+    setConsultationText(sample);
+  }, []);
+
   const analyzeFeedback = async () => {
     if (!consultationText.trim()) return;
 
@@ -41,6 +47,14 @@ export const FeedbackAnalysisTool: React.FC<FeedbackAnalysisToolProps> = ({ prom
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    // Optionally auto-run on mount for instant demo
+    if (consultationText) {
+      analyzeFeedback();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [consultationText]);
 
   const parseThemesFromResponse = (response: string): Theme[] => {
     // Simple parsing logic - in production this would be more robust
@@ -128,10 +142,18 @@ export const FeedbackAnalysisTool: React.FC<FeedbackAnalysisToolProps> = ({ prom
         </p>
       </div>
 
-      {/* Input */}
+      {/* Primary action */}
+      <div className="flex items-center gap-3">
+        <Button onClick={analyzeFeedback} disabled={loading || !consultationText.trim()} variant="primary">
+          {loading ? 'Analyzing...' : 'Analyze sample feedback'}
+        </Button>
+        <button className="text-sm text-[color:var(--accent)] hover:underline" onClick={() => setThemes([])}>Paste your own instead</button>
+      </div>
+
+      {/* Input (optional) */}
       <div>
         <label className="block text-sm font-medium text-[color:var(--ink)] mb-2">
-          Consultation Responses
+          Consultation Responses (optional)
         </label>
         <textarea
           value={consultationText}
@@ -141,15 +163,6 @@ export const FeedbackAnalysisTool: React.FC<FeedbackAnalysisToolProps> = ({ prom
           className="w-full px-4 py-3 bg-[color:var(--panel)] border border-[color:var(--edge)] rounded-lg text-[color:var(--ink)] placeholder-[color:var(--muted)] focus:outline-none focus:ring-2 focus:ring-[color:var(--accent)] font-mono text-sm"
         />
       </div>
-
-      {/* Analyze button */}
-      <Button
-        onClick={analyzeFeedback}
-        disabled={loading || !consultationText.trim()}
-        variant="primary"
-      >
-        {loading ? 'Analyzing...' : 'Analyze Feedback'}
-      </Button>
 
       {/* Analysis output */}
       <AnimatePresence mode="wait">

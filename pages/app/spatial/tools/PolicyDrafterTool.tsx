@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CouncilData } from '../../../../data/types';
 import { PromptFunctions } from '../../../../prompts';
@@ -17,15 +17,29 @@ export const PolicyDrafterTool: React.FC<PolicyDrafterToolProps> = ({ councilDat
   const [policyBrief, setPolicyBrief] = useState('');
   const [draftPolicy, setDraftPolicy] = useState('');
   const [loading, setLoading] = useState(false);
+  const [variants, setVariants] = useState<string[]>([]);
 
-  const generatePolicy = async () => {
-    if (!selectedTopic || !policyBrief.trim()) return;
+  useEffect(() => {
+    // Preselect first topic and auto-draft on load
+    const first = councilData.topics[0]?.id;
+    if (first) {
+      setSelectedTopic(first);
+      generatePolicyFromTopic(first);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
+  const generatePolicyFromTopic = async (topicId: string, brief: string = '') => {
     setLoading(true);
     try {
-      const prompt = prompts.policyDraftPrompt(selectedTopic, policyBrief);
+      const prompt = prompts.policyDraftPrompt(topicId, brief);
       const result = await callGemini(prompt);
       setDraftPolicy(result || 'No policy draft generated.');
+      setVariants([
+        'Provide a stricter compliance variant with measurable thresholds.',
+        'Provide a more flexible design-led variant with guidance.',
+        'Provide a concise summary variant suitable for a policy box.'
+      ]);
     } catch (error) {
       setDraftPolicy('Error generating policy. Please try again.');
     } finally {
@@ -45,30 +59,22 @@ export const PolicyDrafterTool: React.FC<PolicyDrafterToolProps> = ({ councilDat
         </p>
       </div>
 
-      {/* Topic selection */}
+      {/* One-click topics list */}
       <div>
-        <label className="block text-sm font-medium text-[color:var(--ink)] mb-2">
-          Policy Topic
-        </label>
-        <select
-          value={selectedTopic}
-          onChange={(e) => setSelectedTopic(e.target.value)}
-          className="w-full px-4 py-3 bg-[color:var(--panel)] border border-[color:var(--edge)] rounded-lg text-[color:var(--ink)] focus:outline-none focus:ring-2 focus:ring-[color:var(--accent)]"
-        >
-          <option value="">Select a topic...</option>
-          {councilData.topics.map((topic) => (
-            <option key={topic.id} value={topic.id}>
-              {topic.label}
-            </option>
+        <div className="text-sm font-medium text-[color:var(--ink)] mb-2">Draft from a topic</div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          {councilData.topics.slice(0,5).map((topic) => (
+            <div key={topic.id} className="flex items-center justify-between bg-[color:var(--panel)] border border-[color:var(--edge)] rounded-lg p-3">
+              <div className="text-[color:var(--ink)] font-semibold">{topic.label}</div>
+              <button onClick={() => { setSelectedTopic(topic.id); generatePolicyFromTopic(topic.id); }} className="px-3 py-1.5 rounded bg-[color:var(--accent)] text-white text-sm">Draft policy</button>
+            </div>
           ))}
-        </select>
+        </div>
       </div>
 
-      {/* Policy brief input */}
+      {/* Policy brief input (optional) */}
       <div>
-        <label className="block text-sm font-medium text-[color:var(--ink)] mb-2">
-          Policy Brief
-        </label>
+        <label className="block text-sm font-medium text-[color:var(--ink)] mb-2">Add extra instructions (optional)</label>
         <textarea
           value={policyBrief}
           onChange={(e) => setPolicyBrief(e.target.value)}
@@ -79,11 +85,7 @@ export const PolicyDrafterTool: React.FC<PolicyDrafterToolProps> = ({ councilDat
       </div>
 
       {/* Generate button */}
-      <Button
-        onClick={generatePolicy}
-        disabled={loading || !selectedTopic || !policyBrief.trim()}
-        variant="primary"
-      >
+      <Button onClick={() => generatePolicyFromTopic(selectedTopic, policyBrief)} disabled={loading || !selectedTopic} variant="primary">
         {loading ? 'Generating...' : 'Generate Policy Draft'}
       </Button>
 
@@ -121,6 +123,13 @@ export const PolicyDrafterTool: React.FC<PolicyDrafterToolProps> = ({ councilDat
             <div className="bg-[color:var(--surface)] p-4 rounded-lg">
               <MarkdownContent content={draftPolicy} />
             </div>
+            {variants.length > 0 && (
+              <div className="mt-4 flex flex-wrap gap-2">
+                {variants.map((v, idx) => (
+                  <button key={idx} onClick={() => generatePolicyFromTopic(selectedTopic, v)} className="px-3 py-1.5 rounded bg-[color:var(--panel)] border border-[color:var(--edge)] text-[color:var(--ink)] text-xs">Alternative phrasing {idx+1}</button>
+                ))}
+              </div>
+            )}
           </motion.div>
         )}
       </AnimatePresence>

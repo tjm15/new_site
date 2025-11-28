@@ -16,6 +16,7 @@ export const StrategyModelerTool: React.FC<StrategyModelerToolProps> = ({ counci
   const [selectedStrategy, setSelectedStrategy] = useState<string | null>(null);
   const [analysis, setAnalysis] = useState('');
   const [loading, setLoading] = useState(false);
+  const [metrics, setMetrics] = useState<{ totalSites: number; totalCapacity: number } | null>(null);
 
   // Auto-analyze first strategy on mount
   useEffect(() => {
@@ -31,6 +32,16 @@ export const StrategyModelerTool: React.FC<StrategyModelerToolProps> = ({ counci
     try {
       const strategy = councilData.strategies?.find(s => s.id === strategyId);
       if (strategy) {
+        // Simple metrics based on includedSites (fallback to all allocations)
+        const included = strategy.includedSites?.length ? strategy.includedSites : councilData.spatialData.allocations.map(a=>a.id);
+        const totalSites = included.length;
+        const totalCapacity = councilData.spatialData.allocations
+          .filter(a => included.includes(a.id))
+          .reduce((sum, a) => {
+            const n = parseInt(a.capacity.replace(/[^0-9]/g, '')) || 0;
+            return sum + n;
+          }, 0);
+        setMetrics({ totalSites, totalCapacity });
         const prompt = prompts.strategyPrompt(strategy.label, strategy.desc);
         const result = await callGemini(prompt);
         setAnalysis(result || 'No analysis generated.');
@@ -60,27 +71,28 @@ export const StrategyModelerTool: React.FC<StrategyModelerToolProps> = ({ counci
           <h3 className="text-lg font-semibold text-[color:var(--ink)]">
             Select a Strategy
           </h3>
-          <div className="space-y-3">
+          <div className="flex flex-col gap-3">
             {councilData.strategies?.map((strategy) => (
-              <motion.button
-                key={strategy.id}
-                onClick={() => analyzeStrategy(strategy.id)}
-                whileHover={{ x: 4 }}
-                className={`w-full text-left p-4 rounded-lg border transition-colors ${
-                  selectedStrategy === strategy.id
-                    ? 'bg-[color:var(--accent)]/10 border-[color:var(--accent)]'
-                    : 'bg-[color:var(--panel)] border-[color:var(--edge)] hover:border-[color:var(--accent)]/50'
-                }`}
-              >
-                <h4 className="font-semibold text-[color:var(--ink)] mb-1">
-                  {strategy.label}
-                </h4>
-                <p className="text-sm text-[color:var(--muted)]">
-                  {strategy.desc}
-                </p>
-              </motion.button>
+              <div key={strategy.id} className={`p-4 rounded-lg border ${selectedStrategy===strategy.id?'border-[color:var(--accent)] bg-[color:var(--accent)]/10':'border-[color:var(--edge)] bg-[color:var(--panel)]'}`}>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="font-semibold text-[color:var(--ink)]">{strategy.label}</div>
+                    <div className="text-sm text-[color:var(--muted)]">{strategy.desc}</div>
+                  </div>
+                  <button onClick={() => analyzeStrategy(strategy.id)} className="px-3 py-1.5 rounded bg-[color:var(--panel)] border border-[color:var(--edge)] text-[color:var(--ink)] text-sm">Select</button>
+                </div>
+              </div>
             ))}
           </div>
+          {metrics && (
+            <div className="mt-3 bg-[color:var(--panel)] border border-[color:var(--edge)] rounded-lg p-3 text-sm">
+              <div className="font-semibold text-[color:var(--ink)] mb-1">Summary metrics</div>
+              <div className="flex gap-4">
+                <div><span className="text-[color:var(--muted)]">Sites:</span> {metrics.totalSites}</div>
+                <div><span className="text-[color:var(--muted)]">Capacity:</span> {metrics.totalCapacity}</div>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Spatial visualization */}
@@ -120,9 +132,10 @@ export const StrategyModelerTool: React.FC<StrategyModelerToolProps> = ({ counci
             exit={{ opacity: 0, y: -20 }}
             className="bg-[color:var(--panel)] border border-[color:var(--edge)] rounded-xl p-6"
           >
-            <h3 className="text-lg font-semibold text-[color:var(--ink)] mb-4">
-              Strategy Analysis
-            </h3>
+            <h3 className="text-lg font-semibold text-[color:var(--ink)] mb-1">Strategy Narrative</h3>
+            {selectedStrategy && (
+              <p className="text-xs text-[color:var(--muted)] mb-3">Current strategy: {councilData.strategies?.find(s=>s.id===selectedStrategy)?.label}</p>
+            )}
             <MarkdownContent content={analysis} />
           </motion.div>
         )}
