@@ -6,13 +6,19 @@ import { callGemini } from '../../../../utils/gemini';
 import { LoadingSpinner } from '../../shared/LoadingSpinner';
 import { SpatialMap } from '../shared/SpatialMap';
 import { MarkdownContent } from '../../../../components/MarkdownContent';
+import { StructuredMarkdown } from '../../../../components/StructuredMarkdown';
 
 interface SiteAssessmentToolProps {
   councilData: CouncilData;
   prompts: PromptFunctions;
+  initialSiteId?: string;
+  initialAppraisal?: string;
+  initialDetails?: { constraints?: string[]; opportunities?: string[]; policies?: string[] } | null;
+  autoRun?: boolean;
+  onSessionChange?: (session: { selectedSite: string | null; appraisal: string; details: { constraints?: string[]; opportunities?: string[]; policies?: string[] } | null }) => void;
 }
 
-export const SiteAssessmentTool: React.FC<SiteAssessmentToolProps> = ({ councilData, prompts }) => {
+export const SiteAssessmentTool: React.FC<SiteAssessmentToolProps> = ({ councilData, prompts, initialSiteId, initialAppraisal, initialDetails, autoRun, onSessionChange }) => {
   const [selectedSite, setSelectedSite] = useState<string | null>(null);
   const [appraisal, setAppraisal] = useState('');
   const [loading, setLoading] = useState(false);
@@ -42,13 +48,30 @@ export const SiteAssessmentTool: React.FC<SiteAssessmentToolProps> = ({ councilD
   };
 
   useEffect(() => {
-    // Select first site on load for instant appraisal
+    // Restore session if provided
+    if (initialAppraisal) setAppraisal(initialAppraisal);
+    if (initialDetails) setDetails(initialDetails);
+    if (initialSiteId) setSelectedSite(initialSiteId);
+
+    // Prefer initial site from autopick
+    if (autoRun && initialSiteId) {
+      assessSite(initialSiteId);
+      return;
+    }
+    // If restoring existing appraisal, skip auto selection
+    if (initialAppraisal) return;
     const first = councilData.spatialData.allocations[0]?.id;
     if (first) {
       assessSite(first);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    if (onSessionChange) {
+      onSessionChange({ selectedSite, appraisal, details });
+    }
+  }, [selectedSite, appraisal, details, onSessionChange]);
 
   const selectedSiteData = selectedSite
     ? councilData.spatialData.allocations.find(s => s.id === selectedSite)
@@ -131,19 +154,19 @@ export const SiteAssessmentTool: React.FC<SiteAssessmentToolProps> = ({ councilD
           {details && (
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
               <div className="bg-[color:var(--panel)] border border-[color:var(--edge)] rounded-lg p-4">
-                <div className="font-semibold text-[color:var(--ink)] mb-2">Constraints</div>
+                <div className="font-semibold text-[color:var(--ink)] mb-2">⚠️ Constraints</div>
                 <ul className="text-sm text-[color:var(--muted)] list-disc pl-5">
                   {details.constraints?.map((c, idx) => (<li key={idx}>{c}</li>))}
                 </ul>
               </div>
               <div className="bg-[color:var(--panel)] border border-[color:var(--edge)] rounded-lg p-4">
-                <div className="font-semibold text-[color:var(--ink)] mb-2">Opportunities</div>
+                <div className="font-semibold text-[color:var(--ink)] mb-2">💡 Opportunities</div>
                 <ul className="text-sm text-[color:var(--muted)] list-disc pl-5">
                   {details.opportunities?.map((c, idx) => (<li key={idx}>{c}</li>))}
                 </ul>
               </div>
               <div className="bg-[color:var(--panel)] border border-[color:var(--edge)] rounded-lg p-4">
-                <div className="font-semibold text-[color:var(--ink)] mb-2">Relevant Policies</div>
+                <div className="font-semibold text-[color:var(--ink)] mb-2">📜 Relevant Policies</div>
                 <ul className="text-sm text-[color:var(--muted)] list-disc pl-5">
                   {details.policies?.map((c, idx) => (<li key={idx}>{c}</li>))}
                 </ul>
@@ -173,10 +196,8 @@ export const SiteAssessmentTool: React.FC<SiteAssessmentToolProps> = ({ councilD
             exit={{ opacity: 0, y: -20 }}
             className="bg-[color:var(--panel)] border border-[color:var(--edge)] rounded-xl p-6"
           >
-            <h3 className="text-lg font-semibold text-[color:var(--ink)] mb-4">
-              Site Appraisal
-            </h3>
-            <MarkdownContent content={appraisal} />
+            <h3 className="text-lg font-semibold text-[color:var(--ink)] mb-4">🛠️ Site Appraisal</h3>
+            <StructuredMarkdown content={appraisal} />
           </motion.div>
         )}
       </AnimatePresence>

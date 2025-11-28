@@ -6,13 +6,20 @@ import { callGemini } from '../../../../utils/gemini';
 import { LoadingSpinner } from '../../shared/LoadingSpinner';
 import { Button } from '../../shared/Button';
 import { MarkdownContent } from '../../../../components/MarkdownContent';
+import { StructuredMarkdown } from '../../../../components/StructuredMarkdown';
 
 interface PolicyDrafterToolProps {
   councilData: CouncilData;
   prompts: PromptFunctions;
+  initialTopic?: string;
+  initialBrief?: string;
+  initialDraftPolicy?: string;
+  initialVariants?: string[];
+  autoRun?: boolean;
+  onSessionChange?: (session: { selectedTopic: string; policyBrief: string; draftPolicy: string; variants: string[] }) => void;
 }
 
-export const PolicyDrafterTool: React.FC<PolicyDrafterToolProps> = ({ councilData, prompts }) => {
+export const PolicyDrafterTool: React.FC<PolicyDrafterToolProps> = ({ councilData, prompts, initialTopic, initialBrief, initialDraftPolicy, initialVariants, autoRun, onSessionChange }) => {
   const [selectedTopic, setSelectedTopic] = useState('');
   const [policyBrief, setPolicyBrief] = useState('');
   const [draftPolicy, setDraftPolicy] = useState('');
@@ -20,6 +27,23 @@ export const PolicyDrafterTool: React.FC<PolicyDrafterToolProps> = ({ councilDat
   const [variants, setVariants] = useState<string[]>([]);
 
   useEffect(() => {
+    // Restore session if provided
+    if (initialDraftPolicy) setDraftPolicy(initialDraftPolicy);
+    if (initialVariants && initialVariants.length) setVariants(initialVariants);
+    if (initialBrief) setPolicyBrief(initialBrief);
+
+    // If initial props provided via autopick, run that first
+    if (autoRun && (initialTopic || initialBrief)) {
+      const topic = initialTopic || councilData.topics[0]?.id || '';
+      setSelectedTopic(topic);
+      generatePolicyFromTopic(topic, initialBrief || '');
+      return;
+    }
+    // If restoring a previous draft, skip auto generation
+    if (initialDraftPolicy) {
+      setSelectedTopic(initialTopic || councilData.topics[0]?.id || '');
+      return;
+    }
     // Preselect first topic and auto-draft on load
     const first = councilData.topics[0]?.id;
     if (first) {
@@ -28,6 +52,12 @@ export const PolicyDrafterTool: React.FC<PolicyDrafterToolProps> = ({ councilDat
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    if (onSessionChange) {
+      onSessionChange({ selectedTopic, policyBrief, draftPolicy, variants });
+    }
+  }, [selectedTopic, policyBrief, draftPolicy, variants, onSessionChange]);
 
   const generatePolicyFromTopic = async (topicId: string, brief: string = '') => {
     setLoading(true);
@@ -73,16 +103,18 @@ export const PolicyDrafterTool: React.FC<PolicyDrafterToolProps> = ({ councilDat
       </div>
 
       {/* Policy brief input (optional) */}
-      <div>
-        <label className="block text-sm font-medium text-[color:var(--ink)] mb-2">Add extra instructions (optional)</label>
-        <textarea
-          value={policyBrief}
-          onChange={(e) => setPolicyBrief(e.target.value)}
-          placeholder="Describe what the policy should achieve, key requirements, thresholds, or specific considerations..."
-          rows={6}
-          className="w-full px-4 py-3 bg-[color:var(--panel)] border border-[color:var(--edge)] rounded-lg text-[color:var(--ink)] placeholder-[color:var(--muted)] focus:outline-none focus:ring-2 focus:ring-[color:var(--accent)]"
-        />
-      </div>
+      <details className="bg-[color:var(--surface)] border border-[color:var(--edge)] rounded-lg p-3">
+        <summary className="block text-sm font-medium text-[color:var(--ink)] cursor-pointer">Advanced: Add custom instructions (optional)</summary>
+        <div className="mt-3">
+          <textarea
+            value={policyBrief}
+            onChange={(e) => setPolicyBrief(e.target.value)}
+            placeholder="Describe what the policy should achieve, key requirements, thresholds, or specific considerations..."
+            rows={4}
+            className="w-full px-4 py-3 bg-[color:var(--panel)] border border-[color:var(--edge)] rounded-lg text-[color:var(--ink)] placeholder-[color:var(--muted)] focus:outline-none focus:ring-2 focus:ring-[color:var(--accent)]"
+          />
+        </div>
+      </details>
 
       {/* Generate button */}
       <Button onClick={() => generatePolicyFromTopic(selectedTopic, policyBrief)} disabled={loading || !selectedTopic} variant="primary">
@@ -110,9 +142,7 @@ export const PolicyDrafterTool: React.FC<PolicyDrafterToolProps> = ({ councilDat
             className="bg-[color:var(--panel)] border border-[color:var(--edge)] rounded-xl p-6"
           >
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-[color:var(--ink)]">
-                Draft Policy
-              </h3>
+              <h3 className="text-lg font-semibold text-[color:var(--ink)]">📄 Draft Policy</h3>
               <button
                 onClick={() => navigator.clipboard.writeText(draftPolicy)}
                 className="text-sm text-[color:var(--accent)] hover:underline"
@@ -121,7 +151,7 @@ export const PolicyDrafterTool: React.FC<PolicyDrafterToolProps> = ({ councilDat
               </button>
             </div>
             <div className="bg-[color:var(--surface)] p-4 rounded-lg">
-              <MarkdownContent content={draftPolicy} />
+              <StructuredMarkdown content={draftPolicy} />
             </div>
             {variants.length > 0 && (
               <div className="mt-4 flex flex-wrap gap-2">

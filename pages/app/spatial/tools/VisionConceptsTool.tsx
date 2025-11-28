@@ -6,13 +6,20 @@ import { callGemini, callGeminiImage } from '../../../../utils/gemini';
 import { LoadingSpinner } from '../../shared/LoadingSpinner';
 import { Button } from '../../shared/Button';
 import { MarkdownContent } from '../../../../components/MarkdownContent';
+import { StructuredMarkdown } from '../../../../components/StructuredMarkdown';
 
 interface VisionConceptsToolProps {
   councilData: CouncilData;
   prompts: PromptFunctions;
+  initialArea?: string;
+  initialVisionText?: string;
+  initialHighlightsText?: string;
+  initialConceptImage?: string;
+  autoRun?: boolean;
+  onSessionChange?: (session: { areaDescription: string; visionText: string; highlightsText: string; conceptImage: string }) => void;
 }
 
-export const VisionConceptsTool: React.FC<VisionConceptsToolProps> = ({ councilData, prompts }) => {
+export const VisionConceptsTool: React.FC<VisionConceptsToolProps> = ({ councilData, prompts, initialArea, initialVisionText, initialHighlightsText, initialConceptImage, autoRun, onSessionChange }) => {
   const [areaDescription, setAreaDescription] = useState('');
   const [visionText, setVisionText] = useState('');
   const [highlightsText, setHighlightsText] = useState('');
@@ -58,6 +65,31 @@ export const VisionConceptsTool: React.FC<VisionConceptsToolProps> = ({ councilD
   };
 
   useEffect(() => {
+    // Restore session if provided
+    if (initialVisionText) setVisionText(initialVisionText);
+    if (initialHighlightsText) setHighlightsText(initialHighlightsText);
+    if (initialConceptImage) setConceptImage(initialConceptImage);
+
+    // If autopick provided an area, use it and run
+    if (autoRun && (initialArea || '').trim()) {
+      const txt = initialArea as string;
+      setAreaDescription(txt);
+      (async () => {
+        setLoadingText(true);
+        try {
+          const prompt = prompts.visionPrompt(txt);
+          const result = await callGemini(prompt);
+          setVisionText(result || '');
+          const highlights = await callGemini(`Summarise concept highlights as 5 concise bullets for: ${txt}`);
+          setHighlightsText(highlights || '');
+        } finally {
+          setLoadingText(false);
+        }
+      })();
+      return;
+    }
+    // If restoring previous vision text, skip auto demo generation
+    if (initialVisionText) return;
     // Prefill demo area and auto-generate on load
     const demo = `${councilData.name} growth corridor`;
     setAreaDescription(demo);
@@ -75,6 +107,12 @@ export const VisionConceptsTool: React.FC<VisionConceptsToolProps> = ({ councilD
     })();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    if (onSessionChange) {
+      onSessionChange({ areaDescription, visionText, highlightsText, conceptImage });
+    }
+  }, [areaDescription, visionText, highlightsText, conceptImage, onSessionChange]);
 
   const runPresetArea = async (text: string) => {
     setAreaDescription(text);
@@ -101,16 +139,18 @@ export const VisionConceptsTool: React.FC<VisionConceptsToolProps> = ({ councilD
       </div>
 
       {/* Area description input (optional) */}
-      <div>
-        <label className="block text-sm font-medium text-[color:var(--ink)] mb-2">Describe a custom area or opportunity (optional)</label>
-        <textarea
-          value={areaDescription}
-          onChange={(e) => setAreaDescription(e.target.value)}
-          placeholder="e.g., A former industrial site along the canal, 5 hectares, opportunity for mixed-use regeneration with improved public realm"
-          rows={5}
-          className="w-full px-4 py-3 bg-[color:var(--panel)] border border-[color:var(--edge)] rounded-lg text-[color:var(--ink)] placeholder-[color:var(--muted)] focus:outline-none focus:ring-2 focus:ring-[color:var(--accent)]"
-        />
-      </div>
+      <details className="bg-[color:var(--surface)] border border-[color:var(--edge)] rounded-lg p-3">
+        <summary className="block text-sm font-medium text-[color:var(--ink)] cursor-pointer">Advanced: Describe a custom area (optional)</summary>
+        <div className="mt-3">
+          <textarea
+            value={areaDescription}
+            onChange={(e) => setAreaDescription(e.target.value)}
+            placeholder="e.g., A former industrial site along the canal, 5 hectares, opportunity for mixed-use regeneration with improved public realm"
+            rows={3}
+            className="w-full px-4 py-3 bg-[color:var(--panel)] border border-[color:var(--edge)] rounded-lg text-[color:var(--ink)] placeholder-[color:var(--muted)] focus:outline-none focus:ring-2 focus:ring-[color:var(--accent)]"
+          />
+        </div>
+      </details>
 
       {/* Action buttons */}
       <div className="flex flex-wrap gap-3">
@@ -150,10 +190,8 @@ export const VisionConceptsTool: React.FC<VisionConceptsToolProps> = ({ councilD
             exit={{ opacity: 0, y: -20 }}
             className="bg-[color:var(--panel)] border border-[color:var(--edge)] rounded-xl p-6"
           >
-            <h3 className="text-lg font-semibold text-[color:var(--ink)] mb-4">
-              Vision Statement
-            </h3>
-            <MarkdownContent content={visionText} />
+            <h3 className="text-lg font-semibold text-[color:var(--ink)] mb-4">🎯 Vision Statement</h3>
+            <StructuredMarkdown content={visionText} />
           </motion.div>
         )}
         {!loadingText && highlightsText && (
@@ -163,8 +201,8 @@ export const VisionConceptsTool: React.FC<VisionConceptsToolProps> = ({ councilD
             exit={{ opacity: 0, y: -20 }}
             className="bg-[color:var(--panel)] border border-[color:var(--edge)] rounded-xl p-6"
           >
-            <h3 className="text-lg font-semibold text-[color:var(--ink)] mb-4">Concept Highlights</h3>
-            <MarkdownContent content={highlightsText} />
+            <h3 className="text-lg font-semibold text-[color:var(--ink)] mb-4">✨ Concept Highlights</h3>
+            <StructuredMarkdown content={highlightsText} />
           </motion.div>
         )}
       </AnimatePresence>
@@ -190,9 +228,7 @@ export const VisionConceptsTool: React.FC<VisionConceptsToolProps> = ({ councilD
             exit={{ opacity: 0, y: -20 }}
             className="bg-[color:var(--panel)] border border-[color:var(--edge)] rounded-xl p-6"
           >
-            <h3 className="text-lg font-semibold text-[color:var(--ink)] mb-4">
-              Visual Concept
-            </h3>
+            <h3 className="text-lg font-semibold text-[color:var(--ink)] mb-4">🖼️ Visual Concept</h3>
             <img
               src={conceptImage}
               alt="Generated concept"

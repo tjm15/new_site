@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { PlanningApplication } from '../../../../data/types';
 import { PromptFunctions } from '../../../../prompts';
@@ -33,6 +33,14 @@ export const ReasoningStage: React.FC<ReasoningStageProps> = ({
   const [reasoningChain, setReasoningChain] = useState<ReasoningPoint[]>([]);
   const [loading, setLoading] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+
+  useEffect(() => {
+    // Auto-generate on entry to avoid dead-end
+    if (reasoningChain.length === 0) {
+      generateReasoning();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const generateReasoning = async () => {
     setLoading(true);

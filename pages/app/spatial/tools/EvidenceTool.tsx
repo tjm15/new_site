@@ -6,13 +6,21 @@ import { callGemini } from '../../../../utils/gemini';
 import { LoadingSpinner } from '../../shared/LoadingSpinner';
 import { Chip } from '../../shared/Chip';
 import { MarkdownContent } from '../../../../components/MarkdownContent';
+import { StructuredMarkdown } from '../../../../components/StructuredMarkdown';
 
 interface EvidenceToolProps {
   councilData: CouncilData;
   prompts: PromptFunctions;
+  initialQuery?: string;
+  initialTopics?: string[];
+  initialCards?: { title: string; content: string; question?: string }[];
+  autoRun?: boolean;
+  selectedTopicsOverride?: string[];
+  onToggleTopicOverride?: (id: string) => void;
+  onSessionChange?: (session: { query: string; selectedTopics: string[]; cards: { title: string; content: string; question?: string }[] }) => void;
 }
 
-export const EvidenceTool: React.FC<EvidenceToolProps> = ({ councilData, prompts }) => {
+export const EvidenceTool: React.FC<EvidenceToolProps> = ({ councilData, prompts, initialQuery, initialTopics, initialCards, autoRun, selectedTopicsOverride, onToggleTopicOverride, onSessionChange }) => {
   const [query, setQuery] = useState('');
   const [selectedTopics, setSelectedTopics] = useState<string[]>([]);
   const [cards, setCards] = useState<{ title: string; content: string; question?: string }[]>([]);
@@ -41,10 +49,30 @@ export const EvidenceTool: React.FC<EvidenceToolProps> = ({ councilData, prompts
   };
 
   useEffect(() => {
-    // Only run auto-queries once on initial mount
     if (hasInitialized.current) return;
     hasInitialized.current = true;
 
+    // Restore session cards if provided
+    if (initialCards && initialCards.length > 0) {
+      setCards(initialCards);
+    }
+    if (selectedTopicsOverride && !onToggleTopicOverride) {
+      setSelectedTopics(selectedTopicsOverride);
+    } else if (initialTopics && initialTopics.length) {
+      setSelectedTopics(initialTopics);
+    }
+
+    // If we were given an initial query from autopick, run that first
+    if (autoRun && (initialQuery || '').trim()) {
+      setQuery(initialQuery || '');
+      runPreset('Custom Analysis', initialQuery!, initialTopics || []);
+      return;
+    }
+
+    // If we restored cards, skip default auto queries
+    if (initialCards && initialCards.length > 0) return;
+
+    // Otherwise run the default 3 auto-queries once
     const housingTopics = councilData.topics.filter(t => t.id.includes('housing')).map(t => t.id);
     const transportTopics = councilData.topics.filter(t => t.id.includes('transport')).map(t => t.id);
     const environmentTopics = councilData.topics.filter(t => t.id.includes('environment') || t.id.includes('climate')).map(t => t.id);
@@ -54,6 +82,13 @@ export const EvidenceTool: React.FC<EvidenceToolProps> = ({ councilData, prompts
     runPreset('Environmental Constraints', 'Outline key environmental constraints affecting development.', environmentTopics);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Emit session changes upward for persistence
+  useEffect(() => {
+    if (onSessionChange) {
+      onSessionChange({ query, selectedTopics: selectedTopicsOverride || selectedTopics, cards });
+    }
+  }, [query, selectedTopics, cards, selectedTopicsOverride, onSessionChange]);
 
   const handleQuery = async () => {
     if (!query.trim()) return;
@@ -72,23 +107,23 @@ export const EvidenceTool: React.FC<EvidenceToolProps> = ({ councilData, prompts
         </p>
       </div>
 
-      {/* Topic filters */}
-      <div>
-        <label className="block text-sm font-medium text-[color:var(--ink)] mb-3">
-          Filter by Topic (optional)
-        </label>
-        <div className="flex flex-wrap gap-2">
-          {councilData.topics.map((topic) => (
-            <div key={topic.id}>
-              <Chip
-                label={topic.label}
-                active={selectedTopics.includes(topic.id)}
-                onClick={() => toggleTopic(topic.id)}
-              />
-            </div>
-          ))}
+      {/* Topic filters (hidden if override provided to rely on sidebar chips) */}
+      {!selectedTopicsOverride && (
+        <div>
+          <label className="block text-sm font-medium text-[color:var(--ink)] mb-3">Filter by Topic (optional)</label>
+          <div className="flex flex-wrap gap-2">
+            {councilData.topics.map((topic) => (
+              <div key={topic.id}>
+                <Chip
+                  label={topic.label}
+                  active={selectedTopics.includes(topic.id)}
+                  onClick={() => toggleTopic(topic.id)}
+                />
+              </div>
+            ))}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Preset deepen actions */}
       <div className="flex flex-wrap gap-3">
@@ -98,16 +133,18 @@ export const EvidenceTool: React.FC<EvidenceToolProps> = ({ councilData, prompts
       </div>
 
       {/* Query input (optional) */}
-      <div>
-        <label className="block text-sm font-medium text-[color:var(--ink)] mb-2">Custom question (optional)</label>
-        <textarea
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder="e.g., What are the key housing needs in the borough? What environmental constraints affect development?"
-          rows={4}
-          className="w-full px-4 py-3 bg-[color:var(--panel)] border border-[color:var(--edge)] rounded-lg text-[color:var(--ink)] placeholder-[color:var(--muted)] focus:outline-none focus:ring-2 focus:ring-[color:var(--accent)]"
-        />
-      </div>
+      <details className="bg-[color:var(--surface)] border border-[color:var(--edge)] rounded-lg p-3">
+        <summary className="text-sm font-medium text-[color:var(--ink)] cursor-pointer">Advanced: Ask a custom question</summary>
+        <div className="mt-3">
+          <textarea
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="e.g., What are the key housing needs in the borough? What environmental constraints affect development?"
+            rows={3}
+            className="w-full px-4 py-3 bg-[color:var(--panel)] border border-[color:var(--edge)] rounded-lg text-[color:var(--ink)] placeholder-[color:var(--muted)] focus:outline-none focus:ring-2 focus:ring-[color:var(--accent)]"
+          />
+        </div>
+      </details>
 
       {/* Submit button */}
       <button
@@ -134,9 +171,9 @@ export const EvidenceTool: React.FC<EvidenceToolProps> = ({ councilData, prompts
           <div className="grid grid-cols-1 gap-4">
             {cards.map((card, idx) => (
               <motion.div key={idx} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="bg-[color:var(--panel)] border border-[color:var(--edge)] rounded-xl p-6">
-                <h3 className="text-lg font-semibold text-[color:var(--ink)] mb-2">{card.title}</h3>
+                <h3 className="text-lg font-semibold text-[color:var(--ink)] mb-2">🗺️ {card.title}</h3>
                 {card.question && <p className="text-xs text-[color:var(--muted)] mb-3">Question used: {card.question}</p>}
-                <MarkdownContent content={card.content} />
+                <StructuredMarkdown content={card.content} />
               </motion.div>
             ))}
           </div>

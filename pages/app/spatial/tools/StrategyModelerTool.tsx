@@ -6,24 +6,40 @@ import { callGemini } from '../../../../utils/gemini';
 import { LoadingSpinner } from '../../shared/LoadingSpinner';
 import { SpatialMap } from '../shared/SpatialMap';
 import { MarkdownContent } from '../../../../components/MarkdownContent';
+import { StructuredMarkdown } from '../../../../components/StructuredMarkdown';
 
 interface StrategyModelerToolProps {
   councilData: CouncilData;
   prompts: PromptFunctions;
+  initialStrategyId?: string | null;
+  initialAnalysis?: string;
+  initialMetrics?: { totalSites: number; totalCapacity: number } | null;
+  autoRun?: boolean;
+  onSessionChange?: (session: { selectedStrategy: string | null; analysis: string; metrics: { totalSites: number; totalCapacity: number } | null }) => void;
 }
 
-export const StrategyModelerTool: React.FC<StrategyModelerToolProps> = ({ councilData, prompts }) => {
+export const StrategyModelerTool: React.FC<StrategyModelerToolProps> = ({ councilData, prompts, initialStrategyId, initialAnalysis, initialMetrics, autoRun, onSessionChange }) => {
   const [selectedStrategy, setSelectedStrategy] = useState<string | null>(null);
   const [analysis, setAnalysis] = useState('');
   const [loading, setLoading] = useState(false);
   const [metrics, setMetrics] = useState<{ totalSites: number; totalCapacity: number } | null>(null);
 
-  // Auto-analyze first strategy on mount
+  // Auto-analyze first or provided strategy on mount
   useEffect(() => {
-    if (councilData.strategies && councilData.strategies.length > 0) {
-      analyzeStrategy(councilData.strategies[0].id);
-    }
+    if (initialAnalysis) setAnalysis(initialAnalysis);
+    if (initialMetrics) setMetrics(initialMetrics);
+    if (initialStrategyId) setSelectedStrategy(initialStrategyId);
+
+    const first = councilData.strategies && councilData.strategies.length > 0 ? councilData.strategies[0].id : null;
+    const initial = (autoRun && initialStrategyId) ? initialStrategyId : first;
+    if (initial && !initialAnalysis) analyzeStrategy(initial);
   }, []);
+
+  useEffect(() => {
+    if (onSessionChange) {
+      onSessionChange({ selectedStrategy, analysis, metrics });
+    }
+  }, [selectedStrategy, analysis, metrics, onSessionChange]);
 
   const analyzeStrategy = async (strategyId: string) => {
     setSelectedStrategy(strategyId);
@@ -86,10 +102,10 @@ export const StrategyModelerTool: React.FC<StrategyModelerToolProps> = ({ counci
           </div>
           {metrics && (
             <div className="mt-3 bg-[color:var(--panel)] border border-[color:var(--edge)] rounded-lg p-3 text-sm">
-              <div className="font-semibold text-[color:var(--ink)] mb-1">Summary metrics</div>
+              <div className="font-semibold text-[color:var(--ink)] mb-1">📊 Summary metrics</div>
               <div className="flex gap-4">
-                <div><span className="text-[color:var(--muted)]">Sites:</span> {metrics.totalSites}</div>
-                <div><span className="text-[color:var(--muted)]">Capacity:</span> {metrics.totalCapacity}</div>
+                <div className="px-2 py-1 rounded bg-[color:var(--surface)] border border-[color:var(--edge)]">📍 Sites: {metrics.totalSites}</div>
+                <div className="px-2 py-1 rounded bg-[color:var(--surface)] border border-[color:var(--edge)]">🏗️ Capacity: {metrics.totalCapacity}</div>
               </div>
             </div>
           )}
@@ -136,7 +152,7 @@ export const StrategyModelerTool: React.FC<StrategyModelerToolProps> = ({ counci
             {selectedStrategy && (
               <p className="text-xs text-[color:var(--muted)] mb-3">Current strategy: {councilData.strategies?.find(s=>s.id===selectedStrategy)?.label}</p>
             )}
-            <MarkdownContent content={analysis} />
+            <StructuredMarkdown content={analysis} />
           </motion.div>
         )}
       </AnimatePresence>

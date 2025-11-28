@@ -8,6 +8,10 @@ import { MarkdownContent } from '../../../../components/MarkdownContent';
 
 interface FeedbackAnalysisToolProps {
   prompts: PromptFunctions;
+  initialText?: string;
+  initialThemes?: Theme[];
+  autoRun?: boolean;
+  onSessionChange?: (session: { consultationText: string; themes: Theme[] }) => void;
 }
 
 interface Theme {
@@ -17,16 +21,24 @@ interface Theme {
   summary: string;
 }
 
-export const FeedbackAnalysisTool: React.FC<FeedbackAnalysisToolProps> = ({ prompts }) => {
+export const FeedbackAnalysisTool: React.FC<FeedbackAnalysisToolProps> = ({ prompts, initialText, initialThemes, autoRun, onSessionChange }) => {
   const [consultationText, setConsultationText] = useState('');
   const [themes, setThemes] = useState<Theme[]>([]);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
+    if (initialThemes && initialThemes.length) setThemes(initialThemes);
+    if (autoRun && (initialText || '').trim()) {
+      setConsultationText(initialText as string);
+      return;
+    }
     // Pre-fill with sample block (lightweight demo text)
     const sample = `Theme 1: Affordable housing\nSentiment: positive\nMentions: 24\nA strong desire to see genuinely affordable homes delivered in town centre sites, with support for higher density near transit.\n\nTheme 2: Tall buildings\nSentiment: negative\nMentions: 18\nConcerns about height and massing in certain locations, preference for mid-rise typologies with good design and sunlight.\n\nTheme 3: Active travel\nSentiment: positive\nMentions: 30\nSupport for safer cycling and walking routes, street improvements, and car-free development policies.`;
     setConsultationText(sample);
   }, []);
+  useEffect(() => {
+    if (onSessionChange) onSessionChange({ consultationText, themes });
+  }, [consultationText, themes, onSessionChange]);
 
   const analyzeFeedback = async () => {
     if (!consultationText.trim()) return;
@@ -49,8 +61,8 @@ export const FeedbackAnalysisTool: React.FC<FeedbackAnalysisToolProps> = ({ prom
   };
 
   useEffect(() => {
-    // Optionally auto-run on mount for instant demo
-    if (consultationText) {
+    // Optionally auto-run on mount or when initial text set
+    if (consultationText && (autoRun || initialText)) {
       analyzeFeedback();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -147,7 +159,7 @@ export const FeedbackAnalysisTool: React.FC<FeedbackAnalysisToolProps> = ({ prom
         <Button onClick={analyzeFeedback} disabled={loading || !consultationText.trim()} variant="primary">
           {loading ? 'Analyzing...' : 'Analyze sample feedback'}
         </Button>
-        <button className="text-sm text-[color:var(--accent)] hover:underline" onClick={() => setThemes([])}>Paste your own instead</button>
+        <button className="text-sm text-[color:var(--accent)] hover:underline" onClick={() => { setThemes([]); setConsultationText(''); }}>Paste your own instead</button>
       </div>
 
       {/* Input (optional) */}

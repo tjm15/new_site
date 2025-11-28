@@ -10,6 +10,7 @@ import { SiteAssessmentTool } from './tools/SiteAssessmentTool';
 import { FeedbackAnalysisTool } from './tools/FeedbackAnalysisTool';
 import { PlanningWorkspaceLayout } from '../../../components/PlanningWorkspaceLayout';
 import { ContextSidebar } from '../../../components/ContextSidebar';
+import { classifyTool, classifyTopics, inferSiteId } from '../../../utils/classifier';
 
 interface SpatialPlanDemoProps {
   councilData: CouncilData;
@@ -68,27 +69,95 @@ export const SpatialPlanDemo: React.FC<SpatialPlanDemoProps> = ({ councilData, o
   const [selectedTool, setSelectedTool] = useState<ToolId | null>(null);
   const prompts = getPrompts(councilData.id, 'spatial');
   const [question, setQuestion] = useState('');
+  const [autoRunning, setAutoRunning] = useState(false);
+  const [sidebarTopics, setSidebarTopics] = useState<string[]>([]);
+  // Handoff props for initial autorun per tool
+  const [initialProps, setInitialProps] = useState<{
+    evidence?: { initialQuery?: string; initialTopics?: string[]; initialCards?: { title: string; content: string; question?: string }[]; autoRun?: boolean };
+    policy?: { initialTopic?: string; initialBrief?: string; initialDraftPolicy?: string; initialVariants?: string[]; autoRun?: boolean };
+    vision?: { initialArea?: string; initialVisionText?: string; initialHighlightsText?: string; initialConceptImage?: string; autoRun?: boolean };
+    strategy?: { initialStrategyId?: string; initialAnalysis?: string; initialMetrics?: { totalSites: number; totalCapacity: number } | null; autoRun?: boolean };
+    sites?: { initialSiteId?: string; initialAppraisal?: string; initialDetails?: { constraints?: string[]; opportunities?: string[]; policies?: string[] } | null; autoRun?: boolean };
+    feedback?: { initialText?: string; initialThemes?: any[]; autoRun?: boolean };
+  }>({});
+  const [toolSessions, setToolSessions] = useState<Record<string, any>>({});
 
   const renderToolWorkspace = () => {
     switch (selectedTool) {
       case 'evidence':
-        return <EvidenceTool councilData={councilData} prompts={prompts} />;
+        return <EvidenceTool
+          councilData={councilData}
+          prompts={prompts}
+          {...(initialProps.evidence || {})}
+          initialCards={toolSessions.evidence?.cards}
+          initialQuery={toolSessions.evidence?.query || initialProps.evidence?.initialQuery}
+          initialTopics={toolSessions.evidence?.selectedTopics || initialProps.evidence?.initialTopics || sidebarTopics}
+          autoRun={initialProps.evidence?.autoRun && !toolSessions.evidence}
+          selectedTopicsOverride={sidebarTopics.length ? sidebarTopics : undefined}
+          onToggleTopicOverride={(id)=>setSidebarTopics(prev=> prev.includes(id)? prev.filter(t=>t!==id): [...prev,id])}
+          onSessionChange={(session)=> setToolSessions(s=> ({ ...s, evidence: session }))}
+        />;
       case 'vision':
-        return <VisionConceptsTool councilData={councilData} prompts={prompts} />;
+        return <VisionConceptsTool
+          councilData={councilData}
+          prompts={prompts}
+          {...(initialProps.vision || {})}
+          initialArea={toolSessions.vision?.areaDescription || initialProps.vision?.initialArea}
+          initialVisionText={toolSessions.vision?.visionText || initialProps.vision?.initialVisionText}
+          initialHighlightsText={toolSessions.vision?.highlightsText || initialProps.vision?.initialHighlightsText}
+          initialConceptImage={toolSessions.vision?.conceptImage || initialProps.vision?.initialConceptImage}
+          autoRun={initialProps.vision?.autoRun && !toolSessions.vision}
+          onSessionChange={(session)=> setToolSessions(s=> ({ ...s, vision: session }))}
+        />;
       case 'policy':
-        return <PolicyDrafterTool councilData={councilData} prompts={prompts} />;
+        return <PolicyDrafterTool
+          councilData={councilData}
+          prompts={prompts}
+          {...(initialProps.policy || {})}
+          initialTopic={toolSessions.policy?.selectedTopic || initialProps.policy?.initialTopic}
+          initialBrief={toolSessions.policy?.policyBrief || initialProps.policy?.initialBrief}
+          initialDraftPolicy={toolSessions.policy?.draftPolicy || initialProps.policy?.initialDraftPolicy}
+          initialVariants={toolSessions.policy?.variants || initialProps.policy?.initialVariants}
+          autoRun={initialProps.policy?.autoRun && !toolSessions.policy}
+          onSessionChange={(session)=> setToolSessions(s=> ({ ...s, policy: session }))}
+        />;
       case 'strategy':
-        return <StrategyModelerTool councilData={councilData} prompts={prompts} />;
+        return <StrategyModelerTool
+          councilData={councilData}
+          prompts={prompts}
+          {...(initialProps.strategy || {})}
+          initialStrategyId={toolSessions.strategy?.selectedStrategy || initialProps.strategy?.initialStrategyId}
+          initialAnalysis={toolSessions.strategy?.analysis || initialProps.strategy?.initialAnalysis}
+          initialMetrics={toolSessions.strategy?.metrics || initialProps.strategy?.initialMetrics}
+          autoRun={initialProps.strategy?.autoRun && !toolSessions.strategy}
+          onSessionChange={(session)=> setToolSessions(s=> ({ ...s, strategy: session }))}
+        />;
       case 'sites':
-        return <SiteAssessmentTool councilData={councilData} prompts={prompts} />;
+        return <SiteAssessmentTool
+          councilData={councilData}
+          prompts={prompts}
+          {...(initialProps.sites || {})}
+          initialSiteId={toolSessions.sites?.selectedSite || initialProps.sites?.initialSiteId}
+          initialAppraisal={toolSessions.sites?.appraisal || initialProps.sites?.initialAppraisal}
+          initialDetails={toolSessions.sites?.details || initialProps.sites?.initialDetails}
+          autoRun={initialProps.sites?.autoRun && !toolSessions.sites}
+          onSessionChange={(session)=> setToolSessions(s=> ({ ...s, sites: session }))}
+        />;
       case 'feedback':
-        return <FeedbackAnalysisTool prompts={prompts} />;
+        return <FeedbackAnalysisTool
+          prompts={prompts}
+          {...(initialProps.feedback || {})}
+          initialText={toolSessions.feedback?.consultationText || initialProps.feedback?.initialText}
+          initialThemes={toolSessions.feedback?.themes || initialProps.feedback?.initialThemes}
+          autoRun={initialProps.feedback?.autoRun && !toolSessions.feedback}
+          onSessionChange={(session)=> setToolSessions(s=> ({ ...s, feedback: session }))}
+        />;
       default:
         return null;
     }
   };
 
-  const autoPickTool = (text: string): ToolId => {
+  const regexAutoPick = (text: string): ToolId => {
     const q = text.toLowerCase();
     if (q.match(/vision|concept|image|diagram|visual/)) return 'vision';
     if (q.match(/policy|draft|wording|compliance/)) return 'policy';
@@ -170,20 +239,65 @@ export const SpatialPlanDemo: React.FC<SpatialPlanDemoProps> = ({ councilData, o
                   <input
                     value={question}
                     onChange={(e) => setQuestion(e.target.value)}
-                    placeholder="e.g., How many affordable homes are planned near Euston?"
+                    placeholder="e.g., How many affordable homes are planned in the area?"
                     className="flex-1 px-4 py-2 bg-[color:var(--panel)] border border-[color:var(--edge)] rounded-lg text-[color:var(--ink)] placeholder-[color:var(--muted)]"
                   />
                   <button
-                    onClick={() => {
-                      const picked = autoPickTool(question);
+                    onClick={async () => {
+                      if (!question.trim()) return;
+                      setAutoRunning(true);
+                      // Try classifier; fallback to regex while model loads
+                      let picked: ToolId = regexAutoPick(question);
+                      try {
+                        picked = await classifyTool(question);
+                      } catch {}
+
+                      const nextInitial: typeof initialProps = {};
+                      if (picked === 'evidence') {
+                        const topics = await classifyTopics(question, councilData).catch(() => []);
+                        nextInitial.evidence = { initialQuery: question, initialTopics: topics, autoRun: true };
+                      } else if (picked === 'policy') {
+                        // Infer topic if possible
+                        const topics = await classifyTopics(question, councilData).catch(() => []);
+                        nextInitial.policy = { initialTopic: topics[0], initialBrief: question, autoRun: true };
+                      } else if (picked === 'vision') {
+                        nextInitial.vision = { initialArea: question, autoRun: true };
+                      } else if (picked === 'sites') {
+                        const siteId = inferSiteId(question, councilData);
+                        nextInitial.sites = { initialSiteId: siteId || undefined, autoRun: true };
+                      } else if (picked === 'feedback') {
+                        nextInitial.feedback = { initialText: question, autoRun: true };
+                      } else if (picked === 'strategy') {
+                        nextInitial.strategy = { initialStrategyId: councilData.strategies?.[0]?.id, autoRun: true };
+                      }
+                      setInitialProps(nextInitial);
                       setSelectedTool(picked);
+                      setAutoRunning(false);
                     }}
                     className="px-4 py-2 rounded-lg bg-[color:var(--brand)] text-[color:var(--ink)] font-semibold"
                   >
-                    Ask
+                    {autoRunning ? 'Working…' : 'Ask'}
                   </button>
                 </div>
-                <p className="text-xs text-[color:var(--muted)] mt-3">We'll auto-pick the right tool, move your question into the prompt, and start streaming.</p>
+                <p className="text-xs text-[color:var(--muted)] mt-3">We'll auto-pick a tool and run it for you.</p>
+                {/* Example quick asks */}
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {[
+                    'How many affordable homes are planned in the area?',
+                    'Draft a climate resilience policy for town centres',
+                    'Summarise transport constraints in the plan',
+                    'Appraise Site A23 and list constraints',
+                    'Analyze consultation comments about tall buildings'
+                  ].map((ex, i) => (
+                    <button
+                      key={i}
+                      onClick={() => setQuestion(ex)}
+                      className="px-3 py-1.5 rounded-full bg-[color:var(--panel)] border border-[color:var(--edge)] text-xs text-[color:var(--muted)] hover:text-[color:var(--ink)]"
+                    >
+                      {ex}
+                    </button>
+                  ))}
+                </div>
               </div>
             </motion.div>
           ) : (
@@ -200,7 +314,7 @@ export const SpatialPlanDemo: React.FC<SpatialPlanDemoProps> = ({ councilData, o
                 ← Back to Tools
               </button>
               <PlanningWorkspaceLayout
-                context={<ContextSidebar councilData={councilData} onBackToTools={() => setSelectedTool(null)} />}
+                context={<ContextSidebar councilData={councilData} selectedTopics={sidebarTopics} onToggleTopic={(id)=>setSidebarTopics(prev=> prev.includes(id)? prev.filter(t=>t!==id): [...prev,id])} onBackToTools={() => setSelectedTool(null)} />}
                 workspace={renderToolWorkspace()}
               />
             </motion.div>
