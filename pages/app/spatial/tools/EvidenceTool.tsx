@@ -17,6 +17,7 @@ export const EvidenceTool: React.FC<EvidenceToolProps> = ({ councilData, prompts
   const [selectedTopics, setSelectedTopics] = useState<string[]>([]);
   const [cards, setCards] = useState<{ title: string; content: string; question?: string }[]>([]);
   const [loading, setLoading] = useState(false);
+  const hasInitialized = React.useRef(false);
 
   const toggleTopic = (topicId: string) => {
     setSelectedTopics(prev =>
@@ -40,7 +41,10 @@ export const EvidenceTool: React.FC<EvidenceToolProps> = ({ councilData, prompts
   };
 
   useEffect(() => {
-    // Auto-run instant plan scans on mount
+    // Only run auto-queries once on initial mount
+    if (hasInitialized.current) return;
+    hasInitialized.current = true;
+
     const housingTopics = councilData.topics.filter(t => t.id.includes('housing')).map(t => t.id);
     const transportTopics = councilData.topics.filter(t => t.id.includes('transport')).map(t => t.id);
     const environmentTopics = councilData.topics.filter(t => t.id.includes('environment') || t.id.includes('climate')).map(t => t.id);
