@@ -60,8 +60,8 @@ export const ReportStage: React.FC<ReportStageProps> = ({
   return (
     <div className="space-y-6">
       {/* Progress indicator */}
-      <div className="flex items-center gap-2 text-sm text-[color:var(--muted)]">
-        <button onClick={onBack} className="text-[color:var(--accent)] hover:underline">
+      <div className="flex items-center gap-2 text-sm text-[var(--color-muted)]">
+        <button onClick={onBack} className="text-[var(--color-accent)] hover:underline">
           ← Back
         </button>
         <span>•</span>
@@ -69,13 +69,13 @@ export const ReportStage: React.FC<ReportStageProps> = ({
       </div>
 
       {/* Application summary */}
-      <div className="bg-[color:var(--panel)] border border-[color:var(--edge)] rounded-xl p-4">
+      <div className="bg-[var(--color-panel)] border border-[var(--color-edge)] rounded-xl p-4">
         <div className="flex items-center justify-between">
           <div>
-            <h3 className="font-semibold text-[color:var(--ink)] mb-1">
+            <h3 className="font-semibold text-[var(--color-ink)] mb-1">
               {application.reference}
             </h3>
-            <p className="text-sm text-[color:var(--muted)]">{application.description}</p>
+            <p className="text-sm text-[var(--color-muted)]">{application.description}</p>
           </div>
           {!loading && !report && (
             <Button onClick={generateReport} variant="primary">
@@ -88,7 +88,7 @@ export const ReportStage: React.FC<ReportStageProps> = ({
       {loading && (
         <div className="flex flex-col items-center justify-center py-12">
           <LoadingSpinner />
-          <p className="mt-4 text-sm text-[color:var(--muted)]">
+          <p className="mt-4 text-sm text-[var(--color-muted)]">
             Generating comprehensive officer report...
           </p>
         </div>
@@ -119,7 +119,7 @@ export const ReportStage: React.FC<ReportStageProps> = ({
           {/* Report content */}
           <div
             id="report-content"
-            className="bg-white text-black rounded-xl border border-[color:var(--edge)] p-8 shadow-lg"
+            className="bg-white text-black rounded-xl border border-[var(--color-edge)] p-8 shadow-lg"
           >
             {/* Report header */}
             <div className="border-b border-gray-300 pb-6 mb-6">

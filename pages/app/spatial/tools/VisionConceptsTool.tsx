@@ -123,10 +123,10 @@ export const VisionConceptsTool: React.FC<VisionConceptsToolProps> = ({ councilD
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h2 className="text-2xl font-bold text-[color:var(--ink)] mb-2">
+        <h2 className="text-2xl font-bold text-[var(--color-ink)] mb-2">
           Vision & Concepts Generator
         </h2>
-        <p className="text-[color:var(--muted)]">
+        <p className="text-[var(--color-muted)]">
           Generate vision statements and visual concepts for development areas
         </p>
       </div>
@@ -139,15 +139,15 @@ export const VisionConceptsTool: React.FC<VisionConceptsToolProps> = ({ councilD
       </div>
 
       {/* Area description input (optional) */}
-      <details className="bg-[color:var(--surface)] border border-[color:var(--edge)] rounded-lg p-3">
-        <summary className="block text-sm font-medium text-[color:var(--ink)] cursor-pointer">Advanced: Describe a custom area (optional)</summary>
+      <details className="bg-[var(--color-surface)] border border-[var(--color-edge)] rounded-lg p-3">
+        <summary className="block text-sm font-medium text-[var(--color-ink)] cursor-pointer">Advanced: Describe a custom area (optional)</summary>
         <div className="mt-3">
           <textarea
             value={areaDescription}
             onChange={(e) => setAreaDescription(e.target.value)}
             placeholder="e.g., A former industrial site along the canal, 5 hectares, opportunity for mixed-use regeneration with improved public realm"
             rows={3}
-            className="w-full px-4 py-3 bg-[color:var(--panel)] border border-[color:var(--edge)] rounded-lg text-[color:var(--ink)] placeholder-[color:var(--muted)] focus:outline-none focus:ring-2 focus:ring-[color:var(--accent)]"
+            className="w-full px-4 py-3 bg-[var(--color-panel)] border border-[var(--color-edge)] rounded-lg text-[var(--color-ink)] placeholder-[var(--color-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]"
           />
         </div>
       </details>
@@ -188,9 +188,9 @@ export const VisionConceptsTool: React.FC<VisionConceptsToolProps> = ({ councilD
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            className="bg-[color:var(--panel)] border border-[color:var(--edge)] rounded-xl p-6"
+            className="bg-[var(--color-panel)] border border-[var(--color-edge)] rounded-xl p-6"
           >
-            <h3 className="text-lg font-semibold text-[color:var(--ink)] mb-4">🎯 Vision Statement</h3>
+            <h3 className="text-lg font-semibold text-[var(--color-ink)] mb-4">🎯 Vision Statement</h3>
             <StructuredMarkdown content={visionText} />
           </motion.div>
         )}
@@ -199,9 +199,9 @@ export const VisionConceptsTool: React.FC<VisionConceptsToolProps> = ({ councilD
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            className="bg-[color:var(--panel)] border border-[color:var(--edge)] rounded-xl p-6"
+            className="bg-[var(--color-panel)] border border-[var(--color-edge)] rounded-xl p-6"
           >
-            <h3 className="text-lg font-semibold text-[color:var(--ink)] mb-4">✨ Concept Highlights</h3>
+            <h3 className="text-lg font-semibold text-[var(--color-ink)] mb-4">✨ Concept Highlights</h3>
             <StructuredMarkdown content={highlightsText} />
           </motion.div>
         )}
@@ -214,10 +214,10 @@ export const VisionConceptsTool: React.FC<VisionConceptsToolProps> = ({ councilD
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="flex flex-col items-center justify-center py-12 bg-[color:var(--panel)] border border-[color:var(--edge)] rounded-xl"
+            className="flex flex-col items-center justify-center py-12 bg-[var(--color-panel)] border border-[var(--color-edge)] rounded-xl"
           >
             <LoadingSpinner />
-            <p className="mt-4 text-sm text-[color:var(--muted)]">Generating visual concept...</p>
+            <p className="mt-4 text-sm text-[var(--color-muted)]">Generating visual concept...</p>
           </motion.div>
         )}
 
@@ -226,9 +226,9 @@ export const VisionConceptsTool: React.FC<VisionConceptsToolProps> = ({ councilD
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            className="bg-[color:var(--panel)] border border-[color:var(--edge)] rounded-xl p-6"
+            className="bg-[var(--color-panel)] border border-[var(--color-edge)] rounded-xl p-6"
           >
-            <h3 className="text-lg font-semibold text-[color:var(--ink)] mb-4">🖼️ Visual Concept</h3>
+            <h3 className="text-lg font-semibold text-[var(--color-ink)] mb-4">🖼️ Visual Concept</h3>
             <img
               src={conceptImage}
               alt="Generated concept"

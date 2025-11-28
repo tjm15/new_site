@@ -49,8 +49,8 @@ export const ContextStage: React.FC<ContextStageProps> = ({
   return (
     <div className="space-y-6">
       {/* Progress indicator */}
-      <div className="flex items-center gap-2 text-sm text-[color:var(--muted)]">
-        <button onClick={onBack} className="text-[color:var(--accent)] hover:underline">
+      <div className="flex items-center gap-2 text-sm text-[var(--color-muted)]">
+        <button onClick={onBack} className="text-[var(--color-accent)] hover:underline">
           ← Back
         </button>
         <span>•</span>
@@ -58,52 +58,52 @@ export const ContextStage: React.FC<ContextStageProps> = ({
       </div>
 
       {/* Application summary */}
-      <div className="bg-[color:var(--panel)] border border-[color:var(--edge)] rounded-xl p-4">
-        <h3 className="font-semibold text-[color:var(--ink)] mb-1">
+      <div className="bg-[var(--color-panel)] border border-[var(--color-edge)] rounded-xl p-4">
+        <h3 className="font-semibold text-[var(--color-ink)] mb-1">
           {application.reference}
         </h3>
-        <p className="text-sm text-[color:var(--muted)]">{application.description}</p>
+        <p className="text-sm text-[var(--color-muted)]">{application.description}</p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Constraints & Policies */}
         <div className="space-y-4">
-          <h3 className="text-lg font-semibold text-[color:var(--ink)]">
+          <h3 className="text-lg font-semibold text-[var(--color-ink)]">
             Planning Context
           </h3>
 
           {/* Extracted constraints */}
-          <div className="bg-[color:var(--panel)] border border-[color:var(--edge)] rounded-lg p-4">
-            <h4 className="font-semibold text-[color:var(--ink)] mb-3">Site Constraints</h4>
+          <div className="bg-[var(--color-panel)] border border-[var(--color-edge)] rounded-lg p-4">
+            <h4 className="font-semibold text-[var(--color-ink)] mb-3">Site Constraints</h4>
             <ul className="space-y-2">
               {extractedData.keyConstraints?.map((constraint: string, idx: number) => (
                 <li key={idx} className="flex items-start gap-2 text-sm">
                   <span className="mt-1 h-2 w-2 rounded-full bg-red-500 flex-shrink-0" />
-                  <span className="text-[color:var(--muted)]">{constraint}</span>
+                  <span className="text-[var(--color-muted)]">{constraint}</span>
                 </li>
               ))}
             </ul>
           </div>
 
           {/* Relevant policies */}
-          <div className="bg-[color:var(--panel)] border border-[color:var(--edge)] rounded-lg p-4">
-            <h4 className="font-semibold text-[color:var(--ink)] mb-3">Relevant Policies</h4>
+          <div className="bg-[var(--color-panel)] border border-[var(--color-edge)] rounded-lg p-4">
+            <h4 className="font-semibold text-[var(--color-ink)] mb-3">Relevant Policies</h4>
             <div className="space-y-3">
               {relevantPolicies.map((policy) => (
-                <div key={policy.reference} className="border-l-2 border-[color:var(--accent)] pl-3">
-                  <div className="font-medium text-sm text-[color:var(--ink)]">
+                <div key={policy.reference} className="border-l-2 border-[var(--color-accent)] pl-3">
+                  <div className="font-medium text-sm text-[var(--color-ink)]">
                     {policy.reference}
                   </div>
-                  <div className="text-xs text-[color:var(--muted)]">{policy.title}</div>
+                  <div className="text-xs text-[var(--color-muted)]">{policy.title}</div>
                 </div>
               ))}
             </div>
           </div>
 
           {/* Simple constraint map placeholder */}
-          <div className="bg-[color:var(--panel)] border border-[color:var(--edge)] rounded-lg p-4">
-            <h4 className="font-semibold text-[color:var(--ink)] mb-3">Site Context</h4>
-            <div className="aspect-video bg-[color:var(--surface)] rounded flex items-center justify-center text-[color:var(--muted)] text-sm">
+          <div className="bg-[var(--color-panel)] border border-[var(--color-edge)] rounded-lg p-4">
+            <h4 className="font-semibold text-[var(--color-ink)] mb-3">Site Context</h4>
+            <div className="aspect-video bg-[var(--color-surface)] rounded flex items-center justify-center text-[var(--color-muted)] text-sm">
               [Site location map would appear here]
             </div>
           </div>
@@ -112,7 +112,7 @@ export const ContextStage: React.FC<ContextStageProps> = ({
         {/* AI Context Analysis */}
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <h3 className="text-lg font-semibold text-[color:var(--ink)]">
+            <h3 className="text-lg font-semibold text-[var(--color-ink)]">
               AI Context Analysis
             </h3>
             {!loading && !contextAnalysis && (
@@ -134,7 +134,7 @@ export const ContextStage: React.FC<ContextStageProps> = ({
               animate={{ opacity: 1, y: 0 }}
               className="space-y-4"
             >
-              <div className="bg-[color:var(--panel)] border border-[color:var(--edge)] rounded-lg p-6 max-h-[500px] overflow-y-auto">
+              <div className="bg-[var(--color-panel)] border border-[var(--color-edge)] rounded-lg p-6 max-h-[500px] overflow-y-auto">
                 <MarkdownContent content={contextAnalysis} />
               </div>
 

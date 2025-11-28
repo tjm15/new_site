@@ -137,8 +137,8 @@ export const ReasoningStage: React.FC<ReasoningStageProps> = ({
   return (
     <div className="space-y-6">
       {/* Progress indicator */}
-      <div className="flex items-center gap-2 text-sm text-[color:var(--muted)]">
-        <button onClick={onBack} className="text-[color:var(--accent)] hover:underline">
+      <div className="flex items-center gap-2 text-sm text-[var(--color-muted)]">
+        <button onClick={onBack} className="text-[var(--color-accent)] hover:underline">
           ← Back
         </button>
         <span>•</span>
@@ -146,20 +146,20 @@ export const ReasoningStage: React.FC<ReasoningStageProps> = ({
       </div>
 
       {/* Application summary */}
-      <div className="bg-[color:var(--panel)] border border-[color:var(--edge)] rounded-xl p-4">
-        <h3 className="font-semibold text-[color:var(--ink)] mb-1">
+      <div className="bg-[var(--color-panel)] border border-[var(--color-edge)] rounded-xl p-4">
+        <h3 className="font-semibold text-[var(--color-ink)] mb-1">
           {application.reference}
         </h3>
-        <p className="text-sm text-[color:var(--muted)]">{application.description}</p>
+        <p className="text-sm text-[var(--color-muted)]">{application.description}</p>
       </div>
 
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <div>
-            <h3 className="text-lg font-semibold text-[color:var(--ink)]">
+            <h3 className="text-lg font-semibold text-[var(--color-ink)]">
               Planning Assessment Reasoning
             </h3>
-            <p className="text-sm text-[color:var(--muted)]">
+            <p className="text-sm text-[var(--color-muted)]">
               AI-generated reasoning chain with policy compliance assessment
             </p>
           </div>
@@ -188,12 +188,12 @@ export const ReasoningStage: React.FC<ReasoningStageProps> = ({
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: idx * 0.1 }}
-                className="bg-[color:var(--panel)] border border-[color:var(--edge)] rounded-lg p-4"
+                className="bg-[var(--color-panel)] border border-[var(--color-edge)] rounded-lg p-4"
               >
                 <div className="flex items-start justify-between gap-4 mb-3">
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-2">
-                      <span className="text-xs font-semibold text-[color:var(--accent)]">
+                      <span className="text-xs font-semibold text-[var(--color-accent)]">
                         {idx + 1}. {point.category}
                       </span>
                     </div>
@@ -202,14 +202,14 @@ export const ReasoningStage: React.FC<ReasoningStageProps> = ({
                         value={point.text}
                         onChange={(e) => updatePoint(point.id, e.target.value)}
                         onBlur={() => setEditingId(null)}
-                        className="w-full px-3 py-2 bg-[color:var(--surface)] border border-[color:var(--edge)] rounded text-sm text-[color:var(--ink)] focus:outline-none focus:ring-2 focus:ring-[color:var(--accent)]"
+                        className="w-full px-3 py-2 bg-[var(--color-surface)] border border-[var(--color-edge)] rounded text-sm text-[var(--color-ink)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]"
                         rows={3}
                         autoFocus
                       />
                     ) : (
                       <p
                         onClick={() => setEditingId(point.id)}
-                        className="text-sm text-[color:var(--muted)] cursor-pointer hover:text-[color:var(--ink)] transition-colors"
+                        className="text-sm text-[var(--color-muted)] cursor-pointer hover:text-[var(--color-ink)] transition-colors"
                       >
                         {point.text}
                       </p>

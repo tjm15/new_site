@@ -34,10 +34,10 @@ export const SpatialMap: React.FC<SpatialMapProps> = ({
     return (
       <div className="space-y-4">
         <div className="flex justify-between items-center">
-          <h3 className="text-lg font-semibold text-[color:var(--ink)]">Sites</h3>
+          <h3 className="text-lg font-semibold text-[var(--color-ink)]">Sites</h3>
           <button
             onClick={() => setViewMode('map')}
-            className="text-sm text-[color:var(--accent)] hover:underline"
+            className="text-sm text-[var(--color-accent)] hover:underline"
           >
             View Map →
           </button>
@@ -50,29 +50,29 @@ export const SpatialMap: React.FC<SpatialMapProps> = ({
               onClick={() => onSiteSelect?.(site.id)}
               className={`p-4 rounded-lg border cursor-pointer transition-colors ${
                 selectedSite === site.id
-                  ? 'bg-[color:var(--accent)]/10 border-[color:var(--accent)]'
-                  : 'bg-[color:var(--panel)] border-[color:var(--edge)] hover:border-[color:var(--accent)]/50'
+                  ? 'bg-[var(--color-accent)]/10 border-[var(--color-accent)]'
+                  : 'bg-[var(--color-panel)] border-[var(--color-edge)] hover:border-[var(--color-accent)]/50'
               }`}
             >
               <div className="flex items-start justify-between gap-3">
                 <div className="flex-1">
-                  <h4 className="font-semibold text-[color:var(--ink)] mb-1">{site.name}</h4>
+                  <h4 className="font-semibold text-[var(--color-ink)] mb-1">{site.name}</h4>
                   {site.description && (
-                    <p className="text-sm text-[color:var(--muted)] mb-2">{site.description}</p>
+                    <p className="text-sm text-[var(--color-muted)] mb-2">{site.description}</p>
                   )}
                   <div className="flex flex-wrap gap-2">
                     {site.area && (
-                      <span className="text-xs px-2 py-1 rounded-full bg-[color:var(--surface)] text-[color:var(--muted)]">
+                      <span className="text-xs px-2 py-1 rounded-full bg-[var(--color-surface)] text-[var(--color-muted)]">
                         {site.area} ha
                       </span>
                     )}
-                    <span className="text-xs px-2 py-1 rounded-full bg-[color:var(--surface)] text-[color:var(--muted)]">
+                    <span className="text-xs px-2 py-1 rounded-full bg-[var(--color-surface)] text-[var(--color-muted)]">
                       {site.capacity}
                     </span>
                   </div>
                 </div>
                 {selectedSite === site.id && (
-                  <span className="text-[color:var(--accent)] text-xl">✓</span>
+                  <span className="text-[var(--color-accent)] text-xl">✓</span>
                 )}
               </div>
             </motion.div>
@@ -87,14 +87,14 @@ export const SpatialMap: React.FC<SpatialMapProps> = ({
       {isMobile && (
         <button
           onClick={() => setViewMode('list')}
-          className="absolute top-4 right-4 z-10 px-4 py-2 bg-[color:var(--panel)] border border-[color:var(--edge)] rounded-lg text-sm text-[color:var(--ink)] shadow-lg"
+          className="absolute top-4 right-4 z-10 px-4 py-2 bg-[var(--color-panel)] border border-[var(--color-edge)] rounded-lg text-sm text-[var(--color-ink)] shadow-lg"
         >
           ← Back to List
         </button>
       )}
       <svg
         viewBox="0 0 800 600"
-        className="w-full h-auto bg-[color:var(--surface)] rounded-xl border border-[color:var(--edge)]"
+        className="w-full h-auto bg-[var(--color-surface)] rounded-xl border border-[var(--color-edge)]"
       >
         {/* Borough outline */}
         <path
@@ -168,20 +168,20 @@ export const SpatialMap: React.FC<SpatialMapProps> = ({
       </svg>
 
       {/* Map Legend */}
-      <div className="absolute bottom-4 left-4 bg-white/95 backdrop-blur-sm rounded-lg border border-[color:var(--edge)] shadow-lg p-3 text-xs">
-        <div className="font-semibold text-[color:var(--ink)] mb-2">Legend</div>
+      <div className="absolute bottom-4 left-4 bg-white/95 backdrop-blur-sm rounded-lg border border-[var(--color-edge)] shadow-lg p-3 text-xs">
+        <div className="font-semibold text-[var(--color-ink)] mb-2">Legend</div>
         <div className="space-y-1.5">
           <div className="flex items-center gap-2">
             <div className="w-4 h-4 rounded" style={{ backgroundColor: 'rgba(76, 175, 80, 0.3)' }}></div>
-            <span className="text-[color:var(--muted)]">Open Space</span>
+            <span className="text-[var(--color-muted)]">Open Space</span>
           </div>
           <div className="flex items-center gap-2">
             <div className="w-4 h-4 rounded" style={{ backgroundColor: 'rgba(16, 185, 129, 0.2)' }}></div>
-            <span className="text-[color:var(--muted)]">Allocation</span>
+            <span className="text-[var(--color-muted)]">Allocation</span>
           </div>
           <div className="flex items-center gap-2">
-            <div className="w-4 h-4 rounded bg-[color:var(--accent)]"></div>
-            <span className="text-[color:var(--muted)]">Selected Site</span>
+            <div className="w-4 h-4 rounded bg-[var(--color-accent)]"></div>
+            <span className="text-[var(--color-muted)]">Selected Site</span>
           </div>
         </div>
       </div>

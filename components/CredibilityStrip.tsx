@@ -20,10 +20,10 @@ export function CredibilityStrip() {
           <Link 
             key={it.t} 
             to="/involved"
-            className="block rounded-2xl bg-[color:var(--panel)]/90 backdrop-blur border border-[color:var(--edge)] p-5 shadow-sm transition-all hover:shadow-lg hover:-translate-y-1 focus:outline-none focus:[box-shadow:var(--ring)]"
+            className="block rounded-2xl bg-[var(--color-panel)]/90 backdrop-blur border border-[var(--color-edge)] p-5 shadow-sm transition-all hover:shadow-lg hover:-translate-y-1 focus:outline-none focus:[box-shadow:var(--ring)]"
           >
-            <div className="text-[color:var(--ink)] font-medium">{it.t}</div>
-            <div className="text-[color:var(--muted)] mt-1">{it.d}</div>
+            <div className="text-[var(--color-ink)] font-medium">{it.t}</div>
+            <div className="text-[var(--color-muted)] mt-1">{it.d}</div>
           </Link>
         ))}
       </div>
@@ -32,19 +32,19 @@ export function CredibilityStrip() {
 
   // New mobile implementation (single card with list and button)
   return (
-    <div className="mt-6 rounded-2xl bg-[color:var(--panel)]/90 backdrop-blur border border-[color:var(--edge)] p-6 shadow-sm">
+    <div className="mt-6 rounded-2xl bg-[var(--color-panel)]/90 backdrop-blur border border-[var(--color-edge)] p-6 shadow-sm">
       <ul className="space-y-4">
         {items.map((it) => (
           <li key={it.t}>
-            <p className="text-[color:var(--ink)] font-medium">{it.t}</p>
-            <p className="text-[color:var(--muted)] text-sm mt-0.5">{it.d}</p>
+            <p className="text-[var(--color-ink)] font-medium">{it.t}</p>
+            <p className="text-[var(--color-muted)] text-sm mt-0.5">{it.d}</p>
           </li>
         ))}
       </ul>
       <div className="mt-6 text-center">
         <Link 
           to="/involved" 
-          className="inline-flex items-center justify-center px-6 py-3 rounded-xl bg-[color:var(--accent)] text-white font-medium shadow-md hover:shadow-lg transition-shadow focus:outline-none focus:[box-shadow:var(--ring)]"
+          className="inline-flex items-center justify-center px-6 py-3 rounded-xl bg-[var(--color-accent)] text-white font-medium shadow-md hover:shadow-lg transition-shadow focus:outline-none focus:[box-shadow:var(--ring)]"
         >
           Get Involved
         </Link>

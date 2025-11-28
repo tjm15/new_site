@@ -75,12 +75,12 @@ export function DemoLanding({ selectedCouncil, onSelectCouncil, onSelectMode, on
   const selectedCouncilData = councils.find(c => c.id === selectedCouncil);
 
   return (
-    <div className="min-h-screen bg-[color:var(--surface)] py-12 px-6">
+    <div className="min-h-screen bg-[var(--color-surface)] py-12 px-6">
       <div className="max-w-7xl mx-auto">
         {/* Breadcrumb */}
         <div className="mb-8">
           {stage === 'council' && (
-            <h2 className="text-2xl md:text-3xl font-semibold text-[color:var(--ink)]">
+            <h2 className="text-2xl md:text-3xl font-semibold text-[var(--color-ink)]">
               Select Council
             </h2>
           )}
@@ -88,11 +88,11 @@ export function DemoLanding({ selectedCouncil, onSelectCouncil, onSelectMode, on
             <div className="flex items-center gap-4">
               <button 
                 onClick={handleBack}
-                className="p-2 rounded-lg hover:bg-[color:var(--edge)] transition-colors"
+                className="p-2 rounded-lg hover:bg-[var(--color-edge)] transition-colors"
               >
-                <ArrowLeft className="w-5 h-5 text-[color:var(--ink)]" />
+                <ArrowLeft className="w-5 h-5 text-[var(--color-ink)]" />
               </button>
-              <h2 className="text-2xl md:text-3xl font-semibold text-[color:var(--ink)]">
+              <h2 className="text-2xl md:text-3xl font-semibold text-[var(--color-ink)]">
                 {selectedCouncilData.name} → Select Mode
               </h2>
             </div>
@@ -134,25 +134,25 @@ export function DemoLanding({ selectedCouncil, onSelectCouncil, onSelectMode, on
                 <motion.div
                   key={mode.id}
                   whileHover={{ y: -5 }}
-                  className="bg-[color:var(--panel)] rounded-2xl border border-[color:var(--edge)] shadow-lg p-8 cursor-pointer transition-shadow hover:shadow-xl"
+                  className="bg-[var(--color-panel)] rounded-2xl border border-[var(--color-edge)] shadow-lg p-8 cursor-pointer transition-shadow hover:shadow-xl"
                   onClick={() => onSelectMode(mode.id as 'spatial' | 'development')}
                 >
                   <div className="text-5xl mb-4">{mode.icon}</div>
-                  <h3 className="text-2xl font-semibold text-[color:var(--ink)] mb-2">
+                  <h3 className="text-2xl font-semibold text-[var(--color-ink)] mb-2">
                     {mode.title}
                   </h3>
-                  <p className="text-[color:var(--muted)] mb-6">
+                  <p className="text-[var(--color-muted)] mb-6">
                     {mode.description}
                   </p>
                   <ul className="space-y-3">
                     {mode.features.map((feature, idx) => (
                       <li key={idx} className="flex items-start gap-3">
-                        <span className="mt-1.5 h-1.5 w-1.5 rounded-full bg-[color:var(--brand)] flex-shrink-0" />
-                        <span className="text-sm text-[color:var(--muted)]">{feature}</span>
+                        <span className="mt-1.5 h-1.5 w-1.5 rounded-full bg-[var(--color-brand)] flex-shrink-0" />
+                        <span className="text-sm text-[var(--color-muted)]">{feature}</span>
                       </li>
                     ))}
                   </ul>
-                  <div className="mt-6 text-[color:var(--accent)] font-semibold text-sm">
+                  <div className="mt-6 text-[var(--color-accent)] font-semibold text-sm">
                     Launch →
                   </div>
                 </motion.div>

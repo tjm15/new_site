@@ -13,14 +13,14 @@ export const Collapsible: React.FC<CollapsibleProps> = ({ children, previewLines
   return (
     <div className={className}>
       {needsCollapse && !open && content ? (
-        <pre className="whitespace-pre-wrap text-[color:var(--muted)] mb-3">{content.split('\n').slice(0, previewLines).join('\n')}\n…</pre>
+        <pre className="whitespace-pre-wrap text-[var(--color-muted)] mb-3">{content.split('\n').slice(0, previewLines).join('\n')}\n…</pre>
       ) : (
         <div>{children}</div>
       )}
       {needsCollapse && (
         <button
           onClick={() => setOpen(o => !o)}
-          className="mt-1 text-xs text-[color:var(--accent)] hover:underline"
+          className="mt-1 text-xs text-[var(--color-accent)] hover:underline"
         >
           {open ? 'Show less' : 'Show more'}
         </button>

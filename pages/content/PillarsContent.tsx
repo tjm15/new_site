@@ -39,21 +39,21 @@ const PillarDetail = ({ data }) => (
         <div className="flex items-start gap-3 mb-4">
             <span className="text-3xl mt-1">{data.icon}</span>
             <div>
-                <h3 className="text-lg font-semibold text-[color:var(--ink)]">{data.title}</h3>
-                <p className="text-[color:var(--muted)]">{data.subtitle}</p>
+                <h3 className="text-lg font-semibold text-[var(--color-ink)]">{data.title}</h3>
+                <p className="text-[var(--color-muted)]">{data.subtitle}</p>
             </div>
         </div>
-        <div className="pl-2 space-y-4 border-l-2 border-[color:var(--edge)] ml-5">
+        <div className="pl-2 space-y-4 border-l-2 border-[var(--color-edge)] ml-5">
             <p className="pl-4">{data.intro}</p>
             <div className="pl-4 space-y-4">
                 {data.subFeatures.map((sub) => (
                     <div key={sub.title}>
-                        <h4 className="font-semibold text-[color:var(--ink)]">{sub.title}</h4>
-                        <p className="text-[color:var(--muted)] text-sm mt-1">{sub.details}</p>
+                        <h4 className="font-semibold text-[var(--color-ink)]">{sub.title}</h4>
+                        <p className="text-[var(--color-muted)] text-sm mt-1">{sub.details}</p>
                     </div>
                 ))}
             </div>
-            <p className="pl-4 font-medium text-[color:var(--ink)]">{data.conclusion}</p>
+            <p className="pl-4 font-medium text-[var(--color-ink)]">{data.conclusion}</p>
         </div>
     </div>
 );

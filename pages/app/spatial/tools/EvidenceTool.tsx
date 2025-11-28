@@ -99,10 +99,10 @@ export const EvidenceTool: React.FC<EvidenceToolProps> = ({ councilData, prompts
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h2 className="text-2xl font-bold text-[color:var(--ink)] mb-2">
+        <h2 className="text-2xl font-bold text-[var(--color-ink)] mb-2">
           Evidence & Context Query
         </h2>
-        <p className="text-[color:var(--muted)]">
+        <p className="text-[var(--color-muted)]">
           Ask questions about local evidence, demographics, constraints, or any contextual data
         </p>
       </div>
@@ -110,7 +110,7 @@ export const EvidenceTool: React.FC<EvidenceToolProps> = ({ councilData, prompts
       {/* Topic filters (hidden if override provided to rely on sidebar chips) */}
       {!selectedTopicsOverride && (
         <div>
-          <label className="block text-sm font-medium text-[color:var(--ink)] mb-3">Filter by Topic (optional)</label>
+          <label className="block text-sm font-medium text-[var(--color-ink)] mb-3">Filter by Topic (optional)</label>
           <div className="flex flex-wrap gap-2">
             {councilData.topics.map((topic) => (
               <div key={topic.id}>
@@ -127,21 +127,21 @@ export const EvidenceTool: React.FC<EvidenceToolProps> = ({ councilData, prompts
 
       {/* Preset deepen actions */}
       <div className="flex flex-wrap gap-3">
-        <button onClick={() => runPreset('Deepen Housing Analysis', 'Provide a deeper analysis of housing need, delivery pipeline, and affordability challenges.', councilData.topics.filter(t=>t.id.includes('housing')).map(t=>t.id))} className="px-4 py-2 rounded-lg bg-[color:var(--accent)] text-white">Deepen Housing Analysis</button>
-        <button onClick={() => runPreset('Deepen Transport Analysis', 'Assess transport capacity, active travel priorities, and station-led intensification opportunities.', councilData.topics.filter(t=>t.id.includes('transport')).map(t=>t.id))} className="px-4 py-2 rounded-lg bg-[color:var(--panel)] border border-[color:var(--edge)] text-[color:var(--ink)]">Deepen Transport Analysis</button>
-        <button onClick={() => runPreset('Deepen Environment Analysis', 'Analyse climate constraints, flood risk, and nature recovery opportunities.', councilData.topics.filter(t=>t.id.includes('environment')||t.id.includes('climate')).map(t=>t.id))} className="px-4 py-2 rounded-lg bg-[color:var(--panel)] border border-[color:var(--edge)] text-[color:var(--ink)]">Deepen Environment Analysis</button>
+        <button onClick={() => runPreset('Deepen Housing Analysis', 'Provide a deeper analysis of housing need, delivery pipeline, and affordability challenges.', councilData.topics.filter(t=>t.id.includes('housing')).map(t=>t.id))} className="px-4 py-2 rounded-lg bg-[var(--color-accent)] text-white">Deepen Housing Analysis</button>
+        <button onClick={() => runPreset('Deepen Transport Analysis', 'Assess transport capacity, active travel priorities, and station-led intensification opportunities.', councilData.topics.filter(t=>t.id.includes('transport')).map(t=>t.id))} className="px-4 py-2 rounded-lg bg-[var(--color-panel)] border border-[var(--color-edge)] text-[var(--color-ink)]">Deepen Transport Analysis</button>
+        <button onClick={() => runPreset('Deepen Environment Analysis', 'Analyse climate constraints, flood risk, and nature recovery opportunities.', councilData.topics.filter(t=>t.id.includes('environment')||t.id.includes('climate')).map(t=>t.id))} className="px-4 py-2 rounded-lg bg-[var(--color-panel)] border border-[var(--color-edge)] text-[var(--color-ink)]">Deepen Environment Analysis</button>
       </div>
 
       {/* Query input (optional) */}
-      <details className="bg-[color:var(--surface)] border border-[color:var(--edge)] rounded-lg p-3">
-        <summary className="text-sm font-medium text-[color:var(--ink)] cursor-pointer">Advanced: Ask a custom question</summary>
+      <details className="bg-[var(--color-surface)] border border-[var(--color-edge)] rounded-lg p-3">
+        <summary className="text-sm font-medium text-[var(--color-ink)] cursor-pointer">Advanced: Ask a custom question</summary>
         <div className="mt-3">
           <textarea
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="e.g., What are the key housing needs in the borough? What environmental constraints affect development?"
             rows={3}
-            className="w-full px-4 py-3 bg-[color:var(--panel)] border border-[color:var(--edge)] rounded-lg text-[color:var(--ink)] placeholder-[color:var(--muted)] focus:outline-none focus:ring-2 focus:ring-[color:var(--accent)]"
+            className="w-full px-4 py-3 bg-[var(--color-panel)] border border-[var(--color-edge)] rounded-lg text-[var(--color-ink)] placeholder-[var(--color-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]"
           />
         </div>
       </details>
@@ -150,7 +150,7 @@ export const EvidenceTool: React.FC<EvidenceToolProps> = ({ councilData, prompts
       <button
         onClick={handleQuery}
         disabled={loading || !query.trim()}
-        className="w-full md:w-auto px-6 py-3 bg-[color:var(--accent)] text-white rounded-lg font-semibold disabled:opacity-50 disabled:cursor-not-allowed hover:opacity-90 transition-opacity"
+        className="w-full md:w-auto px-6 py-3 bg-[var(--color-accent)] text-white rounded-lg font-semibold disabled:opacity-50 disabled:cursor-not-allowed hover:opacity-90 transition-opacity"
       >
         {loading ? 'Analyzing...' : 'Query Evidence Base'}
       </button>
@@ -170,9 +170,9 @@ export const EvidenceTool: React.FC<EvidenceToolProps> = ({ councilData, prompts
         {!loading && cards.length > 0 && (
           <div className="grid grid-cols-1 gap-4">
             {cards.map((card, idx) => (
-              <motion.div key={idx} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="bg-[color:var(--panel)] border border-[color:var(--edge)] rounded-xl p-6">
-                <h3 className="text-lg font-semibold text-[color:var(--ink)] mb-2">🗺️ {card.title}</h3>
-                {card.question && <p className="text-xs text-[color:var(--muted)] mb-3">Question used: {card.question}</p>}
+              <motion.div key={idx} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="bg-[var(--color-panel)] border border-[var(--color-edge)] rounded-xl p-6">
+                <h3 className="text-lg font-semibold text-[var(--color-ink)] mb-2">🗺️ {card.title}</h3>
+                {card.question && <p className="text-xs text-[var(--color-muted)] mb-3">Question used: {card.question}</p>}
                 <StructuredMarkdown content={card.content} />
               </motion.div>
             ))}

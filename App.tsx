@@ -10,6 +10,7 @@ import { PillarsPage } from './pages/PillarsPage';
 import { ArchitecturePage } from './pages/ArchitecturePage';
 import { InvolvedPage } from './pages/InvolvedPage';
 import { AppPage } from './pages/AppPage';
+import { ThemeProvider } from './contexts/ThemeContext';
 
 
 // A simple component to handle scroll restoration on navigation
@@ -41,11 +42,13 @@ const AnimatedRoutes = () => {
 
 export default function App() {
   return (
-    <HashRouter>
-      <ScrollToTop />
-      <Layout>
-        <AnimatedRoutes />
-      </Layout>
-    </HashRouter>
+    <ThemeProvider>
+      <HashRouter>
+        <ScrollToTop />
+        <Layout>
+          <AnimatedRoutes />
+        </Layout>
+      </HashRouter>
+    </ThemeProvider>
   );
 }

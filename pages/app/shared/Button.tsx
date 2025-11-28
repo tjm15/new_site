@@ -18,9 +18,9 @@ export function Button({
   const baseStyles = "px-6 py-3 rounded-xl font-medium transition-all focus:outline-none focus:[box-shadow:var(--ring)] disabled:opacity-50 disabled:cursor-not-allowed";
   
   const variantStyles = {
-    primary: "bg-[color:var(--accent)] text-white shadow-md hover:shadow-lg",
-    secondary: "bg-[color:var(--ink)] text-white shadow-md hover:shadow-lg",
-    outline: "border-2 border-[color:var(--accent)] text-[color:var(--accent)] hover:bg-[color:var(--accent)] hover:text-white"
+    primary: "bg-[var(--color-accent)] text-white shadow-md hover:shadow-lg",
+    secondary: "bg-[var(--color-ink)] text-white shadow-md hover:shadow-lg",
+    outline: "border-2 border-[var(--color-accent)] text-[var(--color-accent)] hover:bg-[var(--color-accent)] hover:text-white"
   };
   
   return (

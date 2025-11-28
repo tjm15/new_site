@@ -1,10 +1,12 @@
 import React from "react";
 import { usePrefersReducedMotion } from "../hooks/usePrefersReducedMotion";
 import { theme } from "../constants";
+import { useTheme } from "../contexts/ThemeContext";
 
 export function AmbientNetwork({ className = "" }: { className?: string }) {
   const canvasRef = React.useRef<HTMLCanvasElement | null>(null);
   const reduced = usePrefersReducedMotion();
+  const { theme: currentTheme } = useTheme();
 
   React.useEffect(() => {
     const cv = canvasRef.current; if (!cv) return;
@@ -47,8 +49,9 @@ export function AmbientNetwork({ className = "" }: { className?: string }) {
       const w = cv.width / DPR, h = cv.height / DPR;
       ctx.clearRect(0,0,w,h);
       
-      // Grid
-      ctx.strokeStyle = `rgba(${rEdge},${gEdge},${bEdge},0.5)`;
+      // Grid - lighter grey lines on black background in dark mode
+      const gridOpacity = currentTheme === 'dark' ? 0.4 : 0.5;
+      ctx.strokeStyle = `rgba(${rEdge},${gEdge},${bEdge},${gridOpacity})`;
       ctx.lineWidth = 1;
       for (let gx = 0; gx < w; gx += 40) { ctx.beginPath(); ctx.moveTo(gx,0); ctx.lineTo(gx,h); ctx.stroke(); }
       for (let gy = 0; gy < h; gy += 40) { ctx.beginPath(); ctx.moveTo(0,gy); ctx.lineTo(w,gy); ctx.stroke(); }
@@ -84,7 +87,7 @@ export function AmbientNetwork({ className = "" }: { className?: string }) {
       cancelAnimationFrame(raf);
       window.removeEventListener("resize", resize);
     };
-  }, [reduced]);
+  }, [reduced, currentTheme]);
 
   return <canvas ref={canvasRef} className={`${className} block w-full h-full`} aria-hidden="true" />;
 }

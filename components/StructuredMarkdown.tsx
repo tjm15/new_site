@@ -38,7 +38,7 @@ export const StructuredMarkdown: React.FC<StructuredMarkdownProps> = ({ content,
         const needsCollapse = bodyLineCount > collapseLines;
         return (
           <div key={idx} className={idx>0? 'mt-4': ''}>
-            {s.title && <h4 className="text-sm font-semibold text-[color:var(--ink)] mb-2">{s.title}</h4>}
+            {s.title && <h4 className="text-sm font-semibold text-[var(--color-ink)] mb-2">{s.title}</h4>}
             {needsCollapse ? (
               <Collapsible previewLines={collapseLines}>
                 <MarkdownContent content={s.body.trim()} />

@@ -18,7 +18,7 @@ export function Page({ title, children, className = '' }: PageProps) {
       className={`py-16 md:py-20 lg:py-24 ${className}`}
     >
       <div className="mx-auto px-6 w-full max-w-[1180px]">
-        <h1 className="text-[color:var(--ink)] text-3xl md:text-4xl font-semibold mb-8 border-b border-[color:var(--edge)] pb-4">
+        <h1 className="text-[var(--color-ink)] text-3xl md:text-4xl font-semibold mb-8 border-b border-[var(--color-edge)] pb-4">
           {title}
         </h1>
         {children}

@@ -11,15 +11,15 @@ function PrincipleCard({
   points: string[];
 }) {
   return (
-    <div className="rounded-xl border border-[color:var(--edge)] bg-[color:var(--panel)] p-5 shadow-sm">
-      <div className="mb-2 inline-flex items-center gap-2 text-[color:var(--ink)]">
-        <span className="rounded-lg bg-[color:var(--surface)] p-2">{icon}</span>
+    <div className="rounded-xl border border-[var(--color-edge)] bg-[var(--color-panel)] p-5 shadow-sm">
+      <div className="mb-2 inline-flex items-center gap-2 text-[var(--color-ink)]">
+        <span className="rounded-lg bg-[var(--color-surface)] p-2">{icon}</span>
         <h3 className="text-base font-semibold">{title}</h3>
       </div>
-      <ul className="mt-2 space-y-2 text-sm text-[color:var(--muted)]">
+      <ul className="mt-2 space-y-2 text-sm text-[var(--color-muted)]">
         {points.map((p, i) => (
           <li key={i} className="flex items-start gap-2">
-            <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-[color:var(--brand)]" />
+            <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-[var(--color-brand)]" />
             <span>{p}</span>
           </li>
         ))}
@@ -32,16 +32,16 @@ export function FoundationsContent({ usePageHeadings = false }) {
   // FIX: Added explicit prop types to fix TypeScript error about missing children.
   const Heading = ({ id, children }: { id: string, children?: React.ReactNode }) => {
     if (usePageHeadings) {
-      return <h2 id={id} className="text-xl font-semibold text-[color:var(--ink)]">{children}</h2>;
+      return <h2 id={id} className="text-xl font-semibold text-[var(--color-ink)]">{children}</h2>;
     }
-    return <h3 className="text-lg font-semibold text-[color:var(--ink)]">{children}</h3>;
+    return <h3 className="text-lg font-semibold text-[var(--color-ink)]">{children}</h3>;
   };
 
   return (
     <>
       <section aria-labelledby="why-title" className="mb-10">
         <Heading id="why-title">Why it exists</Heading>
-        <div className="mt-3 max-w-3xl space-y-3 text-[color:var(--muted)]">
+        <div className="mt-3 max-w-3xl space-y-3 text-[var(--color-muted)]">
           <p>
             Planning depends on reasoning — but the system that supports it has become fragmented. Evidence sits in separate databases, policies in unread PDFs, and professional judgement in documents that no one revisits.
           </p>
@@ -53,7 +53,7 @@ export function FoundationsContent({ usePageHeadings = false }) {
 
       <section aria-labelledby="philosophy-title">
         <Heading id="philosophy-title">Design Philosophy</Heading>
-        <p className="mt-3 max-w-3xl text-[color:var(--muted)]">
+        <p className="mt-3 max-w-3xl text-[var(--color-muted)]">
           The Planner’s Assistant is built on a simple idea: technology should strengthen professional judgement, not replace it. Planning is about reasoning in public — weighing evidence, policy, and the lived character of place. The Assistant exists to make that reasoning visible and consistent, not to take it away.
         </p>
 

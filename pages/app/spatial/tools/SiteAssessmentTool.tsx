@@ -81,16 +81,16 @@ export const SiteAssessmentTool: React.FC<SiteAssessmentToolProps> = ({ councilD
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h2 className="text-2xl font-bold text-[color:var(--ink)] mb-2">
+        <h2 className="text-2xl font-bold text-[var(--color-ink)] mb-2">
           Site Assessment
         </h2>
-        <p className="text-[color:var(--muted)]">
+        <p className="text-[var(--color-muted)]">
           Select a site from the map to generate an AI-powered development appraisal
         </p>
       </div>
 
       {/* Interactive map */}
-      <div className="bg-[color:var(--panel)] border border-[color:var(--edge)] rounded-xl p-6">
+      <div className="bg-[var(--color-panel)] border border-[var(--color-edge)] rounded-xl p-6">
         <SpatialMap
           boroughOutline={councilData.spatialData.boroughOutline}
           constraints={councilData.spatialData.constraints.map(c => c.path)}
@@ -109,65 +109,65 @@ export const SiteAssessmentTool: React.FC<SiteAssessmentToolProps> = ({ councilD
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-[color:var(--surface)] border border-[color:var(--edge)] rounded-xl p-6"
+          className="bg-[var(--color-surface)] border border-[var(--color-edge)] rounded-xl p-6"
         >
-          <h3 className="text-lg font-semibold text-[color:var(--ink)] mb-3">
+          <h3 className="text-lg font-semibold text-[var(--color-ink)] mb-3">
             {selectedSiteData.name}
           </h3>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
             {selectedSiteData.area && (
               <div>
-                <div className="text-xs text-[color:var(--muted)] mb-1">Area</div>
-                <div className="text-lg font-semibold text-[color:var(--ink)]">
+                <div className="text-xs text-[var(--color-muted)] mb-1">Area</div>
+                <div className="text-lg font-semibold text-[var(--color-ink)]">
                   {selectedSiteData.area} ha
                 </div>
               </div>
             )}
             <div>
-              <div className="text-xs text-[color:var(--muted)] mb-1">Capacity</div>
-              <div className="text-lg font-semibold text-[color:var(--ink)]">
+              <div className="text-xs text-[var(--color-muted)] mb-1">Capacity</div>
+              <div className="text-lg font-semibold text-[var(--color-ink)]">
                 {selectedSiteData.capacity}
               </div>
             </div>
             {selectedSiteData.proposedUse && (
               <div>
-                <div className="text-xs text-[color:var(--muted)] mb-1">Use</div>
-                <div className="text-lg font-semibold text-[color:var(--ink)]">
+                <div className="text-xs text-[var(--color-muted)] mb-1">Use</div>
+                <div className="text-lg font-semibold text-[var(--color-ink)]">
                   {selectedSiteData.proposedUse}
                 </div>
               </div>
             )}
             {selectedSiteData.timeframe && (
               <div>
-                <div className="text-xs text-[color:var(--muted)] mb-1">Timeframe</div>
-                <div className="text-lg font-semibold text-[color:var(--ink)]">
+                <div className="text-xs text-[var(--color-muted)] mb-1">Timeframe</div>
+                <div className="text-lg font-semibold text-[var(--color-ink)]">
                   {selectedSiteData.timeframe}
                 </div>
               </div>
             )}
           </div>
           {selectedSiteData.description && (
-            <p className="text-sm text-[color:var(--muted)]">
+            <p className="text-sm text-[var(--color-muted)]">
               {selectedSiteData.description}
             </p>
           )}
           {details && (
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
-              <div className="bg-[color:var(--panel)] border border-[color:var(--edge)] rounded-lg p-4">
-                <div className="font-semibold text-[color:var(--ink)] mb-2">⚠️ Constraints</div>
-                <ul className="text-sm text-[color:var(--muted)] list-disc pl-5">
+              <div className="bg-[var(--color-panel)] border border-[var(--color-edge)] rounded-lg p-4">
+                <div className="font-semibold text-[var(--color-ink)] mb-2">⚠️ Constraints</div>
+                <ul className="text-sm text-[var(--color-muted)] list-disc pl-5">
                   {details.constraints?.map((c, idx) => (<li key={idx}>{c}</li>))}
                 </ul>
               </div>
-              <div className="bg-[color:var(--panel)] border border-[color:var(--edge)] rounded-lg p-4">
-                <div className="font-semibold text-[color:var(--ink)] mb-2">💡 Opportunities</div>
-                <ul className="text-sm text-[color:var(--muted)] list-disc pl-5">
+              <div className="bg-[var(--color-panel)] border border-[var(--color-edge)] rounded-lg p-4">
+                <div className="font-semibold text-[var(--color-ink)] mb-2">💡 Opportunities</div>
+                <ul className="text-sm text-[var(--color-muted)] list-disc pl-5">
                   {details.opportunities?.map((c, idx) => (<li key={idx}>{c}</li>))}
                 </ul>
               </div>
-              <div className="bg-[color:var(--panel)] border border-[color:var(--edge)] rounded-lg p-4">
-                <div className="font-semibold text-[color:var(--ink)] mb-2">📜 Relevant Policies</div>
-                <ul className="text-sm text-[color:var(--muted)] list-disc pl-5">
+              <div className="bg-[var(--color-panel)] border border-[var(--color-edge)] rounded-lg p-4">
+                <div className="font-semibold text-[var(--color-ink)] mb-2">📜 Relevant Policies</div>
+                <ul className="text-sm text-[var(--color-muted)] list-disc pl-5">
                   {details.policies?.map((c, idx) => (<li key={idx}>{c}</li>))}
                 </ul>
               </div>
@@ -194,9 +194,9 @@ export const SiteAssessmentTool: React.FC<SiteAssessmentToolProps> = ({ councilD
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            className="bg-[color:var(--panel)] border border-[color:var(--edge)] rounded-xl p-6"
+            className="bg-[var(--color-panel)] border border-[var(--color-edge)] rounded-xl p-6"
           >
-            <h3 className="text-lg font-semibold text-[color:var(--ink)] mb-4">🛠️ Site Appraisal</h3>
+            <h3 className="text-lg font-semibold text-[var(--color-ink)] mb-4">🛠️ Site Appraisal</h3>
             <StructuredMarkdown content={appraisal} />
           </motion.div>
         )}

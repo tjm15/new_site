@@ -81,37 +81,37 @@ export const PolicyDrafterTool: React.FC<PolicyDrafterToolProps> = ({ councilDat
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h2 className="text-2xl font-bold text-[color:var(--ink)] mb-2">
+        <h2 className="text-2xl font-bold text-[var(--color-ink)] mb-2">
           Policy Drafter
         </h2>
-        <p className="text-[color:var(--muted)]">
+        <p className="text-[var(--color-muted)]">
           Generate draft policy wording based on topic and requirements
         </p>
       </div>
 
       {/* One-click topics list */}
       <div>
-        <div className="text-sm font-medium text-[color:var(--ink)] mb-2">Draft from a topic</div>
+        <div className="text-sm font-medium text-[var(--color-ink)] mb-2">Draft from a topic</div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           {councilData.topics.slice(0,5).map((topic) => (
-            <div key={topic.id} className="flex items-center justify-between bg-[color:var(--panel)] border border-[color:var(--edge)] rounded-lg p-3">
-              <div className="text-[color:var(--ink)] font-semibold">{topic.label}</div>
-              <button onClick={() => { setSelectedTopic(topic.id); generatePolicyFromTopic(topic.id); }} className="px-3 py-1.5 rounded bg-[color:var(--accent)] text-white text-sm">Draft policy</button>
+            <div key={topic.id} className="flex items-center justify-between bg-[var(--color-panel)] border border-[var(--color-edge)] rounded-lg p-3">
+              <div className="text-[var(--color-ink)] font-semibold">{topic.label}</div>
+              <button onClick={() => { setSelectedTopic(topic.id); generatePolicyFromTopic(topic.id); }} className="px-3 py-1.5 rounded bg-[var(--color-accent)] text-white text-sm">Draft policy</button>
             </div>
           ))}
         </div>
       </div>
 
       {/* Policy brief input (optional) */}
-      <details className="bg-[color:var(--surface)] border border-[color:var(--edge)] rounded-lg p-3">
-        <summary className="block text-sm font-medium text-[color:var(--ink)] cursor-pointer">Advanced: Add custom instructions (optional)</summary>
+      <details className="bg-[var(--color-surface)] border border-[var(--color-edge)] rounded-lg p-3">
+        <summary className="block text-sm font-medium text-[var(--color-ink)] cursor-pointer">Advanced: Add custom instructions (optional)</summary>
         <div className="mt-3">
           <textarea
             value={policyBrief}
             onChange={(e) => setPolicyBrief(e.target.value)}
             placeholder="Describe what the policy should achieve, key requirements, thresholds, or specific considerations..."
             rows={4}
-            className="w-full px-4 py-3 bg-[color:var(--panel)] border border-[color:var(--edge)] rounded-lg text-[color:var(--ink)] placeholder-[color:var(--muted)] focus:outline-none focus:ring-2 focus:ring-[color:var(--accent)]"
+            className="w-full px-4 py-3 bg-[var(--color-panel)] border border-[var(--color-edge)] rounded-lg text-[var(--color-ink)] placeholder-[var(--color-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]"
           />
         </div>
       </details>
@@ -139,24 +139,24 @@ export const PolicyDrafterTool: React.FC<PolicyDrafterToolProps> = ({ councilDat
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            className="bg-[color:var(--panel)] border border-[color:var(--edge)] rounded-xl p-6"
+            className="bg-[var(--color-panel)] border border-[var(--color-edge)] rounded-xl p-6"
           >
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-[color:var(--ink)]">📄 Draft Policy</h3>
+              <h3 className="text-lg font-semibold text-[var(--color-ink)]">📄 Draft Policy</h3>
               <button
                 onClick={() => navigator.clipboard.writeText(draftPolicy)}
-                className="text-sm text-[color:var(--accent)] hover:underline"
+                className="text-sm text-[var(--color-accent)] hover:underline"
               >
                 Copy to Clipboard
               </button>
             </div>
-            <div className="bg-[color:var(--surface)] p-4 rounded-lg">
+            <div className="bg-[var(--color-surface)] p-4 rounded-lg">
               <StructuredMarkdown content={draftPolicy} />
             </div>
             {variants.length > 0 && (
               <div className="mt-4 flex flex-wrap gap-2">
                 {variants.map((v, idx) => (
-                  <button key={idx} onClick={() => generatePolicyFromTopic(selectedTopic, v)} className="px-3 py-1.5 rounded bg-[color:var(--panel)] border border-[color:var(--edge)] text-[color:var(--ink)] text-xs">Alternative phrasing {idx+1}</button>
+                  <button key={idx} onClick={() => generatePolicyFromTopic(selectedTopic, v)} className="px-3 py-1.5 rounded bg-[var(--color-panel)] border border-[var(--color-edge)] text-[var(--color-ink)] text-xs">Alternative phrasing {idx+1}</button>
                 ))}
               </div>
             )}

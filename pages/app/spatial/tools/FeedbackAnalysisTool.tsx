@@ -146,10 +146,10 @@ export const FeedbackAnalysisTool: React.FC<FeedbackAnalysisToolProps> = ({ prom
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h2 className="text-2xl font-bold text-[color:var(--ink)] mb-2">
+        <h2 className="text-2xl font-bold text-[var(--color-ink)] mb-2">
           Consultation Feedback Analysis
         </h2>
-        <p className="text-[color:var(--muted)]">
+        <p className="text-[var(--color-muted)]">
           Paste consultation responses to identify key themes and sentiments
         </p>
       </div>
@@ -159,12 +159,12 @@ export const FeedbackAnalysisTool: React.FC<FeedbackAnalysisToolProps> = ({ prom
         <Button onClick={analyzeFeedback} disabled={loading || !consultationText.trim()} variant="primary">
           {loading ? 'Analyzing...' : 'Analyze sample feedback'}
         </Button>
-        <button className="text-sm text-[color:var(--accent)] hover:underline" onClick={() => { setThemes([]); setConsultationText(''); }}>Paste your own instead</button>
+        <button className="text-sm text-[var(--color-accent)] hover:underline" onClick={() => { setThemes([]); setConsultationText(''); }}>Paste your own instead</button>
       </div>
 
       {/* Input (optional) */}
       <div>
-        <label className="block text-sm font-medium text-[color:var(--ink)] mb-2">
+        <label className="block text-sm font-medium text-[var(--color-ink)] mb-2">
           Consultation Responses (optional)
         </label>
         <textarea
@@ -172,7 +172,7 @@ export const FeedbackAnalysisTool: React.FC<FeedbackAnalysisToolProps> = ({ prom
           onChange={(e) => setConsultationText(e.target.value)}
           placeholder="Paste consultation feedback, survey responses, or public comments here..."
           rows={10}
-          className="w-full px-4 py-3 bg-[color:var(--panel)] border border-[color:var(--edge)] rounded-lg text-[color:var(--ink)] placeholder-[color:var(--muted)] focus:outline-none focus:ring-2 focus:ring-[color:var(--accent)] font-mono text-sm"
+          className="w-full px-4 py-3 bg-[var(--color-panel)] border border-[var(--color-edge)] rounded-lg text-[var(--color-ink)] placeholder-[var(--color-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] font-mono text-sm"
         />
       </div>
 
@@ -196,7 +196,7 @@ export const FeedbackAnalysisTool: React.FC<FeedbackAnalysisToolProps> = ({ prom
             exit={{ opacity: 0, y: -20 }}
             className="space-y-4"
           >
-            <h3 className="text-lg font-semibold text-[color:var(--ink)]">
+            <h3 className="text-lg font-semibold text-[var(--color-ink)]">
               Key Themes Identified
             </h3>
             <div className="grid grid-cols-1 gap-4">
@@ -206,10 +206,10 @@ export const FeedbackAnalysisTool: React.FC<FeedbackAnalysisToolProps> = ({ prom
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: idx * 0.1 }}
-                  className={`bg-[color:var(--panel)] border border-[color:var(--edge)] rounded-xl p-6 ${getSentimentBorderAccent(theme.sentiment)}`}
+                  className={`bg-[var(--color-panel)] border border-[var(--color-edge)] rounded-xl p-6 ${getSentimentBorderAccent(theme.sentiment)}`}
                 >
                   <div className="flex items-start justify-between gap-4 mb-3">
-                    <h4 className="text-lg font-semibold text-[color:var(--ink)] flex-1">
+                    <h4 className="text-lg font-semibold text-[var(--color-ink)] flex-1">
                       {theme.title}
                     </h4>
                     <div className="flex items-center gap-2 flex-wrap">
@@ -217,13 +217,13 @@ export const FeedbackAnalysisTool: React.FC<FeedbackAnalysisToolProps> = ({ prom
                         {getSentimentIcon(theme.sentiment)} {theme.sentiment.toUpperCase()}
                       </span>
                       {theme.count > 1 && (
-                        <span className="px-3 py-1.5 rounded-full text-xs font-semibold bg-[color:var(--surface)] text-[color:var(--muted)] border-2 border-[color:var(--edge)]">
+                        <span className="px-3 py-1.5 rounded-full text-xs font-semibold bg-[var(--color-surface)] text-[var(--color-muted)] border-2 border-[var(--color-edge)]">
                           {theme.count} mentions
                         </span>
                       )}
                     </div>
                   </div>
-                  <div className="text-sm text-[color:var(--muted)]">
+                  <div className="text-sm text-[var(--color-muted)]">
                     <MarkdownContent content={theme.summary} />
                   </div>
                 </motion.div>

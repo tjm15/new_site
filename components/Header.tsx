@@ -27,11 +27,11 @@ export function Header() {
   };
 
   return (
-    <header className={`sticky top-0 z-40 bg-[color:var(--panel)]/80 backdrop-blur border-b border-[color:var(--edge)] transition-shadow duration-300 ${scrolled ? 'shadow-sm' : ''}`}>
+    <header className={`sticky top-0 z-40 bg-[var(--color-panel)]/80 backdrop-blur border-b border-[var(--color-edge)] transition-shadow duration-300 ${scrolled ? 'shadow-sm' : ''}`}>
       <nav className="max-w-[1180px] mx-auto px-6 py-3 flex items-center gap-6">
         <Link to="/" className="flex items-center gap-3 group">
           <Logo />
-          <span className="text-[color:var(--ink)] font-semibold tracking-tight group-hover:text-[color:var(--accent)] transition-colors">
+          <span className="text-[var(--color-ink)] font-semibold tracking-tight group-hover:text-[var(--color-accent)] transition-colors">
             The Planner’s Assistant
           </span>
         </Link>
@@ -43,13 +43,13 @@ export function Header() {
                         key={link.to} 
                         to={link.to}
                         style={({ isActive }) => isActive ? activeLinkStyle : undefined }
-                        className="hover:text-[color:var(--accent)] transition-colors"
+                        className="hover:text-[var(--color-accent)] transition-colors"
                     >
                         {link.label}
                     </NavLink>
                 ))}
             </div>
-            <Link to="/app" className="hidden md:inline-flex items-center justify-center px-3 py-1.5 rounded-xl bg-[color:var(--accent)] text-white shadow-md hover:shadow-lg transition-shadow focus:outline-none focus:[box-shadow:var(--ring)]">Demo</Link>
+            <Link to="/app" className="hidden md:inline-flex items-center justify-center px-3 py-1.5 rounded-xl bg-[var(--color-accent)] text-white shadow-md hover:shadow-lg transition-shadow focus:outline-none focus:[box-shadow:var(--ring)]">Demo</Link>
         </div>
       </nav>
     </header>

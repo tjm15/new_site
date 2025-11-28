@@ -13,10 +13,10 @@ export function FoundationsPage() {
       <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 pb-24 pt-10">
         {/* Page title */}
         <header className="mb-8">
-          <h1 className="text-3xl font-semibold tracking-tight text-[color:var(--ink)] sm:text-4xl">
+          <h1 className="text-3xl font-semibold tracking-tight text-[var(--color-ink)] sm:text-4xl">
             Foundations
           </h1>
-          <p className="mt-2 max-w-3xl text-[color:var(--muted)]">
+          <p className="mt-2 max-w-3xl text-[var(--color-muted)]">
             Why the Planner’s Assistant exists — and the design choices that make it trustworthy in public decision‑making.
           </p>
         </header>
@@ -24,7 +24,7 @@ export function FoundationsPage() {
         <FoundationsContent usePageHeadings={true} />
         
         {/* Closing statement */}
-        <section aria-labelledby="foundation-title" className="mt-10 rounded-2xl border border-[color:var(--edge)] bg-[color:var(--ink)] p-6 text-white">
+        <section aria-labelledby="foundation-title" className="mt-10 rounded-2xl border border-[var(--color-edge)] bg-[var(--color-ink)] p-6 text-white">
           <h2 id="foundation-title" className="text-xl font-semibold">A new foundation for planning</h2>
           <p className="mt-2 text-white/90 max-w-4xl">
             The Planner’s Assistant is not another portal or dashboard — it is shared civic infrastructure. A digital environment that helps planners, officers, and the public see planning decisions as part of a coherent whole — transparent, explainable, and built for the common good.

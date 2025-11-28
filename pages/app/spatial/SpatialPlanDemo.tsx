@@ -168,24 +168,24 @@ export const SpatialPlanDemo: React.FC<SpatialPlanDemoProps> = ({ councilData, o
   };
 
   return (
-    <div className="min-h-screen bg-[color:var(--surface)]">
+    <div className="min-h-screen bg-[var(--color-surface)]">
       {/* Header */}
-      <div className="bg-[color:var(--panel)] border-b border-[color:var(--edge)] sticky top-0 z-10">
+      <div className="bg-[var(--color-panel)] border-b border-[var(--color-edge)] sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <button
                 onClick={onBack}
-                className="text-[color:var(--accent)] hover:underline text-sm"
+                className="text-[var(--color-accent)] hover:underline text-sm"
               >
                 ← Back to Selection
               </button>
-              <div className="h-6 w-px bg-[color:var(--edge)]" />
+              <div className="h-6 w-px bg-[var(--color-edge)]" />
               <div>
-                <h1 className="text-xl font-bold text-[color:var(--ink)]">
+                <h1 className="text-xl font-bold text-[var(--color-ink)]">
                   Welcome to The Planner's Assistant
                 </h1>
-                <p className="text-sm text-[color:var(--muted)]">
+                <p className="text-sm text-[var(--color-muted)]">
                   Your comprehensive toolkit for modern urban and regional planning. Select a tool below to get started.
                 </p>
               </div>
@@ -205,8 +205,8 @@ export const SpatialPlanDemo: React.FC<SpatialPlanDemoProps> = ({ councilData, o
               className="space-y-6"
             >
               <div>
-                <h2 className="text-2xl font-bold text-[color:var(--ink)] mb-2">Select a Tool</h2>
-                <p className="text-[color:var(--muted)]">Choose from 6 AI-powered tools to assist with spatial plan development</p>
+                <h2 className="text-2xl font-bold text-[var(--color-ink)] mb-2">Select a Tool</h2>
+                <p className="text-[var(--color-muted)]">Choose from 6 AI-powered tools to assist with spatial plan development</p>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -215,13 +215,13 @@ export const SpatialPlanDemo: React.FC<SpatialPlanDemoProps> = ({ councilData, o
                     key={tool.id}
                     onClick={() => setSelectedTool(tool.id)}
                     whileHover={{ y: -5 }}
-                    className="text-left bg-[color:var(--panel)] border border-[color:var(--edge)] rounded-xl p-6 hover:border-[color:var(--accent)] transition-all hover:shadow-lg"
+                    className="text-left bg-[var(--color-panel)] border border-[var(--color-edge)] rounded-xl p-6 hover:border-[var(--color-accent)] transition-all hover:shadow-lg"
                   >
                     <div className="text-4xl mb-3">{tool.icon}</div>
-                    <h3 className="text-lg font-semibold text-[color:var(--ink)] mb-2">
+                    <h3 className="text-lg font-semibold text-[var(--color-ink)] mb-2">
                       {tool.label}
                     </h3>
-                    <p className="text-sm text-[color:var(--muted)]">
+                    <p className="text-sm text-[var(--color-muted)]">
                       {tool.description}
                     </p>
                   </motion.button>
@@ -229,10 +229,10 @@ export const SpatialPlanDemo: React.FC<SpatialPlanDemoProps> = ({ councilData, o
               </div>
 
               {/* Ask a question */}
-              <div className="mt-8 bg-[color:var(--panel)] border border-[color:var(--edge)] rounded-xl p-6">
+              <div className="mt-8 bg-[var(--color-panel)] border border-[var(--color-edge)] rounded-xl p-6">
                 <div className="flex items-center justify-between gap-4 mb-3">
                   <div>
-                    <h3 className="text-lg font-semibold text-[color:var(--ink)]">Or ask a question… (we'll pick the best tool)</h3>
+                    <h3 className="text-lg font-semibold text-[var(--color-ink)]">Or ask a question… (we'll pick the best tool)</h3>
                   </div>
                 </div>
                 <div className="flex flex-col sm:flex-row gap-3">
@@ -240,7 +240,7 @@ export const SpatialPlanDemo: React.FC<SpatialPlanDemoProps> = ({ councilData, o
                     value={question}
                     onChange={(e) => setQuestion(e.target.value)}
                     placeholder="e.g., How many affordable homes are planned in the area?"
-                    className="flex-1 px-4 py-2 bg-[color:var(--panel)] border border-[color:var(--edge)] rounded-lg text-[color:var(--ink)] placeholder-[color:var(--muted)]"
+                    className="flex-1 px-4 py-2 bg-[var(--color-panel)] border border-[var(--color-edge)] rounded-lg text-[var(--color-ink)] placeholder-[var(--color-muted)]"
                   />
                   <button
                     onClick={async () => {
@@ -274,12 +274,12 @@ export const SpatialPlanDemo: React.FC<SpatialPlanDemoProps> = ({ councilData, o
                       setSelectedTool(picked);
                       setAutoRunning(false);
                     }}
-                    className="px-4 py-2 rounded-lg bg-[color:var(--brand)] text-[color:var(--ink)] font-semibold"
+                    className="px-4 py-2 rounded-lg bg-[var(--color-brand)] text-[var(--color-ink)] font-semibold"
                   >
                     {autoRunning ? 'Working…' : 'Ask'}
                   </button>
                 </div>
-                <p className="text-xs text-[color:var(--muted)] mt-3">We'll auto-pick a tool and run it for you.</p>
+                <p className="text-xs text-[var(--color-muted)] mt-3">We'll auto-pick a tool and run it for you.</p>
                 {/* Example quick asks */}
                 <div className="mt-3 flex flex-wrap gap-2">
                   {[
@@ -292,7 +292,7 @@ export const SpatialPlanDemo: React.FC<SpatialPlanDemoProps> = ({ councilData, o
                     <button
                       key={i}
                       onClick={() => setQuestion(ex)}
-                      className="px-3 py-1.5 rounded-full bg-[color:var(--panel)] border border-[color:var(--edge)] text-xs text-[color:var(--muted)] hover:text-[color:var(--ink)]"
+                      className="px-3 py-1.5 rounded-full bg-[var(--color-panel)] border border-[var(--color-edge)] text-xs text-[var(--color-muted)] hover:text-[var(--color-ink)]"
                     >
                       {ex}
                     </button>
@@ -309,7 +309,7 @@ export const SpatialPlanDemo: React.FC<SpatialPlanDemoProps> = ({ councilData, o
             >
               <button
                 onClick={() => setSelectedTool(null)}
-                className="mb-6 text-[color:var(--accent)] hover:underline text-sm"
+                className="mb-6 text-[var(--color-accent)] hover:underline text-sm"
               >
                 ← Back to Tools
               </button>

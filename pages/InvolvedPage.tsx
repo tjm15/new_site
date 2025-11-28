@@ -30,11 +30,11 @@ export function InvolvedPage() {
             />
         )}
       </div>
-      <div className="mt-6 text-[color:var(--muted)] max-w-prose space-y-4">
+      <div className="mt-6 text-[var(--color-muted)] max-w-prose space-y-4">
         <p>
-          Public demos, documentation, and design papers will be released in stages as development continues. Further details and early thoughts can be found on my <a href="https://tim-mayoh.bearblog.dev/" target="_blank" rel="noopener noreferrer" className="text-[color:var(--accent)] hover:underline">personal site</a>.
+          Public demos, documentation, and design papers will be released in stages as development continues. Further details and early thoughts can be found on my <a href="https://tim-mayoh.bearblog.dev/" target="_blank" rel="noopener noreferrer" className="text-[var(--color-accent)] hover:underline">personal site</a>.
         </p>
-        <div className="font-medium text-[color:var(--ink)]">
+        <div className="font-medium text-[var(--color-ink)]">
           <strong>The Planner’s Assistant is not a product.</strong><br />It’s an emerging part of the civic infrastructure we all depend on — a shared effort to make planning more intelligent, transparent, and humane.
         </div>
       </div>

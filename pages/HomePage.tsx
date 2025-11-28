@@ -12,10 +12,10 @@ import { ArchitectureContent } from './content/ArchitectureContent';
 // AccordionItem is now a controlled component, receiving its state from the parent.
 const AccordionItem = ({ title, children, isOpen, onToggle }: { title: string, children?: React.ReactNode, isOpen: boolean, onToggle: () => void }) => {
     return (
-        <div className="border-b border-[color:var(--edge)] last:border-b-0">
+        <div className="border-b border-[var(--color-edge)] last:border-b-0">
             <button
                 onClick={onToggle}
-                className="flex w-full items-center justify-between py-4 text-left font-semibold text-[color:var(--ink)]"
+                className="flex w-full items-center justify-between py-4 text-left font-semibold text-[var(--color-ink)]"
                 aria-expanded={isOpen}
             >
                 <span className="text-lg">{title}</span>
@@ -83,7 +83,7 @@ const MobileInfoSection = () => {
     }, [openItem]);
 
     return (
-        <div ref={sectionRef} className="mt-8 rounded-2xl bg-[color:var(--panel)] border border-[color:var(--edge)] shadow-sm px-4">
+        <div ref={sectionRef} className="mt-8 rounded-2xl bg-[var(--color-panel)] border border-[var(--color-edge)] shadow-sm px-4">
             <AccordionItem
                 title="Foundations"
                 isOpen={openItem === 'Foundations'}
@@ -124,7 +124,7 @@ export function HomePage() {
         <div className="relative mx-auto px-6 w-full max-w-[1180px]">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
             <div className="lg:col-span-7">
-              <h1 id="hero-title" className="text-[color:var(--ink)] text-4xl md:text-5xl lg:text-6xl font-semibold leading-tight">The Planner’s Assistant</h1>
+              <h1 id="hero-title" className="text-[var(--color-ink)] text-4xl md:text-5xl lg:text-6xl font-semibold leading-tight">The Planner’s Assistant</h1>
               <p className="mt-3 text-lg md:text-xl">Designing the future of planning. A unified, explainable AI for the public good.</p>
               <p className="mt-6 max-w-prose">
                 An open-source environment for spatial planning — built to restore coherence, capacity, and trust in how decisions about place are made. It brings evidence, policy, and spatial data into one workspace, helping officers and policy teams reason clearly across strategy and development management. Designed for use inside government, it strengthens professional judgement rather than replacing it: supporting day-to-day casework, adaptive plan-making, and a transparent link between national policy, local plans, and individual decisions.
@@ -132,14 +132,14 @@ export function HomePage() {
               <div className="mt-8">
                   {isDesktop ? (
                     <div className="flex flex-wrap items-center gap-4">
-                      <Link to="/app" className="px-5 py-3 rounded-2xl bg-[color:var(--accent)] text-white font-medium shadow-md hover:shadow-lg focus:outline-none focus:[box-shadow:var(--ring)] transition-shadow">Demo</Link>
-                      <a href="https://github.com/tjm15" target="_blank" rel="noopener noreferrer" className="px-5 py-3 rounded-2xl border border-[color:var(--accent)] text-[color:var(--accent)] font-medium hover:bg-[color:var(--accent)]/10 transition-colors">GitHub</a>
-                      <Link to="/foundations" className="text-[color:var(--muted)] hover:text-[color:var(--ink)] transition-colors font-medium">Learn more →</Link>
+                      <Link to="/app" className="px-5 py-3 rounded-2xl bg-[var(--color-accent)] text-white font-medium shadow-md hover:shadow-lg focus:outline-none focus:[box-shadow:var(--ring)] transition-shadow">Demo</Link>
+                      <a href="https://github.com/tjm15" target="_blank" rel="noopener noreferrer" className="px-5 py-3 rounded-2xl border border-[var(--color-accent)] text-[var(--color-accent)] font-medium hover:bg-[var(--color-accent)]/10 transition-colors">GitHub</a>
+                      <Link to="/foundations" className="text-[var(--color-muted)] hover:text-[var(--color-ink)] transition-colors font-medium">Learn more →</Link>
                     </div>
                   ) : (
                     <div className="w-full">
-                        <a href="https://github.com/tjm15" target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center w-full px-5 py-3 rounded-2xl border border-[color:var(--accent)] text-[color:var(--accent)] font-medium">GitHub</a>
-                        <p className="text-sm text-[color:var(--muted)] mt-4 text-center">The interactive demo is available on desktop.</p>
+                        <a href="https://github.com/tjm15" target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center w-full px-5 py-3 rounded-2xl border border-[var(--color-accent)] text-[var(--color-accent)] font-medium">GitHub</a>
+                        <p className="text-sm text-[var(--color-muted)] mt-4 text-center">The interactive demo is available on desktop.</p>
                         <MobileInfoSection />
                     </div>
                   )}
@@ -155,14 +155,14 @@ export function HomePage() {
                 <img 
                   src="https://i.postimg.cc/DwGW68WX/Chat-GPT-Image-Oct-24-2025-03-34-39-PM.png" 
                   alt="A stylized user interface for The Planner's Assistant, showing maps and data analysis."
-                  className="rounded-2xl bg-[color:var(--panel)]/80 border border-[color:var(--edge)] shadow-xl w-full h-auto object-cover" 
+                  className="rounded-2xl bg-[var(--color-panel)]/80 border border-[var(--color-edge)] shadow-xl w-full h-auto object-cover" 
                 />
               </motion.div>
             </div>
           </div>
 
           <div className="mt-12 lg:mt-20">
-            <h3 className="text-center text-xl text-[color:var(--ink)] font-semibold">
+            <h3 className="text-center text-xl text-[var(--color-ink)] font-semibold">
               Built for the people who make planning work
             </h3>
             <CredibilityStrip />

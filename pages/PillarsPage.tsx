@@ -39,14 +39,14 @@ const PillarTab = ({ isActive, onClick, icon, title, subtitle }) => {
   return (
     <motion.button
       onClick={onClick}
-      className={`w-full text-left p-4 md:p-6 rounded-2xl border transition-all duration-300 ${isActive ? 'bg-[color:var(--panel)] shadow-md' : 'bg-transparent hover:bg-[color:var(--surface)]'}`}
+      className={`w-full text-left p-4 md:p-6 rounded-2xl border transition-all duration-300 ${isActive ? 'bg-[var(--color-panel)] shadow-md' : 'bg-transparent hover:bg-[var(--color-surface)]'}`}
       style={{ borderBottom: `4px solid ${isActive ? 'var(--accent)' : 'var(--edge)'}`}}
       role="tab"
       aria-selected={isActive}
     >
       <div className="text-2xl mb-2">{icon}</div>
-      <h2 className="text-lg md:text-xl font-semibold text-[color:var(--ink)]">{title}</h2>
-      <p className="mt-1 text-sm text-[color:var(--muted)] hidden sm:block">{subtitle}</p>
+      <h2 className="text-lg md:text-xl font-semibold text-[var(--color-ink)]">{title}</h2>
+      <p className="mt-1 text-sm text-[var(--color-muted)] hidden sm:block">{subtitle}</p>
     </motion.button>
   );
 };
@@ -57,25 +57,25 @@ const SubFeatureCard = ({ title, description, details, index }) => {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, delay: index * 0.1 }}
-      className="bg-[color:var(--panel)] border border-[color:var(--edge)] rounded-xl p-5"
+      className="bg-[var(--color-panel)] border border-[var(--color-edge)] rounded-xl p-5"
     >
-      <h3 className="font-semibold text-[color:var(--ink)]">{title}</h3>
-      <p className="text-sm text-[color:var(--accent)] font-medium mt-1">{description}</p>
-      <p className="text-[color:var(--muted)] mt-3">{details}</p>
+      <h3 className="font-semibold text-[var(--color-ink)]">{title}</h3>
+      <p className="text-sm text-[var(--color-accent)] font-medium mt-1">{description}</p>
+      <p className="text-[var(--color-muted)] mt-3">{details}</p>
     </motion.div>
   );
 };
 
 const PillarContent = ({ data }) => {
   return (
-    <div className="bg-transparent border border-[color:var(--edge)] rounded-2xl p-6 md:p-8" role="tabpanel">
+    <div className="bg-transparent border border-[var(--color-edge)] rounded-2xl p-6 md:p-8" role="tabpanel">
       <p className="max-w-prose">{data.intro}</p>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 mt-6">
         {data.subFeatures.map((sub, index) => (
           <SubFeatureCard key={sub.title} index={index} {...sub} />
         ))}
       </div>
-      <p className="mt-6 font-medium text-[color:var(--ink)] max-w-prose">{data.conclusion}</p>
+      <p className="mt-6 font-medium text-[var(--color-ink)] max-w-prose">{data.conclusion}</p>
     </div>
   );
 };
