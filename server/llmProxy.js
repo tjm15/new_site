@@ -21,11 +21,16 @@ app.post('/api/llm', async (req, res) => {
     const response = await fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ model, prompt })
+      body: JSON.stringify({ model, prompt, stream: false })
     })
 
-    const text = await response.text()
-    // Return raw text under `text` field. Client will parse as needed.
+    if (!response.ok) {
+      const errText = await response.text()
+      return res.status(response.status).json({ error: errText || 'Upstream error' })
+    }
+
+    const data = await response.json()
+    const text = data?.response || data?.content || ''
     res.json({ text })
   } catch (err) {
     console.error('LLM proxy error', err)

@@ -3,13 +3,12 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { CouncilData, VisionOutcome } from '../../../../data/types';
 import { usePlan } from '../../../../contexts/PlanContext';
 import { runLLMTask } from '../../../../utils/llmTasks';
-import { callLLMStream } from '../../../../utils/llmClient';
+import { callLLM } from '../../../../utils/llmClient';
 import { PromptFunctions } from '../../../../prompts';
 import { callGeminiImage } from '../../../../utils/gemini';
 import { LoadingSpinner } from '../../shared/LoadingSpinner';
 import { Button } from '../../shared/Button';
 import { MarkdownContent } from '../../../../components/MarkdownContent';
-import { StructuredMarkdown } from '../../../../components/StructuredMarkdown';
 
 interface VisionConceptsToolProps {
   councilData: CouncilData;
@@ -44,19 +43,11 @@ export const VisionConceptsTool: React.FC<VisionConceptsToolProps> = ({ councilD
     setLoadingText(true);
     try {
       const prompt = prompts.visionPrompt(areaDescription);
-      let acc = ''
-      for await (const chunk of callLLMStream(prompt)) {
-        acc += chunk
-        setVisionText(acc)
-      }
-      setVisionText(acc || 'No vision generated.')
+      const full = await callLLM(prompt);
+      setVisionText(full || 'No vision generated.')
       // Highlights
-      let hacc = ''
-      for await (const chunk of callLLMStream(`Summarise concept highlights as 5 concise bullets for: ${areaDescription}`)) {
-        hacc += chunk
-        setHighlightsText(hacc)
-      }
-      setHighlightsText(hacc || '')
+      const highlights = await callLLM(`Summarise concept highlights as 5 concise bullets for: ${areaDescription}`);
+      setHighlightsText(highlights || '')
       // Ask AI to propose measurable outcomes and cap to 10
       try {
         const raw = await runLLMTask('vision_suggest', {
@@ -112,18 +103,10 @@ export const VisionConceptsTool: React.FC<VisionConceptsToolProps> = ({ councilD
         setLoadingText(true);
         try {
           const prompt = prompts.visionPrompt(txt);
-          let acc = ''
-          for await (const chunk of callLLMStream(prompt)) {
-            acc += chunk
-            setVisionText(acc)
-          }
-          setVisionText(acc || '')
-          let hacc = ''
-          for await (const chunk of callLLMStream(`Summarise concept highlights as 5 concise bullets for: ${txt}`)) {
-            hacc += chunk
-            setHighlightsText(hacc)
-          }
-          setHighlightsText(hacc || '')
+          const full = await callLLM(prompt);
+          setVisionText(full || '')
+          const highlights = await callLLM(`Summarise concept highlights as 5 concise bullets for: ${txt}`);
+          setHighlightsText(highlights || '')
         } finally {
           setLoadingText(false);
         }
@@ -139,18 +122,10 @@ export const VisionConceptsTool: React.FC<VisionConceptsToolProps> = ({ councilD
       setLoadingText(true);
       try {
         const prompt = prompts.visionPrompt(demo);
-        let acc = ''
-        for await (const chunk of callLLMStream(prompt)) {
-          acc += chunk
-          setVisionText(acc)
-        }
-        setVisionText(acc || '')
-        let hacc = ''
-        for await (const chunk of callLLMStream(`Summarise concept highlights as 5 concise bullets for: ${demo}`)) {
-          hacc += chunk
-          setHighlightsText(hacc)
-        }
-        setHighlightsText(hacc || '')
+        const full = await callLLM(prompt);
+        setVisionText(full || '')
+        const highlights = await callLLM(`Summarise concept highlights as 5 concise bullets for: ${demo}`);
+        setHighlightsText(highlights || '')
       } finally {
         setLoadingText(false);
       }
@@ -241,7 +216,7 @@ export const VisionConceptsTool: React.FC<VisionConceptsToolProps> = ({ councilD
             className="bg-[var(--color-panel)] border border-[var(--color-edge)] rounded-xl p-6"
           >
             <h3 className="text-lg font-semibold text-[var(--color-ink)] mb-4">🎯 Vision Statement</h3>
-            <StructuredMarkdown content={visionText} />
+            <MarkdownContent content={visionText} />
           </motion.div>
         )}
         {!loadingText && highlightsText && (
@@ -252,7 +227,7 @@ export const VisionConceptsTool: React.FC<VisionConceptsToolProps> = ({ councilD
             className="bg-[var(--color-panel)] border border-[var(--color-edge)] rounded-xl p-6"
           >
             <h3 className="text-lg font-semibold text-[var(--color-ink)] mb-4">✨ Concept Highlights</h3>
-            <StructuredMarkdown content={highlightsText} />
+            <MarkdownContent content={highlightsText} />
           </motion.div>
         )}
 

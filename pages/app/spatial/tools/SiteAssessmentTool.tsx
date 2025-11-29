@@ -4,11 +4,10 @@ import { CouncilData } from '../../../../data/types';
 import { usePlan } from '../../../../contexts/PlanContext';
 import { classifySite } from '../../../../utils/llmTasks';
 import { PromptFunctions } from '../../../../prompts';
-import { callLLMStream } from '../../../../utils/llmClient';
+import { callLLM } from '../../../../utils/llmClient';
 import { LoadingSpinner } from '../../shared/LoadingSpinner';
 import { SpatialMap } from '../shared/SpatialMap';
 import { MarkdownContent } from '../../../../components/MarkdownContent';
-import { StructuredMarkdown } from '../../../../components/StructuredMarkdown';
 import type { GeoLayerSet } from '../../../../data/geojsonLayers';
 
 interface SiteAssessmentToolProps {
@@ -38,17 +37,16 @@ export const SiteAssessmentTool: React.FC<SiteAssessmentToolProps> = ({ councilD
       const site = councilData.spatialData.allocations.find(s => s.id === siteId);
       if (site) {
           const prompt = prompts.siteAppraisalPrompt(site);
-          let acc = ''
           try {
-            for await (const chunk of callLLMStream({ mode: 'markdown', prompt })) {
-              acc += chunk
-              setAppraisal(acc)
-            }
-        } catch (e) {
-          console.warn('Site appraisal stream failed', e)
-          acc = ''
-        }
-        setAppraisal(acc || 'No appraisal generated.')
+            // Use non-streaming call to preserve original spacing/formatting from the model.
+            const full = await callLLM({ mode: 'markdown', prompt });
+            // eslint-disable-next-line no-console
+            console.log('[site appraisal raw]', full);
+            setAppraisal(full || 'No appraisal generated.');
+          } catch (e) {
+            console.warn('Site appraisal generation failed', e);
+            setAppraisal('No appraisal generated.');
+          }
         // Derive simple structured details
         const constraints = councilData.spatialData.constraints.slice(0,3).map(c=>c.label);
         const opportunities = ['Brownfield regeneration', 'Transit proximity', 'Town centre vitality'];
@@ -269,7 +267,7 @@ export const SiteAssessmentTool: React.FC<SiteAssessmentToolProps> = ({ councilD
             className="bg-[var(--color-panel)] border border-[var(--color-edge)] rounded-xl p-6"
           >
             <h3 className="text-lg font-semibold text-[var(--color-ink)] mb-4">🛠️ Site Appraisal</h3>
-            <StructuredMarkdown content={appraisal} />
+            <MarkdownContent content={appraisal} />
           </motion.div>
         )}
       </AnimatePresence>

@@ -51,34 +51,20 @@ Provide an analysis covering:
 3. Key risks and trade-offs
 `,
 
-    siteAppraisalPrompt: (site: any) => `
-Perform a rapid planning appraisal for the following site allocation.
-Site: ${site.name}
-Description: ${site.description}
-Area: ${site.area} hectares
-Capacity: ${site.capacity} units
-Proposed Use: ${site.proposedUse}
-Timeframe: ${site.timeframe}
+    siteAppraisalPrompt: (site: any) => `>>> Prepare a full, structured **site allocation appraisal** written in the style of a local plan-making officer for a web-based scenario modelling app interface.
+    Your assessment should reflect how LPAs actually evaluate allocation suitability: policy alignment, constraints, deliverability, infrastructure capacity, and spatial role.
+    Think through the planning judgement before writing.
 
-Structure:
 ## Site Appraisal
 
-### Strategic Fit
-- how it meets planning objectives
-- transport-connected benefits (if any)
-
-### Key Constraints
-- heritage/listed building risk (if any)
-- flood and water management
-- transport & access
-- planning conditions / policy constraints
-
-### Opportunities
-- permeability & connectivity
-- greening & sustainability
-- mixed-use integration / employment
-- digital / smart city features
+- **Site**: ${site.name || 'unknown'}
+- **Description**: ${site.description || 'unknown'}
+- **Area**: ${site.area || 'unknown'} ha
+- **Capacity**: ${site.capacity || 'unknown'} units
+- **Proposed Use**: ${site.proposedUse || 'unknown'}
+- **Timeframe**: ${site.timeframe || 'unknown'}
 `,
+
 
     visionPrompt: (area: string) => `
 Write a 'Place Vision' for ${area} in 2040 based on sustainable planning principles.

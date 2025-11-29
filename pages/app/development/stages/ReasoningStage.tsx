@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { PlanningApplication } from '../../../../data/types';
 import { PromptFunctions } from '../../../../prompts';
-import { callLLMStream } from '../../../../utils/llmClient';
+import { callLLM } from '../../../../utils/llmClient';
 import { LoadingSpinner } from '../../shared/LoadingSpinner';
 import { Button } from '../../shared/Button';
 import { MarkdownContent } from '../../../../components/MarkdownContent';
@@ -46,15 +46,8 @@ export const ReasoningStage: React.FC<ReasoningStageProps> = ({
     setLoading(true);
     try {
       const prompt = prompts.reasoningPrompt(application, contextAnalysis);
-      let acc = ''
-      try {
-        for await (const chunk of callLLMStream(prompt)) {
-          acc += chunk
-        }
-      } catch (e) {
-        console.error('Reasoning stream failed', e)
-      }
-      const points = parseReasoningPoints(acc || '')
+      const full = await callLLM(prompt);
+      const points = parseReasoningPoints(full || '')
       setReasoningChain(points)
     } catch (error) {
       console.error('Error generating reasoning:', error);

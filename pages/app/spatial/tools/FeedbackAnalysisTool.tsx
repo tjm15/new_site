@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { PromptFunctions } from '../../../../prompts';
-import { callLLMStream } from '../../../../utils/llmClient';
+import { callLLM } from '../../../../utils/llmClient';
 import { LoadingSpinner } from '../../shared/LoadingSpinner';
 import { Button } from '../../shared/Button';
 import { MarkdownContent } from '../../../../components/MarkdownContent';
@@ -45,13 +45,9 @@ export const FeedbackAnalysisTool: React.FC<FeedbackAnalysisToolProps> = ({ prom
 
     setLoading(true);
     const prompt = prompts.feedbackPrompt(consultationText);
-    let acc = ''
     try {
-      for await (const chunk of callLLMStream(prompt)) {
-        acc += chunk
-        // Optionally show partial parsing; here we just keep themes empty until done
-      }
-      const parsedThemes = parseThemesFromResponse(acc || '')
+      const full = await callLLM(prompt);
+      const parsedThemes = parseThemesFromResponse(full || '')
       setThemes(parsedThemes)
     } catch (error) {
       setThemes([])

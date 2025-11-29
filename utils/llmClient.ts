@@ -1,52 +1,11 @@
 import { callGemini } from './gemini'
-import { callOllama, callOllamaStream, callOllamaStreamWithReasoning, type OllamaStreamChunk } from './ollama'
+import { callOllama } from './ollama'
 
 export type LLMMode = 'markdown' | 'json' | 'text'
 
 type LLMRequest = { prompt: string; mode?: LLMMode }
 
-const MARKDOWN_RULES = [
-  'You are a UK planning officer producing professional, structured, inspector-ready text.',
-  '',
-  'OUTPUT FORMAT RULES (MANDATORY):',
-  '- Output ONLY GitHub-Flavoured Markdown (GFM).',
-  '- DO NOT use ``` code fences of any kind.',
-  '- DO NOT use HTML tags (no <br>, <p>, <ul>, etc.).',
-  '- DO NOT inline dashes (e.g. “Text-Text”). If you need a heading, use bold or a proper Markdown heading.',
-  '- NEVER join sentences using hyphens as glue.',
-  '- Tables, lists, and headings MUST follow the rules below.',
-  '',
-  'HEADINGS:',
-  '- Use markdown headings (#, ##, ###) or bold labels (“**Strategic Fit:**”).',
-  '- Leave a BLANK LINE before and after each heading.',
-  '',
-  'PARAGRAPHS:',
-  '- Separate paragraphs with exactly ONE blank line.',
-  '',
-  'BULLET LISTS:',
-  '- Each bullet MUST be on its own line.',
-  '- Each bullet MUST begin exactly with “- ” (dash + space).',
-  '- NOTHING may appear on the same line before the dash.',
-  '- NO blank “-” lines: every list item must have text.',
-  '',
-  'TABLES (VERY IMPORTANT):',
-  '- Leave ONE blank line before the table.',
-  '- Use normal GFM table syntax:',
-  '  | Column A | Column B | Column C |',
-  '  | --- | --- | --- |',
-  '  | Row 1 A | Row 1 B | Row 1 C |',
-  '- EVERY table row must be on ONE line.',
-  '- DO NOT insert line breaks inside table cells.',
-  '- If a cell needs multiple ideas, separate them with semicolons or commas, NOT line breaks.',
-  '- DO NOT output HTML (no <br> inside cells).',
-  '',
-  'STYLE:',
-  '- Planning text MUST be concise, evidence-based, and sound enough for examination.',
-  '- Use professional tone, short paragraphs, and structured arguments.',
-  '- You MAY and SHOULD use tables to present structured planning information (constraints, opportunities, risks, etc.).',
-  '',
-  'Return ONLY the markdown content.'
-].join('\n')
+const MARKDOWN_RULES = '' // Stop over-prescribing markdown; let the prompt carry any needed format hints.
 
 const JSON_RULES = [
   'You must output ONLY valid JSON.',
@@ -68,12 +27,8 @@ function buildPrompt(input: string | LLMRequest, defaultMode: LLMMode | undefine
 
 function applyModeRules(prompt: string, mode?: LLMMode): string {
   if (!mode) return prompt
-  const prelude =
-    mode === 'markdown'
-      ? MARKDOWN_RULES
-      : mode === 'json'
-      ? JSON_RULES
-      : TEXT_RULES
+  if (mode === 'markdown') return prompt
+  const prelude = mode === 'json' ? JSON_RULES : TEXT_RULES
   return `${prelude}\n\n${prompt}`
 }
 
@@ -139,7 +94,7 @@ export async function callLLM(input: string | LLMRequest): Promise<string> {
       if (res.ok) {
         const js = await res.json()
         if (js && typeof js.text === 'string') return js.text
-        return js && js.text ? String(js.text) : JSON.stringify(js)
+        throw new Error('Proxy response missing text field')
       }
       const txt = await res.text()
       throw new Error(`Proxy error ${res.status}: ${txt}`)
@@ -156,68 +111,5 @@ export async function callLLM(input: string | LLMRequest): Promise<string> {
 
 export default callLLM
 
-// Streaming API: returns an async generator of text chunks.
-export async function* callLLMStream(input: string | LLMRequest): AsyncGenerator<string, void, unknown> {
-  const useOllama = isOllamaEnabled()
-  const { prompt, mode } = buildPrompt(input, 'markdown')
-  const finalPrompt = applyModeRules(prompt, mode)
-
-  // If running in browser, prefer same-origin proxy which is not streaming in this setup.
-  if (typeof window !== 'undefined') {
-    try {
-      const res = await fetch('/api/llm', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt: finalPrompt })
-      })
-      if (res.ok) {
-        const js = await res.json()
-        const text = js && typeof js.text === 'string' ? js.text : (js && js.text ? String(js.text) : JSON.stringify(js))
-        yield text
-        return
-      }
-      const txt = await res.text()
-      throw new Error(`Proxy error ${res.status}: ${txt}`)
-    } catch (e) {
-      // Proxy failed — fall through to direct clients.
-      // eslint-disable-next-line no-console
-      console.debug('[llmClient] proxy /api/llm failed in stream, falling back to direct call:', e?.message || e)
-    }
-  }
-
-  if (useOllama) {
-    // Server-side streaming with Ollama
-    for await (const chunk of callOllamaStream(finalPrompt)) {
-      yield chunk
-    }
-    return
-  }
-
-  // Fallback: non-streaming Gemini — yield full response once.
-  const full = await callGemini(finalPrompt)
-  yield full
-}
-
+// Streaming APIs removed: use callLLM (non-streaming) instead.
 export type LLMReasoningChunk = { type: 'response' | 'reasoning'; text: string }
-
-// Structured streaming that includes reasoning/thinking chunks when available (Ollama).
-export async function* callLLMStreamWithReasoning(input: string | LLMRequest): AsyncGenerator<LLMReasoningChunk, void, unknown> {
-  const useOllama = isOllamaEnabled()
-  const { prompt, mode } = buildPrompt(input, 'markdown')
-  const finalPrompt = applyModeRules(prompt, mode)
-
-  // Do not use the /api/llm proxy here — it is non-streaming and can return raw NDJSON text.
-  if (useOllama) {
-    for await (const chunk of callOllamaStreamWithReasoning(finalPrompt)) {
-      // Treat any JSON-ish text as reasoning to avoid leaking raw objects into UI.
-      const looksLikeJson = chunk.text.trim().startsWith('{') && chunk.text.includes('"model"')
-      const type: LLMReasoningChunk['type'] = chunk.type === 'thinking' || looksLikeJson ? 'reasoning' : 'response'
-      if (chunk.type === 'response' && looksLikeJson) continue
-      yield { type, text: chunk.text }
-      }
-      return
-    }
-
-  const full = await callGemini(finalPrompt)
-  yield { type: 'response', text: full }
-}

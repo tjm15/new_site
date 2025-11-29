@@ -2,11 +2,10 @@ import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CouncilData } from '../../../../data/types';
 import { PromptFunctions } from '../../../../prompts';
-import { callLLMStream } from '../../../../utils/llmClient';
+import { callLLM } from '../../../../utils/llmClient';
 import { LoadingSpinner } from '../../shared/LoadingSpinner';
 import { Button } from '../../shared/Button';
 import { MarkdownContent } from '../../../../components/MarkdownContent';
-import { StructuredMarkdown } from '../../../../components/StructuredMarkdown';
 
 interface PolicyDrafterToolProps {
   councilData: CouncilData;
@@ -63,12 +62,8 @@ export const PolicyDrafterTool: React.FC<PolicyDrafterToolProps> = ({ councilDat
     setLoading(true);
     try {
       const prompt = prompts.policyDraftPrompt(topicId, brief);
-      let acc = ''
-      for await (const chunk of callLLMStream(prompt)) {
-        acc += chunk
-        setDraftPolicy(acc)
-      }
-      setDraftPolicy(acc || 'No policy draft generated.')
+      const full = await callLLM(prompt);
+      setDraftPolicy(full || 'No policy draft generated.')
       setVariants([
         'Provide a stricter compliance variant with measurable thresholds.',
         'Provide a more flexible design-led variant with guidance.',

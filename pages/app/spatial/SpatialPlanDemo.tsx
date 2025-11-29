@@ -17,7 +17,6 @@ import { StageInsightsPanel } from '../../../components/StageInsightsPanel';
 import { Link } from 'react-router-dom';
 import { retrieveContext } from '../../../lib/localQa';
 import { getGeoLayerSet } from '../../../data/geojsonLayers';
-import { StructuredMarkdown } from '../../../components/StructuredMarkdown';
 import { MapLibreFrame } from '../../../components/MapLibreFrame';
 import { callLLM } from '../../../utils/llmClient';
 import { prepareAssistantMarkdown } from '../../../utils/markdown';
@@ -422,7 +421,7 @@ Sites scored: ${activePlan.sites?.length || 0}
                 <Link to="/app/gateway1" className="px-3 py-2 bg-[var(--color-panel)] border border-[var(--color-edge)] rounded text-sm text-[var(--color-ink)]">Open full Gateway 1 form</Link>
               </div>
               {summary ? (
-                <StructuredMarkdown content={summary} />
+                <MarkdownContent content={summary} />
               ) : (
                 <div className="text-sm text-[var(--color-muted)]">No summary yet — run the assessment to populate.</div>
               )}
@@ -677,13 +676,13 @@ const AnswerModal: React.FC<{
   if (!open) return null;
   const markdown = prepareAssistantMarkdown(answer || '');
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-      <div className="bg-[var(--color-panel)] border border-[var(--color-edge)] rounded-xl shadow-xl max-w-3xl w-full max-h-[80vh] overflow-hidden">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
+      <div className="bg-[var(--color-panel)] border border-[var(--color-edge)] rounded-xl shadow-xl max-w-5xl w-full max-h-[85vh] overflow-hidden">
         <div className="flex items-center justify-between px-4 py-3 border-b border-[var(--color-edge)]">
           <div className="font-semibold text-[var(--color-ink)]">Assistant answer</div>
           <button className="text-[var(--color-accent)] text-sm hover:underline" onClick={onClose}>Close</button>
         </div>
-        <div className="p-4 overflow-auto max-h-[70vh]">
+        <div className="p-4 overflow-auto max-h-[75vh]">
           {markdown ? (
             <MarkdownContent content={markdown} />
           ) : (

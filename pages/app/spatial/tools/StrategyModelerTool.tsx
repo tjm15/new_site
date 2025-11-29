@@ -2,11 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CouncilData } from '../../../../data/types';
 import { PromptFunctions } from '../../../../prompts';
-import { callLLMStream } from '../../../../utils/llmClient';
+import { callLLM } from '../../../../utils/llmClient';
 import { LoadingSpinner } from '../../shared/LoadingSpinner';
 import { SpatialMap } from '../shared/SpatialMap';
 import { MarkdownContent } from '../../../../components/MarkdownContent';
-import { StructuredMarkdown } from '../../../../components/StructuredMarkdown';
 import type { GeoLayerSet } from '../../../../data/geojsonLayers';
 
 interface StrategyModelerToolProps {
@@ -61,12 +60,8 @@ export const StrategyModelerTool: React.FC<StrategyModelerToolProps> = ({ counci
           }, 0);
         setMetrics({ totalSites, totalCapacity });
         const prompt = prompts.strategyPrompt(strategy.label, strategy.desc);
-        let acc = ''
-        for await (const chunk of callLLMStream(prompt)) {
-          acc += chunk
-          setAnalysis(acc)
-        }
-        setAnalysis(acc || 'No analysis generated.')
+        const full = await callLLM(prompt);
+        setAnalysis(full || 'No analysis generated.')
       }
     } catch (error) {
       setAnalysis('Error analyzing strategy. Please try again.');
@@ -159,7 +154,7 @@ export const StrategyModelerTool: React.FC<StrategyModelerToolProps> = ({ counci
             {selectedStrategy && (
               <p className="text-xs text-[var(--color-muted)] mb-3">Current strategy: {councilData.strategies?.find(s=>s.id===selectedStrategy)?.label}</p>
             )}
-            <StructuredMarkdown content={analysis} />
+            <MarkdownContent content={analysis} />
           </motion.div>
         )}
       </AnimatePresence>

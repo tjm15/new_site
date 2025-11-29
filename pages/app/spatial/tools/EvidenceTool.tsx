@@ -2,11 +2,10 @@ import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CouncilData } from '../../../../data/types';
 import { PromptFunctions } from '../../../../prompts';
-import { callLLMStreamWithReasoning } from '../../../../utils/llmClient';
+import { callLLM } from '../../../../utils/llmClient';
 import { LoadingSpinner } from '../../shared/LoadingSpinner';
 import { Chip } from '../../shared/Chip';
 import { MarkdownContent } from '../../../../components/MarkdownContent';
-import { StructuredMarkdown } from '../../../../components/StructuredMarkdown';
 
 interface EvidenceToolProps {
   councilData: CouncilData;
@@ -45,17 +44,9 @@ export const EvidenceTool: React.FC<EvidenceToolProps> = ({ councilData, prompts
     const prompt = prompts.evidencePrompt(question, topics);
     // Add a placeholder card we will update as chunks arrive
     setCards(prev => [{ id: cardId, title, content: 'Generating...', question }, ...prev]);
-    let acc = '';
-    let reasoning = '';
     try {
-      for await (const chunk of callLLMStreamWithReasoning(prompt)) {
-        if (chunk.type === 'response') {
-          acc += chunk.text;
-        } else if (chunk.type === 'reasoning') {
-          reasoning += (reasoning ? '\n' : '') + chunk.text;
-        }
-        setCards(prev => prev.map(c => c.id === cardId ? { ...c, content: acc || 'Generating...', reasoning } : c));
-      }
+      const full = await callLLM(prompt);
+      setCards(prev => prev.map(c => c.id === cardId ? { ...c, content: full || 'Generating...', reasoning: '' } : c));
     } catch (error) {
       setCards(prev => [{ id: cardId, title, content: 'Error generating response. Please try again.', question }, ...prev.filter(c => c.id !== cardId)])
     } finally {
@@ -190,7 +181,7 @@ export const EvidenceTool: React.FC<EvidenceToolProps> = ({ councilData, prompts
               <motion.div key={card.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="bg-[var(--color-panel)] border border-[var(--color-edge)] rounded-xl p-6">
                 <h3 className="text-lg font-semibold text-[var(--color-ink)] mb-2">🗺️ {card.title}</h3>
                 {card.question && <p className="text-xs text-[var(--color-muted)] mb-3">Question used: {card.question}</p>}
-                <StructuredMarkdown content={card.content} />
+                <MarkdownContent content={card.content} />
                 {card.reasoning && card.reasoning.trim() && (
                   <div className="mt-3">
                     <button

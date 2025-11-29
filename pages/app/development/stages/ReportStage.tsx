@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { PlanningApplication } from '../../../../data/types';
 import { PromptFunctions } from '../../../../prompts';
-import { callLLMStream } from '../../../../utils/llmClient';
+import { callLLM } from '../../../../utils/llmClient';
 import { printReport, copyToClipboard } from '../../../../utils/printToPDF';
 import { LoadingSpinner } from '../../shared/LoadingSpinner';
 import { Button } from '../../shared/Button';
@@ -40,17 +40,8 @@ export const ReportStage: React.FC<ReportStageProps> = ({
         reasoningChain
       };
       const prompt = prompts.reportPrompt(application, allData);
-      let acc = ''
-      try {
-        for await (const chunk of callLLMStream(prompt)) {
-          acc += chunk
-          setReport(acc)
-        }
-      } catch (e) {
-        console.error('Report generation stream failed', e)
-        acc = ''
-      }
-      setReport(acc || 'No report generated.')
+      const full = await callLLM(prompt);
+      setReport(full || 'No report generated.')
     } catch (error) {
       setReport('Error generating report. Please try again.');
     } finally {
