@@ -2,6 +2,7 @@ import React, { createContext, useContext, useMemo, useState, useEffect } from '
 import type { Plan } from '../data/types'
 import { NEW_SYSTEM_STAGES } from '../constants'
 import { STAGES, type PlanStageId } from '../data/stageMeta'
+import { PLAN_SEEDS } from '../data/planSeeds'
 
 type PlanCtx = {
   plans: Plan[]
@@ -16,10 +17,43 @@ type PlanCtx = {
 
 const Ctx = createContext<PlanCtx | null>(null)
 
+const legacyStageIdMap: Record<string, PlanStageId> = {
+  SUBMISSION: 'SUBMISSION_EXAM',
+  ADOPTION: 'ADOPTION_MONITORING',
+}
+
+function normalizePlan(plan: Plan): Plan {
+  if (plan.systemType !== 'new') return plan
+  const mappedStage = (legacyStageIdMap[plan.planStage as string] || plan.planStage || legacyStageIdMap[plan.currentStage as string] || plan.currentStage || NEW_SYSTEM_STAGES[0].id) as PlanStageId
+  const existingById = (plan.stages || []).reduce<Record<string, any>>((acc, stage) => {
+    const normalizedId = (legacyStageIdMap[stage.id as string] as PlanStageId) || stage.id
+    acc[normalizedId] = { ...stage, id: normalizedId }
+    return acc
+  }, {})
+  const mergedStages = NEW_SYSTEM_STAGES.map(stage => ({
+    id: stage.id,
+    title: stage.title,
+    ...(existingById[stage.id] || {}),
+  }))
+  const migratedMilestones = (plan.timetable?.milestones || []).map(m => ({
+    ...m,
+    stageId: (legacyStageIdMap[m.stageId as string] as PlanStageId) || m.stageId,
+  }))
+  return {
+    ...plan,
+    stages: mergedStages,
+    planStage: mappedStage,
+    timetable: { ...(plan.timetable || { milestones: [] }), milestones: migratedMilestones },
+  }
+}
+
 export function PlanProvider({ children }: { children: React.ReactNode }) {
   const [plans, setPlans] = useState<Plan[]>(() => {
     const raw = localStorage.getItem('plans.v1')
-    return raw ? JSON.parse(raw) : []
+    const parsed = raw ? JSON.parse(raw) : []
+    if (Array.isArray(parsed) && parsed.length) return parsed.map(normalizePlan)
+    // Seed default demo plans if none saved
+    return Object.values(PLAN_SEEDS).map(normalizePlan)
   })
   const [activeId, setActiveId] = useState<string | undefined>(() => {
     return localStorage.getItem('plans.activeId') || undefined
@@ -42,8 +76,13 @@ export function PlanProvider({ children }: { children: React.ReactNode }) {
   const activePlan = useMemo(() => plans.find(p => p.id === activeId), [plans, activeId])
   const getActiveForCouncil = (councilId: string) => {
     const id = activeByCouncil[councilId]
-    if (!id) return undefined
-    return plans.find(p => p.id === id)
+    if (id) {
+      const found = plans.find(p => p.id === id)
+      if (found) return found
+    }
+    // Fallback: first plan matching this council
+    const fallback = plans.find(p => p.councilId === councilId)
+    return fallback
   }
 
   const createPlan: PlanCtx['createPlan'] = (partial) => {
@@ -78,7 +117,7 @@ export function PlanProvider({ children }: { children: React.ReactNode }) {
     setActiveByCouncil(prev => ({ ...prev, [councilId]: id }))
   }
   const updatePlan = (id: string, patch: Partial<Plan>) => {
-    setPlans(prev => prev.map(p => (p.id === id ? { ...p, ...patch } : p)))
+    setPlans(prev => prev.map(p => (p.id === id ? normalizePlan({ ...p, ...patch }) : p)))
   }
 
   const setPlanStage: PlanCtx['setPlanStage'] = (id, stage) => {

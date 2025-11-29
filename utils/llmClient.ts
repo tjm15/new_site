@@ -1,28 +1,46 @@
 import { callGemini } from './gemini'
 import { callOllama, callOllamaStream, callOllamaStreamWithReasoning, type OllamaStreamChunk } from './ollama'
 
+const parseOllamaFlag = (val: any) => {
+  if (typeof val === 'boolean') return val
+  if (typeof val === 'number') return val === 1
+  if (typeof val === 'string') {
+    const t = val.trim().toLowerCase()
+    return t === '1' || t === 'true' || t === 'yes' || t === 'on'
+  }
+  return false
+}
+
+// Shared helper so UI and clients agree on which backend is active.
+export function isOllamaEnabled(): boolean {
+  let useOllama = false
+  try {
+    const proc = typeof process !== 'undefined' && (process as any).env
+    if (proc) {
+      useOllama = parseOllamaFlag(proc.USE_OLLAMA) || parseOllamaFlag(proc.VITE_USE_OLLAMA)
+    }
+  } catch {}
+  try {
+    // Vite exposes only VITE_* by default; include USE_OLLAMA for consistency when manually injected.
+    const meta: any = typeof import.meta !== 'undefined' ? (import.meta as any).env : undefined
+    if (meta) {
+      useOllama = useOllama || parseOllamaFlag(meta.VITE_USE_OLLAMA) || parseOllamaFlag(meta.USE_OLLAMA)
+    }
+  } catch {}
+  try {
+    const win: any = typeof window !== 'undefined' ? window : undefined
+    if (win) {
+      useOllama = useOllama || parseOllamaFlag(win.USE_OLLAMA) || parseOllamaFlag(win.VITE_USE_OLLAMA) || parseOllamaFlag(win.__USE_OLLAMA__)
+    }
+  } catch {}
+  return useOllama
+}
+
 // callLLM: choose LLM backend based on environment variables.
 // - If process.env.USE_OLLAMA === '1' or process.env.VITE_USE_OLLAMA === '1', use Ollama.
 // - Otherwise, fall back to Gemini.
 export async function callLLM(prompt: string): Promise<string> {
-  // Determine whether Ollama is enabled. We check both Vite's import.meta.env
-  // and Node's process.env so this works in dev, prod build-time and server contexts.
-  const useOllama = (() => {
-    try {
-      const proc = typeof process !== 'undefined' && (process as any).env
-      const procFlag = proc && (proc.USE_OLLAMA === '1' || proc.USE_OLLAMA === 'true' || proc.VITE_USE_OLLAMA === '1' || proc.VITE_USE_OLLAMA === 'true')
-
-      // Vite exposes env via import.meta.env at build time in client bundles.
-      // Use a safe any-cast to avoid TS errors when import.meta isn't defined in some runtimes.
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const meta: any = (typeof import.meta !== 'undefined' ? (import.meta as any).env : undefined)
-      const viteFlag = meta && (meta.VITE_USE_OLLAMA === '1' || meta.VITE_USE_OLLAMA === 'true')
-
-      return Boolean(procFlag) || Boolean(viteFlag)
-    } catch (e) {
-      return false
-    }
-  })()
+  const useOllama = isOllamaEnabled()
 
   // Debug log to help trace which backend is selected during development.
   try {
@@ -62,18 +80,7 @@ export default callLLM
 
 // Streaming API: returns an async generator of text chunks.
 export async function* callLLMStream(prompt: string): AsyncGenerator<string, void, unknown> {
-  const useOllama = (() => {
-    try {
-      const proc = typeof process !== 'undefined' && (process as any).env
-      const procFlag = proc && (proc.USE_OLLAMA === '1' || proc.USE_OLLAMA === 'true' || proc.VITE_USE_OLLAMA === '1' || proc.VITE_USE_OLLAMA === 'true')
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const meta: any = (typeof import.meta !== 'undefined' ? (import.meta as any).env : undefined)
-      const viteFlag = meta && (meta.VITE_USE_OLLAMA === '1' || meta.VITE_USE_OLLAMA === 'true')
-      return Boolean(procFlag) || Boolean(viteFlag)
-    } catch (e) {
-      return false
-    }
-  })()
+  const useOllama = isOllamaEnabled()
 
   // If running in browser, prefer same-origin proxy which is not streaming in this setup.
   if (typeof window !== 'undefined') {
@@ -115,18 +122,7 @@ export type LLMReasoningChunk = { type: 'response' | 'reasoning'; text: string }
 
 // Structured streaming that includes reasoning/thinking chunks when available (Ollama).
 export async function* callLLMStreamWithReasoning(prompt: string): AsyncGenerator<LLMReasoningChunk, void, unknown> {
-  const useOllama = (() => {
-    try {
-      const proc = typeof process !== 'undefined' && (process as any).env
-      const procFlag = proc && (proc.USE_OLLAMA === '1' || proc.USE_OLLAMA === 'true' || proc.VITE_USE_OLLAMA === '1' || proc.VITE_USE_OLLAMA === 'true')
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const meta: any = (typeof import.meta !== 'undefined' ? (import.meta as any).env : undefined)
-      const viteFlag = meta && (meta.VITE_USE_OLLAMA === '1' || meta.VITE_USE_OLLAMA === 'true')
-      return Boolean(procFlag) || Boolean(viteFlag)
-    } catch (e) {
-      return false
-    }
-  })()
+  const useOllama = isOllamaEnabled()
 
   // Do not use the /api/llm proxy here — it is non-streaming and can return raw NDJSON text.
   if (useOllama) {

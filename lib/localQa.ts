@@ -120,6 +120,10 @@ export async function retrieveContext(
   council?: CouncilLike,
   topK = 5
 ): Promise<RetrievedChunk[]> {
+  // In the browser, skip heavy local embedding and return empty context to avoid fetch/model errors.
+  if (typeof window !== 'undefined') {
+    return []
+  }
   const model = await getModel()
   let cache = planCache[plan.id]
   if (!cache) {
@@ -133,3 +137,9 @@ export async function retrieveContext(
   scored.sort((a, b) => b.score - a.score)
   return scored.slice(0, topK).map(({ i }) => cache!.meta[i])
 }
+// Polyfill esbuild helper when it isn't injected (seen in browser bundles with transformers)
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+;(globalThis as any).__publicField = (globalThis as any).__publicField || ((obj: any, key: any, value: any) => {
+  obj[key] = value
+  return value
+})

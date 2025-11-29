@@ -116,12 +116,14 @@ export type PlanStageId =
   | 'PREP'
   | 'GATEWAY_1'
   | 'BASELINING'
+  | 'VISION_OUTCOMES'
+  | 'SITE_SELECTION'
   | 'CONSULTATION_1'
   | 'GATEWAY_2'
   | 'CONSULTATION_2'
   | 'GATEWAY_3'
-  | 'SUBMISSION'
-  | 'ADOPTION'
+  | 'SUBMISSION_EXAM'
+  | 'ADOPTION_MONITORING'
 
 export interface PlanStage {
   id: PlanStageId
@@ -154,6 +156,7 @@ export interface SiteCandidate {
   availability?: 'R' | 'A' | 'G'
   achievability?: 'R' | 'A' | 'G'
   notes?: string
+  capacityEstimate?: number
 }
 
 export interface ReadinessAreaResult {
@@ -168,6 +171,34 @@ export interface ReadinessAssessment {
   assessedAt?: string
   overallStatus?: 'red' | 'amber' | 'green'
   overallComment?: string
+}
+
+export type EvidenceStatus = 'planned' | 'in_progress' | 'complete' | 'not_applicable'
+
+export interface EvidenceItem {
+  id: string
+  topic: string
+  title: string
+  source?: string
+  status?: EvidenceStatus
+  notes?: string
+}
+
+export interface RepresentationTag {
+  id: string
+  policyId?: string
+  siteId?: string
+  issue?: string
+  sentiment?: 'support' | 'object' | 'comment'
+}
+
+export interface ConsultationSummary {
+  stageId: 'CONSULTATION_1' | 'CONSULTATION_2'
+  who: string
+  when: string
+  how: string
+  mainIssues: string[]
+  intendedChanges?: string
 }
 
 export interface Plan {
@@ -187,6 +218,34 @@ export interface Plan {
   gateway1SummaryText?: string
   readinessAssessment?: ReadinessAssessment
   gateway1PublishedAt?: string
+  // Evidence / baselining
+  evidenceInventory?: EvidenceItem[]
+  baselineTrends?: Record<string, string> // topic -> markdown summary
+  swot?: { strengths?: string[]; weaknesses?: string[]; opportunities?: string[]; threats?: string[] }
+  baselineNarrative?: string
+  // Outcomes linkage
+  outcomePolicyLinks?: Record<string, { policyIds?: string[]; siteIds?: string[] }>
+  // Site decisions
+  siteDecisions?: Array<{ siteId: string; decision: 'selected' | 'rejected'; rationale: string }>
+  // Consultations
+  consultationSummaries?: ConsultationSummary[]
+  representationTags?: RepresentationTag[]
+  // Gateway 2/3
+  gateway2Checklist?: string
+  gateway2Risks?: string
+  gateway2Summary?: string
+  requirementsCheck?: string
+  statementCompliance?: string
+  statementSoundness?: string
+  examReadinessNote?: string
+  // Submission / exam
+  submissionBundle?: Array<{ id: string; title: string; status?: 'present' | 'missing' | 'outdated' }>
+  examRehearsalNotes?: string
+  // Adoption / monitoring
+  adoptionChecklist?: string
+  monitoringIndicators?: Array<{ id: string; name: string; baseline?: string; source?: string; target?: string }>
+  annualMonitoringNarratives?: string[]
+  year4Evaluation?: string
   // SEA / HRA baseline and scoping data
   seaHra?: {
     seaScopingStatus?: 'Not started' | 'Drafted' | 'Consulted'
@@ -200,5 +259,7 @@ export interface Plan {
     methods?: string[]
     timelineNote?: string
   }
-}
+  // AI suggestions
+  aiSuggestedStageId?: PlanStageId
+  aiSuggestedStageReason?: string
 }

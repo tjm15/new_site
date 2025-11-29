@@ -49,7 +49,10 @@ export default defineConfig(({ mode }) => {
       ],
       define: {
         'process.env.API_KEY': JSON.stringify(env.GEMINI_API_KEY),
-        'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY)
+        'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY),
+        // Expose Ollama toggle to the client so status indicators match the backend choice.
+        'import.meta.env.USE_OLLAMA': JSON.stringify(env.USE_OLLAMA || ''),
+        'import.meta.env.VITE_USE_OLLAMA': JSON.stringify(env.VITE_USE_OLLAMA || env.USE_OLLAMA || '')
       },
       resolve: {
         alias: {

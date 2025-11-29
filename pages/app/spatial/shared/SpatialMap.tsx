@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Allocation } from '../../../../data/types';
 import { useMediaQuery } from '../../../../hooks/useMediaQuery';
+import type { GeoLayerSet } from '../../../../data/geojsonLayers';
+import { MapLibreFrame } from '../../../../components/MapLibreFrame';
 
 interface SpatialMapProps {
   boroughOutline: string;
@@ -13,6 +15,7 @@ interface SpatialMapProps {
   showConstraints?: boolean;
   showCentres?: boolean;
   showAllocations?: boolean;
+  geojsonLayers?: GeoLayerSet | null;
 }
 
 export const SpatialMap: React.FC<SpatialMapProps> = ({
@@ -25,10 +28,31 @@ export const SpatialMap: React.FC<SpatialMapProps> = ({
   showConstraints = true,
   showCentres = true,
   showAllocations = true,
+  geojsonLayers = null,
 }) => {
   const [hoveredSite, setHoveredSite] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'map' | 'list'>('list');
   const isMobile = useMediaQuery('(max-width: 768px)');
+
+  // Prefer maplibre when geojson layers are available
+  if (geojsonLayers) {
+    return (
+      <div className="relative">
+        {isMobile && (
+          <div className="mb-3 flex justify-between items-center">
+            <h3 className="text-lg font-semibold text-[var(--color-ink)]">Sites & context</h3>
+            {selectedSite && <span className="text-xs text-[var(--color-muted)]">Selected: {selectedSite}</span>}
+          </div>
+        )}
+        <MapLibreFrame
+          layers={geojsonLayers}
+          height={isMobile ? 320 : 420}
+          selectedAllocationId={selectedSite || undefined}
+          onSelectAllocation={onSiteSelect}
+        />
+      </div>
+    )
+  }
 
   if (isMobile && viewMode === 'list') {
     return (

@@ -15,11 +15,13 @@
     "express": "^4.21.2",
     "framer-motion": "^12.23.24",
     "lucide-react": "^0.417.0",
+    "maplibre-gl": "^5.13.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "react-markdown": "^10.1.0",
     "react-router-dom": "^7.9.4",
     "rehype-raw": "^7.0.0",
+    "remark-breaks": "^4.0.0",
     "remark-gfm": "^4.0.1"
   },
   "devDependencies": {

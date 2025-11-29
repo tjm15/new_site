@@ -9,6 +9,7 @@ import { LoadingSpinner } from '../../shared/LoadingSpinner';
 import { SpatialMap } from '../shared/SpatialMap';
 import { MarkdownContent } from '../../../../components/MarkdownContent';
 import { StructuredMarkdown } from '../../../../components/StructuredMarkdown';
+import type { GeoLayerSet } from '../../../../data/geojsonLayers';
 
 interface SiteAssessmentToolProps {
   councilData: CouncilData;
@@ -18,9 +19,10 @@ interface SiteAssessmentToolProps {
   initialDetails?: { constraints?: string[]; opportunities?: string[]; policies?: string[] } | null;
   autoRun?: boolean;
   onSessionChange?: (session: { selectedSite: string | null; appraisal: string; details: { constraints?: string[]; opportunities?: string[]; policies?: string[] } | null }) => void;
+  geoLayers?: GeoLayerSet | null;
 }
 
-export const SiteAssessmentTool: React.FC<SiteAssessmentToolProps> = ({ councilData, prompts, initialSiteId, initialAppraisal, initialDetails, autoRun, onSessionChange }) => {
+export const SiteAssessmentTool: React.FC<SiteAssessmentToolProps> = ({ councilData, prompts, initialSiteId, initialAppraisal, initialDetails, autoRun, onSessionChange, geoLayers }) => {
   const [selectedSite, setSelectedSite] = useState<string | null>(null);
   const [appraisal, setAppraisal] = useState('');
   const [loading, setLoading] = useState(false);
@@ -107,7 +109,7 @@ export const SiteAssessmentTool: React.FC<SiteAssessmentToolProps> = ({ councilD
     if (onSessionChange) {
       onSessionChange({ selectedSite, appraisal, details });
     }
-  }, [selectedSite, appraisal, details, onSessionChange]);
+  }, [selectedSite, appraisal, details]);
 
   const selectedSiteData = selectedSite
     ? councilData.spatialData.allocations.find(s => s.id === selectedSite)
@@ -137,6 +139,7 @@ export const SiteAssessmentTool: React.FC<SiteAssessmentToolProps> = ({ councilD
           showConstraints={true}
           showCentres={false}
           showAllocations={true}
+          geojsonLayers={geoLayers || undefined}
         />
       </div>
 

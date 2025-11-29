@@ -5,7 +5,7 @@ import { usePlan } from '../../../../contexts/PlanContext';
 import { runLLMTask } from '../../../../utils/llmTasks';
 import { callLLMStream } from '../../../../utils/llmClient';
 import { PromptFunctions } from '../../../../prompts';
-import { callGemini, callGeminiImage } from '../../../../utils/gemini';
+import { callGeminiImage } from '../../../../utils/gemini';
 import { LoadingSpinner } from '../../shared/LoadingSpinner';
 import { Button } from '../../shared/Button';
 import { MarkdownContent } from '../../../../components/MarkdownContent';

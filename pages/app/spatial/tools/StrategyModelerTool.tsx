@@ -7,6 +7,7 @@ import { LoadingSpinner } from '../../shared/LoadingSpinner';
 import { SpatialMap } from '../shared/SpatialMap';
 import { MarkdownContent } from '../../../../components/MarkdownContent';
 import { StructuredMarkdown } from '../../../../components/StructuredMarkdown';
+import type { GeoLayerSet } from '../../../../data/geojsonLayers';
 
 interface StrategyModelerToolProps {
   councilData: CouncilData;
@@ -16,9 +17,10 @@ interface StrategyModelerToolProps {
   initialMetrics?: { totalSites: number; totalCapacity: number } | null;
   autoRun?: boolean;
   onSessionChange?: (session: { selectedStrategy: string | null; analysis: string; metrics: { totalSites: number; totalCapacity: number } | null }) => void;
+  geoLayers?: GeoLayerSet | null;
 }
 
-export const StrategyModelerTool: React.FC<StrategyModelerToolProps> = ({ councilData, prompts, initialStrategyId, initialAnalysis, initialMetrics, autoRun, onSessionChange }) => {
+export const StrategyModelerTool: React.FC<StrategyModelerToolProps> = ({ councilData, prompts, initialStrategyId, initialAnalysis, initialMetrics, autoRun, onSessionChange, geoLayers }) => {
   const [selectedStrategy, setSelectedStrategy] = useState<string | null>(null);
   const [analysis, setAnalysis] = useState('');
   const [loading, setLoading] = useState(false);
@@ -128,6 +130,7 @@ export const StrategyModelerTool: React.FC<StrategyModelerToolProps> = ({ counci
             showConstraints={true}
             showCentres={true}
             showAllocations={true}
+            geojsonLayers={geoLayers || undefined}
           />
         </div>
       </div>

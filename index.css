@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import "maplibre-gl/dist/maplibre-gl.css";
 
 @theme {
   --font-sans: ui-sans-serif, system-ui, Inter, Helvetica, Arial, sans-serif;

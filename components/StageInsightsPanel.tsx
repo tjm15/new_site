@@ -5,60 +5,88 @@ import { useStageInsights } from '../hooks/useStageInsights'
 export type StageInsightsPanelProps = {
   plan: Plan
   stageId: PlanStageId
+  qaNotes?: string[]
+  showQA?: boolean
 }
 
-export const StageInsightsPanel: React.FC<StageInsightsPanelProps> = ({ plan, stageId }) => {
+export const StageInsightsPanel: React.FC<StageInsightsPanelProps> = ({ plan, stageId, qaNotes, showQA = true }) => {
   const { insights } = useStageInsights(plan, stageId)
-  const status: 'In progress' | 'Not started' | 'Complete' = 'In progress'
+  const statusLabel = insights?.source === 'fallback' ? 'fallback' : 'LLM'
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-      {/* Left: AI summary */}
-      <div className="bg-[var(--color-panel)] border border-[var(--color-edge)] rounded-lg p-4">
-        <div className="flex items-center justify-between mb-2">
-          <h2 className="text-lg font-semibold text-[var(--color-ink)]">{stageIdToLabel(stageId)}</h2>
-          <span className="px-2 py-1 text-xs rounded bg-[var(--color-surface)] border border-[var(--color-edge)]">{status}</span>
+    <div className="bg-[var(--color-panel)] border border-[var(--color-edge)] rounded-lg p-4">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <div className="text-sm font-semibold text-[var(--color-ink)]">AI Inspector report</div>
+          <div className="text-xs text-[var(--color-muted)]">{stageIdToLabel(stageId)}</div>
         </div>
-        <p className="text-sm text-[var(--color-ink)] min-h-[40px]">{insights?.summary || 'Analysing the plan and stage context…'}</p>
-        {insights?.updatedAt && (
-          <div className="text-xs text-[var(--color-muted)] mt-2">Last updated: {timeAgo(insights.updatedAt)}</div>
-        )}
+        <div className="flex flex-col items-end gap-1">
+          {insights?.updatedAt && (
+            <span className="text-[11px] text-[var(--color-muted)]">Updated {timeAgo(insights.updatedAt)}</span>
+          )}
+          <span className="px-2 py-1 text-[11px] rounded bg-[var(--color-surface)] border border-[var(--color-edge)]">
+            {statusLabel}
+          </span>
+        </div>
       </div>
 
-      {/* Right: actions and risks */}
-      <div className="bg-[var(--color-panel)] border border-[var(--color-edge)] rounded-lg p-4">
-        <div>
-          <div className="font-semibold text-[var(--color-ink)] mb-2">What you should do now</div>
-          <ul className="list-disc ml-5 text-sm text-[var(--color-ink)]">
-            {(insights?.actions?.length ? insights.actions : ['Confirm draft timetable with senior officers.', 'Draft Notice to Commence using last Cabinet report.', 'Log existing evidence base and flag obvious gaps.']).map((a, i) => (
-              <li key={i}>{a}</li>
-            ))}
-          </ul>
+      {insights?.cards?.length ? (
+        <div className="grid grid-cols-1 gap-2 mt-3">
+          {insights.cards.slice(0, 3).map((card, idx) => (
+            <div key={idx} className="flex items-start justify-between border border-[var(--color-edge)] rounded p-2 bg-[var(--color-surface)]">
+              <div className="pr-2">
+                <div className="text-sm font-semibold text-[var(--color-ink)]">{card.title}</div>
+                {card.reason && <div className="text-xs text-[var(--color-muted)] leading-snug">{card.reason}</div>}
+              </div>
+              <span
+                className={`px-2 py-1 text-[11px] rounded-full border ${
+                  card.status === 'G' ? 'bg-green-100 text-green-800 border-green-200'
+                  : card.status === 'A' ? 'bg-amber-100 text-amber-800 border-amber-200'
+                  : 'bg-red-100 text-red-800 border-red-200'
+                }`}
+              >
+                {card.status}
+              </span>
+            </div>
+          ))}
         </div>
-        {insights?.risks?.length ? (
-          <div className="mt-3">
-            <div className="font-semibold text-[var(--color-ink)] mb-1">Risks & blockers</div>
-            <ul className="list-disc ml-5 text-sm text-[var(--color-ink)]">
-              {insights.risks.slice(0, 3).map((r, i) => (
-                <li key={i} className="text-[var(--color-ink)]">{r}</li>
-              ))}
+      ) : (
+        <div className="text-xs text-[var(--color-muted)] mt-3">Inspector analysis unavailable.</div>
+      )}
+
+      {insights?.summary && (
+        <p className="text-sm text-[var(--color-ink)] mt-3 leading-relaxed">{insights.summary}</p>
+      )}
+
+      {showQA && (
+        <div className="mt-3 border-t border-[var(--color-edge)] pt-3">
+          <div className="font-semibold text-[var(--color-ink)] mb-1 text-sm">QA & checks</div>
+          {qaNotes && qaNotes.length > 0 ? (
+            <ul className="list-disc ml-5 text-sm text-[var(--color-ink)] space-y-1">
+              {qaNotes.map((q, idx) => <li key={idx}>{q}</li>)}
             </ul>
-          </div>
-        ) : null}
-      </div>
+          ) : (
+            <div className="text-xs text-[var(--color-muted)]">No QA checks defined for this stage.</div>
+          )}
+        </div>
+      )}
     </div>
   )
 }
 
 function stageIdToLabel(id: PlanStageId) {
-  const map: Record<PlanStageId, string> = {
-    PREP: 'Preparation',
+  const map: Record<string, string> = {
+    PREP: 'Preparation / Notice to Commence',
     GATEWAY_1: 'Gateway 1',
     BASELINING: 'Baselining & Evidence',
+    VISION_OUTCOMES: 'Vision & Outcomes',
+    SITE_SELECTION: 'Site Selection & Spatial Strategy',
     CONSULTATION_1: 'Consultation 1',
     GATEWAY_2: 'Gateway 2',
     CONSULTATION_2: 'Consultation 2',
     GATEWAY_3: 'Gateway 3',
+    SUBMISSION_EXAM: 'Submission & Examination Rehearsal',
+    ADOPTION_MONITORING: 'Adoption & Monitoring',
     SUBMISSION: 'Submission',
     ADOPTION: 'Adoption',
   }

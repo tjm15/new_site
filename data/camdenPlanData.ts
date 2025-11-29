@@ -112,15 +112,17 @@ export const CAMDEN_SAMPLE_PLAN = {
   area: 'London Borough of Camden',
   systemType: 'new',
   stages: [
-    { id: 'PREP', title: 'Preparation (Notice Period)' },
+    { id: 'PREP', title: 'Preparation / Notice to Commence' },
     { id: 'GATEWAY_1', title: 'Gateway 1: Readiness' },
     { id: 'BASELINING', title: 'Baselining & Evidence' },
-    { id: 'CONSULTATION_1', title: 'Consultation 1' },
+    { id: 'VISION_OUTCOMES', title: 'Vision & Outcomes' },
+    { id: 'SITE_SELECTION', title: 'Site Selection & Spatial Strategy' },
+    { id: 'CONSULTATION_1', title: 'Consultation 1 (Scope & Early Vision)' },
     { id: 'GATEWAY_2', title: 'Gateway 2: Submission Ready' },
-    { id: 'CONSULTATION_2', title: 'Consultation 2' },
-    { id: 'GATEWAY_3', title: 'Gateway 3: Examination' },
-    { id: 'SUBMISSION', title: 'Submission' },
-    { id: 'ADOPTION', title: 'Adoption' }
+    { id: 'CONSULTATION_2', title: 'Consultation 2 (Proposed Plan)' },
+    { id: 'GATEWAY_3', title: 'Gateway 3: Examination Readiness' },
+    { id: 'SUBMISSION_EXAM', title: 'Submission & Examination Rehearsal' },
+    { id: 'ADOPTION_MONITORING', title: 'Adoption & Monitoring' }
   ],
   timetable: { milestones: [] },
   visionStatements: [

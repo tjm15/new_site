@@ -15,6 +15,9 @@ export function ContextSidebar({ councilData, selectedTopics = [], onToggleTopic
   const { activePlan } = usePlan();
   const boroughAsset = `/assets/boroughs/${councilData.id}.svg`;
   const hasAllocations = councilData.spatialData?.allocations?.length > 0;
+  const humanizeId = (id: string) => id
+    .replace(/[_-]+/g, ' ')
+    .replace(/\b\w/g, (c) => c.toUpperCase());
 
   return (
     <div className="bg-[var(--color-panel)] border border-[var(--color-edge)] rounded-xl p-4 space-y-4">
@@ -41,7 +44,7 @@ export function ContextSidebar({ councilData, selectedTopics = [], onToggleTopic
             <div className="text-xs text-[var(--color-muted)] mb-1">Available sites</div>
             <ul className="max-h-28 overflow-y-auto text-sm text-[var(--color-muted)] list-disc pl-5">
               {councilData.spatialData.allocations.slice(0, 10).map((s) => (
-                <li key={s.id}>{s.id}</li>
+                <li key={s.id}>{s.name || humanizeId(s.id)}</li>
               ))}
             </ul>
           </div>
