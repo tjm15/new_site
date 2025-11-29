@@ -70,7 +70,7 @@ export function useStageInsights(plan: Plan | undefined, stageId: PlanStageId | 
         const prompt = [
           'You are a UK planning inspector reviewing a Local Plan under the CULP system.',
           'Return JSON only with fields: { "cards": [ { "title": string, "status": "R"|"A"|"G", "reason": string } ] }',
-          'Provide detailed reasoning inside each card. Omit any summary field to avoid duplication.',
+          'Each card reason should be 1–3 sentences. Do not include any summary field.',
           'Prioritise the top ~3 risks/issues across the whole plan. No extra text.',
           `Stage: ${stageMeta.label}`,
           `Plan: ${trimmedPlan.title} (${trimmedPlan.area})`,
@@ -78,7 +78,7 @@ export function useStageInsights(plan: Plan | undefined, stageId: PlanStageId | 
         ].join('\n')
         const raw = await callLLM(prompt)
         const parsed = extractJsonObject(raw)
-        const summary = parsed ? (typeof parsed.summary === 'string' ? parsed.summary : '') : (raw || 'Inspector analysis unavailable.')
+        const summary = ''
         const actions = stageMeta.actionsRecommended?.map(a => a.label) || []
         const risks: string[] = []
         const cards = Array.isArray(parsed?.cards) ? parsed.cards : undefined

@@ -15,9 +15,6 @@ export function normalizeLLMText(input: string): string {
   // Minimal, non-destructive cleanup.
   text = text.replace(/\r\n/g, '\n');
 
-  // Render HTML breaks as real newlines for Markdown parsing.
-  text = text.replace(/<br\s*\/?>/gi, '\n');
-
   // If LLM emitted double pipes as separators, break them onto new lines to avoid inline noise.
   text = text.replace(/\|\|/g, '\n');
 
@@ -30,6 +27,24 @@ export function normalizeLLMText(input: string): string {
   // Ensure there's a space after bold spans when text is jammed (e.g., "**Title**Next").
   text = text.replace(/(\*\*[^*]+\*\*)(?=\S)/g, '$1 ');
 
+  // Insert a blank line before table rows so GFM tables parse after preceding text.
+  text = addTablePadding(text);
+
+  // Break out bullet markers that are jammed against prior text (but leave table rows alone).
+  text = text.replace(/([^\n])([*-])(\s+)/g, (match, prevChar, bullet, spaces, offset, str) => {
+    const lineStart = str.lastIndexOf('\n', offset) + 1;
+    const lineEnd = str.indexOf('\n', offset);
+    const line = str.slice(lineStart, lineEnd === -1 ? str.length : lineEnd);
+    if (line.trim().startsWith('|')) return match;
+
+    const prevNonSpace = str.slice(0, offset + 1).trimEnd().slice(-1);
+    const nextNonSpaceMatch = str.slice(offset + match.length).match(/\S/);
+    const nextNonSpace = nextNonSpaceMatch ? nextNonSpaceMatch[0] : '';
+    if (prevNonSpace && /\d/.test(prevNonSpace) && /\d/.test(nextNonSpace)) return match;
+
+    return `${prevChar}\n${bullet}${spaces}`;
+  });
+
   // Lightly tidy excess blank lines.
   text = text.replace(/\n{3,}/g, '\n\n');
 
@@ -40,10 +55,24 @@ export function normalizeLLMText(input: string): string {
 // Minimal prep for assistant answers to ensure markdown renders (unescape newlines, strip outer fences).
 export function prepareAssistantMarkdown(raw: string): string {
   if (!raw) return '';
-  let s = String(raw).trim();
-  s = s.replace(/^```[a-zA-Z0-9]*\s*\n?/, '');
-  s = s.replace(/```$/, '');
-  s = s.replace(/\\n/g, '\n');
-  s = s.replace(/<br\s*\/?>/gi, '\n');
-  return s.trim();
+  const unescaped = String(raw).replace(/\\n/g, '\n');
+  return normalizeLLMText(unescaped);
+}
+
+function addTablePadding(markdown: string): string {
+  const lines = markdown.split('\n');
+  const out: string[] = [];
+  const isTableLine = (line: string) => /^\s*\|.*\|/.test(line.trim());
+
+  lines.forEach(line => {
+    const prev = out[out.length - 1];
+    if (isTableLine(line)) {
+      const prevBlank = prev === undefined || prev.trim() === '';
+      const prevTable = prev !== undefined && isTableLine(prev);
+      if (!prevBlank && !prevTable) out.push('');
+    }
+    out.push(line);
+  });
+
+  return out.join('\n');
 }

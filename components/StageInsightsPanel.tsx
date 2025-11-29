@@ -32,16 +32,16 @@ export const StageInsightsPanel: React.FC<StageInsightsPanelProps> = ({ plan, st
 
       {insights?.cards?.length ? (
         <div className="grid grid-cols-1 gap-2 mt-3">
-          {insights.cards.slice(0, 3).map((card, idx) => (
-            <div key={idx} className="flex items-start justify-between border border-[var(--color-edge)] rounded p-2 bg-[var(--color-surface)]">
-              <div className="pr-2">
-                <div className="text-sm font-semibold text-[var(--color-ink)]">{card.title}</div>
-                {card.reason && <div className="text-xs text-[var(--color-muted)] leading-snug">{card.reason}</div>}
-              </div>
-              <span
-                className={`px-2 py-1 text-[11px] rounded-full border ${
-                  card.status === 'G' ? 'bg-green-100 text-green-800 border-green-200'
-                  : card.status === 'A' ? 'bg-amber-100 text-amber-800 border-amber-200'
+            {insights.cards.slice(0, 3).map((card, idx) => (
+              <div key={idx} className="flex items-start justify-between border border-[var(--color-edge)] rounded p-2 bg-[var(--color-surface)]">
+                <div className="pr-2">
+                  <div className="text-sm font-semibold text-[var(--color-ink)]">{card.title}</div>
+                  {card.reason && <div className="text-xs text-[var(--color-muted)] leading-snug">{card.reason}</div>}
+                </div>
+                <span
+                  className={`px-2 py-1 text-[11px] rounded-full border ${
+                    card.status === 'G' ? 'bg-green-100 text-green-800 border-green-200'
+                    : card.status === 'A' ? 'bg-amber-100 text-amber-800 border-amber-200'
                   : 'bg-red-100 text-red-800 border-red-200'
                 }`}
               >
@@ -52,10 +52,6 @@ export const StageInsightsPanel: React.FC<StageInsightsPanelProps> = ({ plan, st
         </div>
       ) : (
         <div className="text-xs text-[var(--color-muted)] mt-3">Inspector analysis unavailable.</div>
-      )}
-
-      {insights?.summary && (
-        <p className="text-sm text-[var(--color-ink)] mt-3 leading-relaxed">{insights.summary}</p>
       )}
 
       {showQA && (

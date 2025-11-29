@@ -20,12 +20,10 @@ import { getGeoLayerSet } from '../../../data/geojsonLayers';
 import { StructuredMarkdown } from '../../../components/StructuredMarkdown';
 import { MapLibreFrame } from '../../../components/MapLibreFrame';
 import { callLLM } from '../../../utils/llmClient';
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
-import rehypeRaw from 'rehype-raw';
 import { prepareAssistantMarkdown } from '../../../utils/markdown';
 import { STAGES as STAGE_MODEL } from '../../../data/stageMeta';
 import { PlanTimelineHorizontal } from '../../../components/PlanTimelineHorizontal';
+import { MarkdownContent } from '../../../components/MarkdownContent';
 
 interface SpatialPlanDemoProps {
   councilData: CouncilData;
@@ -687,9 +685,7 @@ const AnswerModal: React.FC<{
         </div>
         <div className="p-4 overflow-auto max-h-[70vh]">
           {markdown ? (
-            <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeRaw]}>
-              {markdown}
-            </ReactMarkdown>
+            <MarkdownContent content={markdown} />
           ) : (
             <div className="text-sm text-[var(--color-muted)]">No answer yet.</div>
           )}
