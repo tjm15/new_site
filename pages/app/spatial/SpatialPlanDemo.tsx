@@ -90,10 +90,10 @@ Plan: ${activePlan.title}
 Known outcomes: ${(activePlan.visionStatements || []).map(v=>v.text).join('; ') || 'None yet'}
 Sites scored: ${activePlan.sites?.length || 0}
 `;
-      const datasets = await callLLM(`List the top 8 datasets (with source suggestions) this authority should include in its Local Plan baseline. Return as markdown bullets.`);
-      const trends = await callLLM(`Given this planning authority context, draft bullet trends and issues by topic (housing, economy, transport, environment, infrastructure). Keep concise.\nContext:\n${ctx}`);
-      const swot = await callLLM(`Create a SWOT / key challenges list grounded in constraints and opportunities. Return as markdown list with four sections.`);
-      const narrative = await callLLM(`Draft a short baseline narrative (200-250 words) for this authority.\nContext:\n${ctx}`);
+      const datasets = await callLLM({ mode: 'markdown', prompt: `List the top 8 datasets (with source suggestions) this authority should include in its Local Plan baseline. Return as markdown bullets.` });
+      const trends = await callLLM({ mode: 'markdown', prompt: `Given this planning authority context, draft bullet trends and issues by topic (housing, economy, transport, environment, infrastructure). Keep concise.\nContext:\n${ctx}` });
+      const swot = await callLLM({ mode: 'markdown', prompt: `Create a SWOT / key challenges list grounded in constraints and opportunities. Return as markdown list with four sections.` });
+      const narrative = await callLLM({ mode: 'markdown', prompt: `Draft a short baseline narrative (200-250 words) for this authority.\nContext:\n${ctx}` });
       setBaselineState({
         datasets,
         trends,
@@ -258,7 +258,7 @@ Sites scored: ${activePlan.sites?.length || 0}
       `Assistant:`
     ].join('\n');
     try {
-      const replyRaw = await callLLM(prompt);
+      const replyRaw = await callLLM({ mode: 'markdown', prompt });
       const reply = replyRaw || '(no response)';
       const newHistory = [...history, { role: 'user', text: question }, { role: 'assistant', text: reply }];
       setChatHistoryByPlan(prev => ({ ...prev, [activePlan.id]: newHistory }));

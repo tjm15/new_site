@@ -11,7 +11,7 @@ app.use(express.json({ limit: '1mb' }))
 
 app.post('/api/llm', async (req, res) => {
   try {
-    const { prompt } = req.body || {}
+    const { prompt, mode } = req.body || {}
     if (!prompt) return res.status(400).json({ error: 'Missing prompt' })
 
     const host = process.env.OLLAMA_HOST || process.env.VITE_OLLAMA_HOST || 'http://localhost:11434'

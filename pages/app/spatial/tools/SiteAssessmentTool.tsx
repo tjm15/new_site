@@ -37,13 +37,13 @@ export const SiteAssessmentTool: React.FC<SiteAssessmentToolProps> = ({ councilD
     try {
       const site = councilData.spatialData.allocations.find(s => s.id === siteId);
       if (site) {
-        const prompt = prompts.siteAppraisalPrompt(site);
-        let acc = ''
-        try {
-          for await (const chunk of callLLMStream(prompt)) {
-            acc += chunk
-            setAppraisal(acc)
-          }
+          const prompt = prompts.siteAppraisalPrompt(site);
+          let acc = ''
+          try {
+            for await (const chunk of callLLMStream({ mode: 'markdown', prompt })) {
+              acc += chunk
+              setAppraisal(acc)
+            }
         } catch (e) {
           console.warn('Site appraisal stream failed', e)
           acc = ''

@@ -3,6 +3,15 @@ import maplibregl, { type LngLatBoundsLike, type Map } from 'maplibre-gl'
 import 'maplibre-gl/dist/maplibre-gl.css'
 import type { GeoLayerSet } from '../data/geojsonLayers'
 
+// Use the external CSP-safe worker instead of the inline Blob worker to avoid missing
+// helpers (e.g., __publicField) in the worker bundle when built via Vite/esbuild.
+const workerUrl = new URL('maplibre-gl/dist/maplibre-gl-csp-worker.js', import.meta.url).toString()
+if (typeof (maplibregl as any).setWorkerUrl === 'function') {
+  ;(maplibregl as any).setWorkerUrl(workerUrl)
+} else {
+  ;(maplibregl as any).workerUrl = workerUrl
+}
+
 type MapLibreFrameProps = {
   layers: GeoLayerSet
   height?: number
@@ -14,6 +23,7 @@ export function MapLibreFrame({ layers, height = 360, selectedAllocationId, onSe
   const containerRef = useRef<HTMLDivElement | null>(null)
   const mapRef = useRef<Map | null>(null)
   const isLoadedRef = useRef(false)
+  const allocationEventsBoundRef = useRef(false)
 
   const bounds: LngLatBoundsLike | undefined = useMemo(() => {
     if (!layers.outline?.features?.length) return undefined
@@ -48,28 +58,65 @@ export function MapLibreFrame({ layers, height = 360, selectedAllocationId, onSe
     if (!containerRef.current || mapRef.current) return
     const map = new maplibregl.Map({
       container: containerRef.current,
+      // Keep the base style minimal so the map loads even if external tiles fail.
       style: {
         version: 8,
         name: 'Planning demo',
         glyphs: 'https://demotiles.maplibre.org/font/{fontstack}/{range}.pbf',
-        sources: {
-          'osm': {
+        sources: {},
+        layers: [
+          { id: 'background', type: 'background', paint: { 'background-color': '#eef2f7' } },
+        ]
+      },
+      attributionControl: false,
+      dragRotate: false,
+      pitchWithRotate: false,
+      bounds,
+      fitBoundsOptions: { padding: 20 }
+    })
+
+    const ensureLayers = () => {
+      if (!map.isStyleLoaded()) return
+      isLoadedRef.current = true
+
+      // Base map (non-blocking; skip if it already exists)
+      if (!map.getSource('osm')) {
+        try {
+          map.addSource('osm', {
             type: 'raster',
             tiles: ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],
             tileSize: 256,
             attribution: '© OpenStreetMap contributors'
-          },
-          'outline': { type: 'geojson', data: layers.outline },
-          ...(layers.constraints ? { 'constraints': { type: 'geojson', data: layers.constraints } } : {}),
-          ...(layers.allocations ? { 'allocations': { type: 'geojson', data: layers.allocations } } : {}),
-          ...(layers.centres ? { 'centres': { type: 'geojson', data: layers.centres } } : {})
-        },
-        layers: [
-          { id: 'background', type: 'background', paint: { 'background-color': '#eef2f7' } },
-          { id: 'osm-tiles', type: 'raster', source: 'osm', minzoom: 0, maxzoom: 19 },
-          { id: 'outline-fill', type: 'fill', source: 'outline', paint: { 'fill-color': '#e2e8f0', 'fill-outline-color': '#475569', 'fill-opacity': 0.75 } },
-          { id: 'outline-line', type: 'line', source: 'outline', paint: { 'line-color': '#475569', 'line-width': 2 } },
-          ...(layers.constraints ? [{
+          })
+          map.addLayer({ id: 'osm-tiles', type: 'raster', source: 'osm', minzoom: 0, maxzoom: 19 })
+        } catch (e) {
+          console.warn('OSM raster failed to load; continuing with plain background', e)
+        }
+      }
+
+      const upsertGeoSource = (id: string, data?: any) => {
+        if (!data) return
+        const src = map.getSource(id) as any
+        if (src?.setData) {
+          src.setData(data)
+        } else if (!src) {
+          map.addSource(id, { type: 'geojson', data })
+        }
+      }
+
+      upsertGeoSource('outline', layers.outline)
+      upsertGeoSource('constraints', layers.constraints)
+      upsertGeoSource('allocations', layers.allocations)
+      upsertGeoSource('centres', layers.centres)
+
+      if (layers.outline) {
+        if (!map.getLayer('outline-fill')) map.addLayer({ id: 'outline-fill', type: 'fill', source: 'outline', paint: { 'fill-color': '#e2e8f0', 'fill-outline-color': '#475569', 'fill-opacity': 0.75 } })
+        if (!map.getLayer('outline-line')) map.addLayer({ id: 'outline-line', type: 'line', source: 'outline', paint: { 'line-color': '#475569', 'line-width': 2 } })
+      }
+
+      if (layers.constraints) {
+        if (!map.getLayer('constraints-fill')) {
+          map.addLayer({
             id: 'constraints-fill',
             type: 'fill',
             source: 'constraints',
@@ -78,46 +125,65 @@ export function MapLibreFrame({ layers, height = 360, selectedAllocationId, onSe
               'fill-opacity': 0.22,
               'fill-outline-color': '#ef4444'
             }
-          } as const] : []),
-          ...(layers.allocations ? [
-            { id: 'allocations-fill', type: 'fill', source: 'allocations', paint: { 'fill-color': '#22c55e', 'fill-opacity': 0.35 } },
-            { id: 'allocations-outline', type: 'line', source: 'allocations', paint: { 'line-color': '#15803d', 'line-width': 2 } }
-          ] : []),
-          ...(layers.centres ? [
-            { id: 'centres-circle', type: 'circle', source: 'centres', paint: { 'circle-color': '#2563eb', 'circle-radius': 7, 'circle-opacity': 0.9, 'circle-stroke-color': '#1d4ed8', 'circle-stroke-width': 1 } },
-            { id: 'centres-label', type: 'symbol', source: 'centres', layout: { 'text-field': ['get', 'name'], 'text-size': 12, 'text-offset': [0, 1.2], 'text-anchor': 'top' }, paint: { 'text-color': '#0f172a', 'text-halo-color': '#e2e8f0', 'text-halo-width': 1 } }
-          ] : [])
-        ]
-      },
-      attributionControl: false,
-      dragRotate: false,
-      pitchWithRotate: false,
-    })
+          })
+        }
+      }
+
+      if (layers.allocations) {
+        if (!map.getLayer('allocations-fill')) map.addLayer({ id: 'allocations-fill', type: 'fill', source: 'allocations', paint: { 'fill-color': '#22c55e', 'fill-opacity': 0.35 } })
+        if (!map.getLayer('allocations-outline')) map.addLayer({ id: 'allocations-outline', type: 'line', source: 'allocations', paint: { 'line-color': '#15803d', 'line-width': 2 } })
+
+        if (onSelectAllocation && !allocationEventsBoundRef.current && map.getLayer('allocations-fill')) {
+          map.on('click', 'allocations-fill', (e) => {
+            const feature = e.features?.[0]
+            const id = feature?.properties?.id as string | undefined
+            if (id) onSelectAllocation(id)
+          })
+          map.on('mouseenter', 'allocations-fill', () => { map.getCanvas().style.cursor = 'pointer' })
+          map.on('mouseleave', 'allocations-fill', () => { map.getCanvas().style.cursor = '' })
+          allocationEventsBoundRef.current = true
+        }
+      }
+
+      if (layers.centres) {
+        if (!map.getLayer('centres-circle')) map.addLayer({ id: 'centres-circle', type: 'circle', source: 'centres', paint: { 'circle-color': '#2563eb', 'circle-radius': 7, 'circle-opacity': 0.9, 'circle-stroke-color': '#1d4ed8', 'circle-stroke-width': 1 } })
+        if (!map.getLayer('centres-label')) map.addLayer({ id: 'centres-label', type: 'symbol', source: 'centres', layout: { 'text-field': ['get', 'name'], 'text-size': 12, 'text-offset': [0, 1.2], 'text-anchor': 'top' }, paint: { 'text-color': '#0f172a', 'text-halo-color': '#e2e8f0', 'text-halo-width': 1 } })
+      }
+    }
 
     mapRef.current = map
-    map.on('load', () => {
-      isLoadedRef.current = true
-    })
-    if (bounds) {
-      map.fitBounds(bounds, { padding: 20, duration: 0 })
+
+    const handleLoad = () => {
+      ensureLayers()
+      // Expose for quick console debugging in devtools
+      if (import.meta.env.DEV) {
+        (window as any).__planningMap = map
+      }
     }
 
-    if (layers.allocations && onSelectAllocation) {
-      map.on('click', 'allocations-fill', (e) => {
-        const feature = e.features?.[0]
-        const id = feature?.properties?.id as string | undefined
-        if (id) onSelectAllocation(id)
-      })
-      map.on('mouseenter', 'allocations-fill', () => { map.getCanvas().style.cursor = 'pointer' })
-      map.on('mouseleave', 'allocations-fill', () => { map.getCanvas().style.cursor = '' })
-    }
+    map.on('load', handleLoad)
+    map.on('styledata', ensureLayers)
+    map.on('error', (e) => console.warn('MapLibre error', e?.error || e))
 
     return () => {
       map.remove()
       mapRef.current = null
       isLoadedRef.current = false
+      allocationEventsBoundRef.current = false
     }
   }, [bounds, layers, onSelectAllocation])
+
+  // Re-fit when the outline bounds change (e.g., switching council)
+  useEffect(() => {
+    const map = mapRef.current
+    if (!map || !bounds) return
+    const fit = () => map.fitBounds(bounds, { padding: 20, duration: 0 })
+    if (map.isStyleLoaded() || isLoadedRef.current) {
+      fit()
+    } else {
+      map.once('load', fit)
+    }
+  }, [bounds])
 
   // Highlight the active allocation when it changes
   useEffect(() => {
@@ -139,10 +205,12 @@ export function MapLibreFrame({ layers, height = 360, selectedAllocationId, onSe
         ])
       }
     }
-    if (map && isLoadedRef.current) {
-      updateHighlight()
-    } else if (map) {
-      map.once('load', updateHighlight)
+    if (map) {
+      if (map.isStyleLoaded() || isLoadedRef.current) {
+        updateHighlight()
+      } else {
+        map.once('load', updateHighlight)
+      }
     }
   }, [selectedAllocationId])
 
@@ -156,10 +224,12 @@ export function MapLibreFrame({ layers, height = 360, selectedAllocationId, onSe
       if (layers.allocations && map.getSource('allocations')) (map.getSource('allocations') as any).setData(layers.allocations)
       if (layers.centres && map.getSource('centres')) (map.getSource('centres') as any).setData(layers.centres)
     }
-    if (map && isLoadedRef.current) {
-      applyData()
-    } else if (map) {
-      map.once('load', applyData)
+    if (map) {
+      if (map.isStyleLoaded() || isLoadedRef.current) {
+        applyData()
+      } else {
+        map.once('load', applyData)
+      }
     }
   }, [layers])
 

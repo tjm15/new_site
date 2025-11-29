@@ -21,9 +21,9 @@ app.use(bodyParser.json({ limit: '1mb' }))
 
 app.post('/api/llm', async (req, res) => {
   try {
-    const { prompt } = req.body || {}
+    const { prompt, mode } = req.body || {}
     if (!prompt) return res.status(400).json({ error: 'Missing prompt' })
-    const text = await callLLM(typeof prompt === 'string' ? prompt : JSON.stringify(prompt))
+    const text = await callLLM(typeof prompt === 'string' ? { mode, prompt } : { mode, prompt: JSON.stringify(prompt) })
     res.json({ text })
   } catch (e: any) {
     console.error('LLM proxy error:', e)

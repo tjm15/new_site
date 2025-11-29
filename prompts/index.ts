@@ -60,10 +60,24 @@ Capacity: ${site.capacity} units
 Proposed Use: ${site.proposedUse}
 Timeframe: ${site.timeframe}
 
-Output Structure:
-1. **Strategic Fit**: How it meets planning objectives
-2. **Key Constraints**: Likely issues (heritage, flood, transport, etc.)
-3. **Opportunities**: Potential for improvement (permeability, greening, etc.)
+Structure:
+## Site Appraisal
+
+### Strategic Fit
+- how it meets planning objectives
+- transport-connected benefits (if any)
+
+### Key Constraints
+- heritage/listed building risk (if any)
+- flood and water management
+- transport & access
+- planning conditions / policy constraints
+
+### Opportunities
+- permeability & connectivity
+- greening & sustainability
+- mixed-use integration / employment
+- digital / smart city features
 `,
 
     visionPrompt: (area: string) => `

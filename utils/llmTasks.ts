@@ -32,7 +32,7 @@ export async function runLLMTask<TOutput = any>(
   } catch (e) {
     prompt = `[${promptId}]\nInput:\n${JSON.stringify(input)}`
   }
-  const text = await callLLM(prompt)
+  const text = await callLLM({ mode: 'json', prompt })
   try {
     return JSON.parse(text) as TOutput
   } catch {
