@@ -21,7 +21,7 @@ export const DevManagementDemo: React.FC<DevManagementDemoProps> = ({ councilDat
   const [contextAnalysis, setContextAnalysis] = useState('');
   const [reasoningChain, setReasoningChain] = useState<any[]>([]);
 
-  const prompts = getPrompts(councilData.id, 'development');
+  const prompts = getPrompts(councilData.id, 'development', councilData.name);
 
   const handleSelectApplication = (app: PlanningApplication) => {
     setSelectedApplication(app);

@@ -108,3 +108,97 @@ export interface CouncilData {
   applications: PlanningApplication[];
   strategies?: Strategy[];
 }
+
+// New Local Plan system types
+export type PlanSystemType = 'legacy' | 'new'
+
+export type PlanStageId =
+  | 'PREP'
+  | 'GATEWAY_1'
+  | 'BASELINING'
+  | 'CONSULTATION_1'
+  | 'GATEWAY_2'
+  | 'CONSULTATION_2'
+  | 'GATEWAY_3'
+  | 'SUBMISSION'
+  | 'ADOPTION'
+
+export interface PlanStage {
+  id: PlanStageId
+  title: string
+  targetDate?: string // ISO date
+  status?: 'not-started' | 'active' | 'completed'
+}
+
+export interface PlanTimetable {
+  noticeToCommenceDate?: string // ISO date
+  milestones: Array<{
+    stageId: PlanStageId
+    date: string // ISO date
+  }>
+}
+
+export interface VisionOutcome {
+  id: string
+  text: string
+  metric?: string
+  linkedPolicies?: string[]
+  linkedSites?: string[]
+}
+
+export interface SiteCandidate {
+  id: string
+  name: string
+  location?: string
+  suitability?: 'R' | 'A' | 'G'
+  availability?: 'R' | 'A' | 'G'
+  achievability?: 'R' | 'A' | 'G'
+  notes?: string
+}
+
+export interface ReadinessAreaResult {
+  id: string
+  rag: 'red' | 'amber' | 'green'
+  summary?: string
+  actions?: string[]
+}
+
+export interface ReadinessAssessment {
+  areas: ReadinessAreaResult[]
+  assessedAt?: string
+  overallStatus?: 'red' | 'amber' | 'green'
+  overallComment?: string
+}
+
+export interface Plan {
+  id: string
+  title: string
+  area: string
+  councilId?: CouncilId
+  systemType: PlanSystemType
+  stages: PlanStage[]
+  timetable: PlanTimetable
+  visionStatements: VisionOutcome[]
+  sites: SiteCandidate[]
+  // Deprecated: use planStage
+  currentStage?: PlanStageId
+  // Primary workflow field
+  planStage?: PlanStageId
+  gateway1SummaryText?: string
+  readinessAssessment?: ReadinessAssessment
+  gateway1PublishedAt?: string
+  // SEA / HRA baseline and scoping data
+  seaHra?: {
+    seaScopingStatus?: 'Not started' | 'Drafted' | 'Consulted'
+    seaScopingNotes?: string
+    hraBaselineSummary?: string
+  }
+  // Statement of community involvement / engagement capture
+  sci?: {
+    hasStrategy?: boolean
+    keyStakeholders?: string[]
+    methods?: string[]
+    timelineNote?: string
+  }
+}
+}

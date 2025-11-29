@@ -14,28 +14,30 @@ export interface PromptFunctions {
   reportPrompt: (application: any, allData: any) => string;
 }
 
-export function getPrompts(councilId: string, mode: 'spatial' | 'development'): PromptFunctions {
+export function getPrompts(councilId: string, mode: 'spatial' | 'development', councilName?: string): PromptFunctions {
+  const authority = councilName || councilId;
   return {
     evidencePrompt: (query: string, selectedTopics?: string[]) => `
-You are an expert planning policy officer.
+You are an expert planning policy officer for ${authority}.
 
 User Question: "${query}"
 ${selectedTopics && selectedTopics.length > 0 ? `Focus on topics: ${selectedTopics.join(', ')}` : ''}
 
-Answer the question with evidence from local planning data and policy context.
-Keep it concise (max 250 words).
-Use clear, professional planning language.
+Answer using local context for ${authority}. Do not ask what authority it is; assume ${authority} and stay specific.
+Keep it concise. Use clear, professional planning language.
 `,
 
     policyDraftPrompt: (topic: string, brief: string) => `
-Act as a senior planning policy officer.
-Draft a new policy or supporting text related to: ${topic}.
+Act as a senior planning policy officer at ${authority}.
+Draft a new policy or supporting text specifically for ${authority} related to: ${topic}.
 User specific focus: "${brief || "General update based on best practice"}"
+
+Ground the policy in ${authority}'s context (do not invent another authority), using locally relevant tone and framing.
 
 Output format:
 1. Policy Title
 2. Policy Text (formal planning language)
-3. Short justification (max 100 words)
+3. Short justification
 `,
 
     strategyPrompt: (strategyName: string, strategyDesc: string) => `
@@ -43,7 +45,7 @@ Act as a strategic planner. Evaluate the following spatial strategy.
 Strategy Name: ${strategyName}
 Description: ${strategyDesc}
 
-Provide a 300-word analysis covering:
+Provide an analysis covering:
 1. Likely housing delivery effectiveness
 2. Sustainability implications (transport/climate)
 3. Key risks and trade-offs
@@ -58,7 +60,7 @@ Capacity: ${site.capacity} units
 Proposed Use: ${site.proposedUse}
 Timeframe: ${site.timeframe}
 
-Output Structure (max 250 words):
+Output Structure:
 1. **Strategic Fit**: How it meets planning objectives
 2. **Key Constraints**: Likely issues (heritage, flood, transport, etc.)
 3. **Opportunities**: Potential for improvement (permeability, greening, etc.)
@@ -67,7 +69,7 @@ Output Structure (max 250 words):
     visionPrompt: (area: string) => `
 Write a 'Place Vision' for ${area} in 2040 based on sustainable planning principles.
 
-Style: Inspiring, forward-looking, but grounded in planning policy. Max 150 words.
+Style: Inspiring, forward-looking, but grounded in planning policy.
 Include references to sustainable transport, climate action, and community.
 `,
 
@@ -127,7 +129,7 @@ Generate a context analysis covering:
 2. Policy Cross-References (which policies apply and why)
 3. Comparable Cases (similar applications and their outcomes)
 
-Format as structured text (max 400 words).
+Format as structured text.
 `,
 
     reasoningPrompt: (application: any, contextData: any) => `
@@ -176,7 +178,6 @@ Generate a formal planning officer report with the following sections:
 8. CONDITIONS/REASONS (if applicable)
 
 Use formal planning language. Cite policies using square brackets [Policy X].
-Max 1500 words.
 `
   };
 }

@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CouncilData } from '../../../../data/types';
 import { PromptFunctions } from '../../../../prompts';
-import { callGemini } from '../../../../utils/gemini';
+import { callLLMStreamWithReasoning } from '../../../../utils/llmClient';
 import { LoadingSpinner } from '../../shared/LoadingSpinner';
 import { Chip } from '../../shared/Chip';
 import { MarkdownContent } from '../../../../components/MarkdownContent';
@@ -13,19 +13,23 @@ interface EvidenceToolProps {
   prompts: PromptFunctions;
   initialQuery?: string;
   initialTopics?: string[];
-  initialCards?: { title: string; content: string; question?: string }[];
+  initialCards?: { id?: string; title: string; content: string; question?: string; reasoning?: string }[];
   autoRun?: boolean;
   selectedTopicsOverride?: string[];
   onToggleTopicOverride?: (id: string) => void;
-  onSessionChange?: (session: { query: string; selectedTopics: string[]; cards: { title: string; content: string; question?: string }[] }) => void;
+  onSessionChange?: (session: { query: string; selectedTopics: string[]; cards: { title: string; content: string; question?: string; reasoning?: string }[] }) => void;
 }
+
+type EvidenceCard = { id: string; title: string; content: string; question?: string; reasoning?: string };
 
 export const EvidenceTool: React.FC<EvidenceToolProps> = ({ councilData, prompts, initialQuery, initialTopics, initialCards, autoRun, selectedTopicsOverride, onToggleTopicOverride, onSessionChange }) => {
   const [query, setQuery] = useState('');
   const [selectedTopics, setSelectedTopics] = useState<string[]>([]);
-  const [cards, setCards] = useState<{ title: string; content: string; question?: string }[]>([]);
+  const [cards, setCards] = useState<EvidenceCard[]>([]);
   const [loading, setLoading] = useState(false);
   const hasInitialized = React.useRef(false);
+  const [showReasoning, setShowReasoning] = useState<Record<string, boolean>>({});
+  const nextId = React.useRef(0);
 
   const toggleTopic = (topicId: string) => {
     setSelectedTopics(prev =>
@@ -36,13 +40,24 @@ export const EvidenceTool: React.FC<EvidenceToolProps> = ({ councilData, prompts
   };
 
   const runPreset = async (title: string, question: string, topics: string[]) => {
+    const cardId = `card_${Date.now()}_${nextId.current++}`;
     setLoading(true);
+    const prompt = prompts.evidencePrompt(question, topics);
+    // Add a placeholder card we will update as chunks arrive
+    setCards(prev => [{ id: cardId, title, content: 'Generating...', question }, ...prev]);
+    let acc = '';
+    let reasoning = '';
     try {
-      const prompt = prompts.evidencePrompt(question, topics);
-      const result = await callGemini(prompt);
-      setCards(prev => [{ title, content: result || 'No response generated.', question }, ...prev]);
+      for await (const chunk of callLLMStreamWithReasoning(prompt)) {
+        if (chunk.type === 'response') {
+          acc += chunk.text;
+        } else if (chunk.type === 'reasoning') {
+          reasoning += (reasoning ? '\n' : '') + chunk.text;
+        }
+        setCards(prev => prev.map(c => c.id === cardId ? { ...c, content: acc || 'Generating...', reasoning } : c));
+      }
     } catch (error) {
-      setCards(prev => [{ title, content: 'Error generating response. Please try again.', question }, ...prev]);
+      setCards(prev => [{ id: cardId, title, content: 'Error generating response. Please try again.', question }, ...prev.filter(c => c.id !== cardId)])
     } finally {
       setLoading(false);
     }
@@ -54,7 +69,7 @@ export const EvidenceTool: React.FC<EvidenceToolProps> = ({ councilData, prompts
 
     // Restore session cards if provided
     if (initialCards && initialCards.length > 0) {
-      setCards(initialCards);
+      setCards(initialCards.map((c, idx) => ({ id: c.id || `init_${idx}_${Date.now()}`, ...c })));
     }
     if (selectedTopicsOverride && !onToggleTopicOverride) {
       setSelectedTopics(selectedTopicsOverride);
@@ -72,14 +87,16 @@ export const EvidenceTool: React.FC<EvidenceToolProps> = ({ councilData, prompts
     // If we restored cards, skip default auto queries
     if (initialCards && initialCards.length > 0) return;
 
-    // Otherwise run the default 3 auto-queries once
-    const housingTopics = councilData.topics.filter(t => t.id.includes('housing')).map(t => t.id);
-    const transportTopics = councilData.topics.filter(t => t.id.includes('transport')).map(t => t.id);
-    const environmentTopics = councilData.topics.filter(t => t.id.includes('environment') || t.id.includes('climate')).map(t => t.id);
+    // Only auto-run defaults when explicitly requested to avoid excessive LLM calls.
+    if (autoRun) {
+      const housingTopics = councilData.topics.filter(t => t.id.includes('housing')).map(t => t.id);
+      const transportTopics = councilData.topics.filter(t => t.id.includes('transport')).map(t => t.id);
+      const environmentTopics = councilData.topics.filter(t => t.id.includes('environment') || t.id.includes('climate')).map(t => t.id);
 
-    runPreset('Housing Need & Delivery', 'Summarise housing pressures, delivery targets and affordability for this LPA.', housingTopics);
-    runPreset('Spatial Distribution of Growth', 'Describe how growth is distributed across places and centres.', transportTopics);
-    runPreset('Environmental Constraints', 'Outline key environmental constraints affecting development.', environmentTopics);
+      runPreset('Housing Need & Delivery', 'Summarise housing pressures, delivery targets and affordability for this LPA.', housingTopics);
+      runPreset('Spatial Distribution of Growth', 'Describe how growth is distributed across places and centres.', transportTopics);
+      runPreset('Environmental Constraints', 'Outline key environmental constraints affecting development.', environmentTopics);
+    }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -169,11 +186,26 @@ export const EvidenceTool: React.FC<EvidenceToolProps> = ({ councilData, prompts
         )}
         {!loading && cards.length > 0 && (
           <div className="grid grid-cols-1 gap-4">
-            {cards.map((card, idx) => (
-              <motion.div key={idx} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="bg-[var(--color-panel)] border border-[var(--color-edge)] rounded-xl p-6">
+            {cards.map((card) => (
+              <motion.div key={card.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="bg-[var(--color-panel)] border border-[var(--color-edge)] rounded-xl p-6">
                 <h3 className="text-lg font-semibold text-[var(--color-ink)] mb-2">🗺️ {card.title}</h3>
                 {card.question && <p className="text-xs text-[var(--color-muted)] mb-3">Question used: {card.question}</p>}
                 <StructuredMarkdown content={card.content} />
+                {card.reasoning && card.reasoning.trim() && (
+                  <div className="mt-3">
+                    <button
+                      className="text-xs text-[var(--color-accent)] hover:underline"
+                      onClick={() => setShowReasoning(prev => ({ ...prev, [card.id]: !prev[card.id] }))}
+                    >
+                      {showReasoning[card.id] ? 'Hide reasoning' : 'Show reasoning'}
+                    </button>
+                    {showReasoning[card.id] && (
+                      <div className="mt-2 rounded border border-[var(--color-edge)] bg-[var(--color-surface)] p-3 text-xs text-[var(--color-muted)] whitespace-pre-wrap">
+                        {(card.reasoning || '').replace(/\s*\n\s*/g, ' ')}
+                      </div>
+                    )}
+                  </div>
+                )}
               </motion.div>
             ))}
           </div>

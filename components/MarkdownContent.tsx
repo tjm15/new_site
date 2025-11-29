@@ -1,6 +1,8 @@
 import React from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import rehypeRaw from 'rehype-raw';
+import { normalizeLLMText } from '../utils/markdown';
 
 interface MarkdownContentProps {
   content: string;
@@ -8,10 +10,13 @@ interface MarkdownContentProps {
 }
 
 export const MarkdownContent: React.FC<MarkdownContentProps> = ({ content, className = '' }) => {
+  const cleaned = normalizeLLMText(content || '');
   return (
     <div className={className}>
       <ReactMarkdown
         remarkPlugins={[remarkGfm]}
+        rehypePlugins={[rehypeRaw]}
+        skipHtml={false}
         components={{
         h1: ({node, ...props}) => <h1 className="text-2xl font-bold text-[var(--color-ink)] mb-4" {...props} />,
         h2: ({node, ...props}) => <h2 className="text-xl font-bold text-[var(--color-ink)] mb-3" {...props} />,
@@ -46,7 +51,7 @@ export const MarkdownContent: React.FC<MarkdownContentProps> = ({ content, class
         ),
       }}
       >
-        {content}
+        {cleaned}
       </ReactMarkdown>
     </div>
   );

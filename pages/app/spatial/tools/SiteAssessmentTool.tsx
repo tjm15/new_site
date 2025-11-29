@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CouncilData } from '../../../../data/types';
+import { usePlan } from '../../../../contexts/PlanContext';
+import { classifySite } from '../../../../utils/llmTasks';
 import { PromptFunctions } from '../../../../prompts';
-import { callGemini } from '../../../../utils/gemini';
+import { callLLMStream } from '../../../../utils/llmClient';
 import { LoadingSpinner } from '../../shared/LoadingSpinner';
 import { SpatialMap } from '../shared/SpatialMap';
 import { MarkdownContent } from '../../../../components/MarkdownContent';
@@ -23,6 +25,8 @@ export const SiteAssessmentTool: React.FC<SiteAssessmentToolProps> = ({ councilD
   const [appraisal, setAppraisal] = useState('');
   const [loading, setLoading] = useState(false);
   const [details, setDetails] = useState<{ constraints?: string[]; opportunities?: string[]; policies?: string[] } | null>(null);
+  const [rag, setRag] = useState<{ suitability?: 'R'|'A'|'G'; availability?: 'R'|'A'|'G'; achievability?: 'R'|'A'|'G'; overall?: 'R'|'A'|'G' } | null>(null);
+  const { activePlan, updatePlan } = usePlan();
 
   const assessSite = async (siteId: string) => {
     setSelectedSite(siteId);
@@ -32,13 +36,45 @@ export const SiteAssessmentTool: React.FC<SiteAssessmentToolProps> = ({ councilD
       const site = councilData.spatialData.allocations.find(s => s.id === siteId);
       if (site) {
         const prompt = prompts.siteAppraisalPrompt(site);
-        const result = await callGemini(prompt);
-        setAppraisal(result || 'No appraisal generated.');
+        let acc = ''
+        try {
+          for await (const chunk of callLLMStream(prompt)) {
+            acc += chunk
+            setAppraisal(acc)
+          }
+        } catch (e) {
+          console.warn('Site appraisal stream failed', e)
+          acc = ''
+        }
+        setAppraisal(acc || 'No appraisal generated.')
         // Derive simple structured details
         const constraints = councilData.spatialData.constraints.slice(0,3).map(c=>c.label);
         const opportunities = ['Brownfield regeneration', 'Transit proximity', 'Town centre vitality'];
         const policies = councilData.policies.filter(p=>p.topics.includes(site.category)).slice(0,3).map(p=>`${p.reference} ${p.title}`);
         setDetails({ constraints, opportunities, policies });
+        // AI RAG prefill
+        try {
+          const ai = await classifySite({ id: site.id, name: site.name }, activePlan as any);
+          const normalized = {
+            suitability: ai?.suitability?.rag?.toUpperCase?.() as 'R'|'A'|'G',
+            availability: ai?.availability?.rag?.toUpperCase?.() as 'R'|'A'|'G',
+            achievability: ai?.achievability?.rag?.toUpperCase?.() as 'R'|'A'|'G',
+            overall: ai?.overall?.rag?.toUpperCase?.() as 'R'|'A'|'G'
+          };
+          setRag(normalized);
+          if (activePlan && activePlan.councilId === councilData.id) {
+            const updatedSites = [...activePlan.sites];
+            const idx = updatedSites.findIndex(s => s.id === site.id);
+            if (idx >= 0) {
+              updatedSites[idx] = { ...updatedSites[idx], suitability: normalized.suitability, availability: normalized.availability, achievability: normalized.achievability };
+            } else {
+              updatedSites.push({ id: site.id, name: site.name, suitability: normalized.suitability, availability: normalized.availability, achievability: normalized.achievability });
+            }
+            updatePlan(activePlan.id, { sites: updatedSites });
+          }
+        } catch (e) {
+          console.warn('Site RAG classify failed', e);
+        }
       }
     } catch (error) {
       setAppraisal('Error generating appraisal. Please try again.');
@@ -171,6 +207,39 @@ export const SiteAssessmentTool: React.FC<SiteAssessmentToolProps> = ({ councilD
                   {details.policies?.map((c, idx) => (<li key={idx}>{c}</li>))}
                 </ul>
               </div>
+            </div>
+          )}
+          {/* RAG ratings */}
+          {rag && (
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-4">
+              {(['suitability','availability','achievability','overall'] as const).map(key => (
+                <div key={key} className="bg-[var(--color-panel)] border border-[var(--color-edge)] rounded-lg p-4">
+                  <div className="text-xs text-[var(--color-muted)] mb-1">{key.charAt(0).toUpperCase() + key.slice(1)}</div>
+                  <div className={`text-lg font-semibold ${rag[key] === 'G' ? 'text-green-600' : rag[key] === 'A' ? 'text-amber-600' : 'text-red-600'}`}>{rag[key]}</div>
+                  <div className="mt-2">
+                    <select
+                      value={rag[key]}
+                      onChange={(e)=>{
+                        const next = { ...rag, [key]: e.target.value as 'R'|'A'|'G' }
+                        setRag(next)
+                        if (activePlan && activePlan.councilId === councilData.id && selectedSite) {
+                          const updatedSites = [...activePlan.sites]
+                          const idx = updatedSites.findIndex(s => s.id === selectedSite)
+                          if (idx >= 0) {
+                            updatedSites[idx] = { ...updatedSites[idx], suitability: next.suitability, availability: next.availability, achievability: next.achievability }
+                          }
+                          updatePlan(activePlan.id, { sites: updatedSites })
+                        }
+                      }}
+                      className="border border-[var(--color-edge)] rounded p-1 text-sm"
+                    >
+                      <option value="G">G</option>
+                      <option value="A">A</option>
+                      <option value="R">R</option>
+                    </select>
+                  </div>
+                </div>
+              ))}
             </div>
           )}
         </motion.div>

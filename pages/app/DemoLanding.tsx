@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ModuleCard } from '../../components/ModuleCard';
 import { ArrowLeft } from 'lucide-react';
+import { usePlan } from '../../contexts/PlanContext';
+import { suggestTimetable } from '../../utils/llmTasks';
 
 interface DemoLandingProps {
   selectedCouncil: string | null;
@@ -59,6 +61,11 @@ const modes = [
 
 export function DemoLanding({ selectedCouncil, onSelectCouncil, onSelectMode, onBack }: DemoLandingProps) {
   const [stage, setStage] = useState<'council' | 'mode'>(selectedCouncil ? 'mode' : 'council');
+  const { activePlan, getActiveForCouncil, setActiveForCouncil, createPlan, updatePlan } = usePlan();
+  const [creating, setCreating] = useState(false);
+  const [title, setTitle] = useState('New Local Plan');
+  const [area, setArea] = useState('');
+  const [councilIdInput, setCouncilIdInput] = useState<string>(selectedCouncil || '');
 
   const handleCouncilSelect = (councilId: string) => {
     onSelectCouncil(councilId);
@@ -75,8 +82,8 @@ export function DemoLanding({ selectedCouncil, onSelectCouncil, onSelectMode, on
   const selectedCouncilData = councils.find(c => c.id === selectedCouncil);
 
   return (
-    <div className="min-h-screen bg-[var(--color-surface)] py-12 px-6">
-      <div className="max-w-7xl mx-auto">
+    <div className="h-screen bg-[var(--color-surface)] flex flex-col">
+      <div className="max-w-7xl mx-auto w-full px-6 py-4 flex-1 overflow-auto">
         {/* Breadcrumb */}
         <div className="mb-8">
           {stage === 'council' && (
@@ -118,6 +125,7 @@ export function DemoLanding({ selectedCouncil, onSelectCouncil, onSelectMode, on
                   />
                 </div>
               ))}
+              {/* Removed old Create New Plan panel; creation now lives inside Spatial workspace */}
             </motion.div>
           )}
 
@@ -157,6 +165,7 @@ export function DemoLanding({ selectedCouncil, onSelectCouncil, onSelectMode, on
                   </div>
                 </motion.div>
               ))}
+              {/* Active plan display handled in spatial workspace header */}
             </motion.div>
           )}
         </AnimatePresence>

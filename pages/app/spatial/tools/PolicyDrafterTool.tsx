@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CouncilData } from '../../../../data/types';
 import { PromptFunctions } from '../../../../prompts';
-import { callGemini } from '../../../../utils/gemini';
+import { callLLMStream } from '../../../../utils/llmClient';
 import { LoadingSpinner } from '../../shared/LoadingSpinner';
 import { Button } from '../../shared/Button';
 import { MarkdownContent } from '../../../../components/MarkdownContent';
@@ -63,13 +63,17 @@ export const PolicyDrafterTool: React.FC<PolicyDrafterToolProps> = ({ councilDat
     setLoading(true);
     try {
       const prompt = prompts.policyDraftPrompt(topicId, brief);
-      const result = await callGemini(prompt);
-      setDraftPolicy(result || 'No policy draft generated.');
+      let acc = ''
+      for await (const chunk of callLLMStream(prompt)) {
+        acc += chunk
+        setDraftPolicy(acc)
+      }
+      setDraftPolicy(acc || 'No policy draft generated.')
       setVariants([
         'Provide a stricter compliance variant with measurable thresholds.',
         'Provide a more flexible design-led variant with guidance.',
         'Provide a concise summary variant suitable for a policy box.'
-      ]);
+      ])
     } catch (error) {
       setDraftPolicy('Error generating policy. Please try again.');
     } finally {
@@ -151,7 +155,7 @@ export const PolicyDrafterTool: React.FC<PolicyDrafterToolProps> = ({ councilDat
               </button>
             </div>
             <div className="bg-[var(--color-surface)] p-4 rounded-lg">
-              <StructuredMarkdown content={draftPolicy} />
+              <MarkdownContent content={draftPolicy} />
             </div>
             {variants.length > 0 && (
               <div className="mt-4 flex flex-wrap gap-2">

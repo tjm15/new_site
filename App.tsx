@@ -11,6 +11,8 @@ import { ArchitecturePage } from './pages/ArchitecturePage';
 import { InvolvedPage } from './pages/InvolvedPage';
 import { AppPage } from './pages/AppPage';
 import { ThemeProvider } from './contexts/ThemeContext';
+import { PlanProvider } from './contexts/PlanContext';
+import Gateway1Page from './pages/app/Gateway1';
 
 
 // A simple component to handle scroll restoration on navigation
@@ -35,6 +37,7 @@ const AnimatedRoutes = () => {
                 <Route path="/architecture" element={<ArchitecturePage />} />
                 <Route path="/involved" element={<InvolvedPage />} />
                 <Route path="/app" element={<AppPage />} />
+                <Route path="/app/gateway1" element={<Gateway1Page />} />
             </Routes>
         </AnimatePresence>
     );
@@ -43,12 +46,14 @@ const AnimatedRoutes = () => {
 export default function App() {
   return (
     <ThemeProvider>
-      <HashRouter>
-        <ScrollToTop />
-        <Layout>
-          <AnimatedRoutes />
-        </Layout>
-      </HashRouter>
+      <PlanProvider>
+        <HashRouter>
+          <ScrollToTop />
+          <Layout>
+            <AnimatedRoutes />
+          </Layout>
+        </HashRouter>
+      </PlanProvider>
     </ThemeProvider>
   );
 }

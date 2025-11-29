@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CouncilData } from '../../../../data/types';
 import { PromptFunctions } from '../../../../prompts';
-import { callGemini } from '../../../../utils/gemini';
+import { callLLMStream } from '../../../../utils/llmClient';
 import { LoadingSpinner } from '../../shared/LoadingSpinner';
 import { SpatialMap } from '../shared/SpatialMap';
 import { MarkdownContent } from '../../../../components/MarkdownContent';
@@ -59,8 +59,12 @@ export const StrategyModelerTool: React.FC<StrategyModelerToolProps> = ({ counci
           }, 0);
         setMetrics({ totalSites, totalCapacity });
         const prompt = prompts.strategyPrompt(strategy.label, strategy.desc);
-        const result = await callGemini(prompt);
-        setAnalysis(result || 'No analysis generated.');
+        let acc = ''
+        for await (const chunk of callLLMStream(prompt)) {
+          acc += chunk
+          setAnalysis(acc)
+        }
+        setAnalysis(acc || 'No analysis generated.')
       }
     } catch (error) {
       setAnalysis('Error analyzing strategy. Please try again.');

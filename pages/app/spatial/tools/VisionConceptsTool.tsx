@@ -1,6 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { CouncilData } from '../../../../data/types';
+import { CouncilData, VisionOutcome } from '../../../../data/types';
+import { usePlan } from '../../../../contexts/PlanContext';
+import { runLLMTask } from '../../../../utils/llmTasks';
+import { callLLMStream } from '../../../../utils/llmClient';
 import { PromptFunctions } from '../../../../prompts';
 import { callGemini, callGeminiImage } from '../../../../utils/gemini';
 import { LoadingSpinner } from '../../shared/LoadingSpinner';
@@ -26,6 +29,9 @@ export const VisionConceptsTool: React.FC<VisionConceptsToolProps> = ({ councilD
   const [conceptImage, setConceptImage] = useState('');
   const [loadingText, setLoadingText] = useState(false);
   const [loadingImage, setLoadingImage] = useState(false);
+  const [outcomes, setOutcomes] = useState<VisionOutcome[]>([]);
+  const { activePlan, updatePlan } = usePlan();
+  const [links, setLinks] = useState<Record<string, { policies: string[]; sites: string[] }>>({});
   const presetAreas = [
     `${councilData.name} station-led intensification corridor`,
     `${councilData.name} high street renewal zone`,
@@ -38,10 +44,38 @@ export const VisionConceptsTool: React.FC<VisionConceptsToolProps> = ({ councilD
     setLoadingText(true);
     try {
       const prompt = prompts.visionPrompt(areaDescription);
-      const result = await callGemini(prompt);
-      setVisionText(result || 'No vision generated.');
-      const highlights = await callGemini(`Summarise concept highlights as 5 concise bullets for: ${areaDescription}`);
-      setHighlightsText(highlights || '');
+      let acc = ''
+      for await (const chunk of callLLMStream(prompt)) {
+        acc += chunk
+        setVisionText(acc)
+      }
+      setVisionText(acc || 'No vision generated.')
+      // Highlights
+      let hacc = ''
+      for await (const chunk of callLLMStream(`Summarise concept highlights as 5 concise bullets for: ${areaDescription}`)) {
+        hacc += chunk
+        setHighlightsText(hacc)
+      }
+      setHighlightsText(hacc || '')
+      // Ask AI to propose measurable outcomes and cap to 10
+      try {
+        const raw = await runLLMTask('vision_suggest', {
+          authorityName: councilData.name,
+          areaDescription
+        });
+        const refined = await runLLMTask('vision_refine', {
+          rawOutcomes: Array.isArray(raw) ? raw : [String(raw || '')],
+          maxOutcomes: 10
+        });
+        const parsed: VisionOutcome[] = Array.isArray(refined) ? refined : [];
+        setOutcomes(parsed.slice(0, 10));
+        if (activePlan && activePlan.councilId === councilData.id) {
+          updatePlan(activePlan.id, { visionStatements: parsed.slice(0, 10) });
+        }
+      } catch (e) {
+        // Non-blocking
+        console.warn('Outcome suggestion failed', e);
+      }
     } catch (error) {
       setVisionText('Error generating vision. Please try again.');
     } finally {
@@ -78,10 +112,18 @@ export const VisionConceptsTool: React.FC<VisionConceptsToolProps> = ({ councilD
         setLoadingText(true);
         try {
           const prompt = prompts.visionPrompt(txt);
-          const result = await callGemini(prompt);
-          setVisionText(result || '');
-          const highlights = await callGemini(`Summarise concept highlights as 5 concise bullets for: ${txt}`);
-          setHighlightsText(highlights || '');
+          let acc = ''
+          for await (const chunk of callLLMStream(prompt)) {
+            acc += chunk
+            setVisionText(acc)
+          }
+          setVisionText(acc || '')
+          let hacc = ''
+          for await (const chunk of callLLMStream(`Summarise concept highlights as 5 concise bullets for: ${txt}`)) {
+            hacc += chunk
+            setHighlightsText(hacc)
+          }
+          setHighlightsText(hacc || '')
         } finally {
           setLoadingText(false);
         }
@@ -97,10 +139,18 @@ export const VisionConceptsTool: React.FC<VisionConceptsToolProps> = ({ councilD
       setLoadingText(true);
       try {
         const prompt = prompts.visionPrompt(demo);
-        const result = await callGemini(prompt);
-        setVisionText(result || '');
-        const highlights = await callGemini(`Summarise concept highlights as 5 concise bullets for: ${demo}`);
-        setHighlightsText(highlights || '');
+        let acc = ''
+        for await (const chunk of callLLMStream(prompt)) {
+          acc += chunk
+          setVisionText(acc)
+        }
+        setVisionText(acc || '')
+        let hacc = ''
+        for await (const chunk of callLLMStream(`Summarise concept highlights as 5 concise bullets for: ${demo}`)) {
+          hacc += chunk
+          setHighlightsText(hacc)
+        }
+        setHighlightsText(hacc || '')
       } finally {
         setLoadingText(false);
       }
@@ -203,6 +253,73 @@ export const VisionConceptsTool: React.FC<VisionConceptsToolProps> = ({ councilD
           >
             <h3 className="text-lg font-semibold text-[var(--color-ink)] mb-4">✨ Concept Highlights</h3>
             <StructuredMarkdown content={highlightsText} />
+          </motion.div>
+        )}
+
+        {/* Outcomes list */}
+        {outcomes.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            className="bg-[var(--color-panel)] border border-[var(--color-edge)] rounded-xl p-6"
+          >
+            <h3 className="text-lg font-semibold text-[var(--color-ink)] mb-4">🎯 Proposed Outcomes (max 10)</h3>
+            <ul className="space-y-2">
+              {outcomes.slice(0, 10).map((o) => (
+                <li key={o.id} className="text-sm space-y-2">
+                  <div>
+                    <span className="font-medium text-[var(--color-ink)]">{o.text}</span>
+                    {o.metric && (
+                      <span className="ml-2 text-[var(--color-muted)]">Metric: {o.metric}</span>
+                    )}
+                  </div>
+                  {/* Simple linkers to policies/sites */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div>
+                      <div className="text-xs text-[var(--color-muted)] mb-1">Link Policies</div>
+                      <select multiple className="w-full border border-[var(--color-edge)] rounded p-2 text-sm"
+                        value={links[o.id]?.policies || []}
+                        onChange={(e)=>{
+                          const selected = Array.from(e.target.selectedOptions).map(opt=>opt.value)
+                          const next = { ...(links[o.id]||{ policies: [], sites: [] }), policies: selected }
+                          setLinks(prev=>({ ...prev, [o.id]: next }))
+                          if (activePlan && activePlan.councilId === councilData.id) {
+                            const updated = activePlan.visionStatements.map(v=> v.id===o.id ? { ...v, linkedPolicies: selected } : v)
+                            updatePlan(activePlan.id, { visionStatements: updated })
+                          }
+                        }}
+                      >
+                        {councilData.policies.slice(0,10).map(p=> (
+                          <option key={p.reference} value={p.reference}>{p.reference} {p.title}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <div className="text-xs text-[var(--color-muted)] mb-1">Link Sites</div>
+                      <select multiple className="w-full border border-[var(--color-edge)] rounded p-2 text-sm"
+                        value={links[o.id]?.sites || []}
+                        onChange={(e)=>{
+                          const selected = Array.from(e.target.selectedOptions).map(opt=>opt.value)
+                          const next = { ...(links[o.id]||{ policies: [], sites: [] }), sites: selected }
+                          setLinks(prev=>({ ...prev, [o.id]: next }))
+                          if (activePlan && activePlan.councilId === councilData.id) {
+                            const updated = activePlan.visionStatements.map(v=> v.id===o.id ? { ...v, linkedSites: selected } : v)
+                            updatePlan(activePlan.id, { visionStatements: updated })
+                          }
+                        }}
+                      >
+                        {activePlan?.sites?.length ? activePlan.sites.map(s=> (
+                          <option key={s.id} value={s.id}>{s.name}</option>
+                        )) : councilData.spatialData.allocations.slice(0,10).map(s=> (
+                          <option key={s.id} value={s.id}>{s.name||s.id}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+                </li>
+              ))}
+            </ul>
           </motion.div>
         )}
       </AnimatePresence>

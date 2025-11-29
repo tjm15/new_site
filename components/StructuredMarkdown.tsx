@@ -1,6 +1,7 @@
 import React from 'react';
 import { MarkdownContent } from './MarkdownContent';
 import { Collapsible } from './Collapsible';
+import { normalizeLLMText } from '../utils/markdown';
 
 interface Section { title?: string; body: string; }
 
@@ -30,7 +31,8 @@ interface StructuredMarkdownProps {
 }
 
 export const StructuredMarkdown: React.FC<StructuredMarkdownProps> = ({ content, collapseLines = 18, className = '' }) => {
-  const sections = parseSections(content);
+  const cleaned = normalizeLLMText(content || '');
+  const sections = parseSections(cleaned);
   return (
     <div className={className}>
       {sections.map((s, idx) => {

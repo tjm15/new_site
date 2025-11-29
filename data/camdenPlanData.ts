@@ -104,3 +104,31 @@ export const POLICIES = [
     text: "Development in Central Camden will focus on Kentish Town and Camden Town. Regis Road and Murphy sites are expected to deliver approx 1,750 new homes and intensified industrial space. Camden Goods Yard will deliver approx 1,200 homes."
   }
 ];
+
+// Sample new-system plan seed (optional demo)
+export const CAMDEN_SAMPLE_PLAN = {
+  id: 'camden_new_plan',
+  title: 'Camden Local Plan (New System Demo)',
+  area: 'London Borough of Camden',
+  systemType: 'new',
+  stages: [
+    { id: 'PREP', title: 'Preparation (Notice Period)' },
+    { id: 'GATEWAY_1', title: 'Gateway 1: Readiness' },
+    { id: 'BASELINING', title: 'Baselining & Evidence' },
+    { id: 'CONSULTATION_1', title: 'Consultation 1' },
+    { id: 'GATEWAY_2', title: 'Gateway 2: Submission Ready' },
+    { id: 'CONSULTATION_2', title: 'Consultation 2' },
+    { id: 'GATEWAY_3', title: 'Gateway 3: Examination' },
+    { id: 'SUBMISSION', title: 'Submission' },
+    { id: 'ADOPTION', title: 'Adoption' }
+  ],
+  timetable: { milestones: [] },
+  visionStatements: [
+    { id: 'v1', text: 'Deliver inclusive growth with net zero development.', metric: 'Annual emissions trajectory' }
+  ],
+  sites: [
+    { id: 'site_regis_road', name: 'Regis Road', location: 'Kentish Town' },
+    { id: 'site_murphys_yard', name: "Murphy's Yard", location: 'Kentish Town' }
+  ],
+  currentStage: 'PREP'
+} as const

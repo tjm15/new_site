@@ -19,9 +19,9 @@ export function Layout({ children }: LayoutProps) {
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_transparent_60%,_var(--surface)_95%)]" />
       </div>
       
-      <div className="relative z-10 min-h-screen flex flex-col" style={{ scrollBehavior: "smooth" }}>
+      <div className="relative z-10 h-screen flex flex-col" style={{ scrollBehavior: "smooth" }}>
         <Header />
-        <main className="flex-grow">
+        <main className="flex-1 overflow-auto">
           {children}
         </main>
         <Footer />

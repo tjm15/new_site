@@ -15,7 +15,7 @@ export function Footer() {
   const { theme: currentTheme, toggleTheme } = useTheme();
 
   return (
-    <footer className="border-t border-[var(--color-edge)] py-10 bg-[var(--color-surface)]">
+    <footer className="border-t border-[var(--color-edge)] py-4 bg-[var(--color-surface)]">
       <div className="max-w-[1180px] mx-auto px-6 flex flex-col md:flex-row items-start md:items-center gap-4">
         <div className="flex items-center gap-3 text-[var(--color-ink)] font-medium">
           <Logo />
@@ -24,7 +24,7 @@ export function Footer() {
         <div className="md:ml-auto flex flex-wrap gap-x-4 gap-y-2 text-sm items-center">
             <Link to="/" className="hover:underline">Home</Link>
             {navLinks.map(link => (
-                <Link key={link.to} to={link.to} className="hover:underline">{link.label}</Link>
+              <Link key={link.to} to={link.to} className="hover:underline">{link.label}</Link>
             ))}
             <button
               onClick={toggleTheme}

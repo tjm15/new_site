@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { PromptFunctions } from '../../../../prompts';
-import { callGemini } from '../../../../utils/gemini';
+import { callLLMStream } from '../../../../utils/llmClient';
 import { LoadingSpinner } from '../../shared/LoadingSpinner';
 import { Button } from '../../shared/Button';
 import { MarkdownContent } from '../../../../components/MarkdownContent';
@@ -44,19 +44,19 @@ export const FeedbackAnalysisTool: React.FC<FeedbackAnalysisToolProps> = ({ prom
     if (!consultationText.trim()) return;
 
     setLoading(true);
+    const prompt = prompts.feedbackPrompt(consultationText);
+    let acc = ''
     try {
-      const prompt = prompts.feedbackPrompt(consultationText);
-      const result = await callGemini(prompt);
-      
-      // Parse the result to extract themes
-      // For demo purposes, we'll parse a structured response
-      // In production, this would be more sophisticated
-      const parsedThemes = parseThemesFromResponse(result || '');
-      setThemes(parsedThemes);
+      for await (const chunk of callLLMStream(prompt)) {
+        acc += chunk
+        // Optionally show partial parsing; here we just keep themes empty until done
+      }
+      const parsedThemes = parseThemesFromResponse(acc || '')
+      setThemes(parsedThemes)
     } catch (error) {
-      setThemes([]);
+      setThemes([])
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
   };
 

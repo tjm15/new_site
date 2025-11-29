@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { PlanningApplication, CouncilData } from '../../../../data/types';
 import { PromptFunctions } from '../../../../prompts';
-import { callGemini } from '../../../../utils/gemini';
+import { callLLMStream } from '../../../../utils/llmClient';
 import { LoadingSpinner } from '../../shared/LoadingSpinner';
 import { Button } from '../../shared/Button';
 import { MarkdownContent } from '../../../../components/MarkdownContent';
@@ -31,8 +31,16 @@ export const ContextStage: React.FC<ContextStageProps> = ({
     setLoading(true);
     try {
       const prompt = prompts.contextPrompt(application);
-      const result = await callGemini(prompt);
-      setContextAnalysis(result || 'No context analysis generated.');
+      let acc = ''
+      try {
+        for await (const chunk of callLLMStream(prompt)) {
+          acc += chunk
+          setContextAnalysis(acc)
+        }
+      } catch (e) {
+        console.error('Context generation stream failed', e)
+      }
+      setContextAnalysis(acc || 'No context analysis generated.')
     } catch (error) {
       setContextAnalysis('Error generating context. Please try again.');
     } finally {

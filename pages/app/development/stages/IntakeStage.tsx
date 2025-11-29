@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { PlanningApplication, ApplicationDocument } from '../../../../data/types';
 import { PromptFunctions } from '../../../../prompts';
-import { callGemini } from '../../../../utils/gemini';
+import { callLLMStream } from '../../../../utils/llmClient';
 import { LoadingSpinner } from '../../shared/LoadingSpinner';
 import { Button } from '../../shared/Button';
 import { MarkdownContent } from '../../../../components/MarkdownContent';
@@ -24,11 +24,17 @@ export const IntakeStage: React.FC<IntakeStageProps> = ({ application, prompts, 
     setLoading(true);
     try {
       const prompt = prompts.intakePrompt(application.documents);
-      const result = await callGemini(prompt);
-      
+      let acc = ''
+      try {
+        for await (const chunk of callLLMStream(prompt)) {
+          acc += chunk
+        }
+      } catch (e) {
+        console.error('Intake extraction stream failed', e)
+      }
       // Try to parse JSON response
       try {
-        const parsed = JSON.parse(result || '{}');
+        const parsed = JSON.parse(acc || '{}');
         setExtractedData(parsed);
       } catch {
         // If not valid JSON, create a structured response

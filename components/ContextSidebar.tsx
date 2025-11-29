@@ -1,6 +1,8 @@
 import React from 'react';
 import type { CouncilData } from '../data/types';
 import { Chip } from '../pages/app/shared/Chip';
+import { usePlan } from '../contexts/PlanContext';
+import { Link } from 'react-router-dom';
 
 interface ContextSidebarProps {
   councilData: CouncilData;
@@ -10,6 +12,7 @@ interface ContextSidebarProps {
 }
 
 export function ContextSidebar({ councilData, selectedTopics = [], onToggleTopic, onBackToTools }: ContextSidebarProps) {
+  const { activePlan } = usePlan();
   const boroughAsset = `/assets/boroughs/${councilData.id}.svg`;
   const hasAllocations = councilData.spatialData?.allocations?.length > 0;
 
@@ -41,6 +44,11 @@ export function ContextSidebar({ councilData, selectedTopics = [], onToggleTopic
                 <li key={s.id}>{s.id}</li>
               ))}
             </ul>
+          </div>
+        )}
+        {activePlan?.systemType === 'new' && activePlan?.councilId === councilData.id && (
+          <div className="mt-3">
+            <Link to="/app/gateway1" className="text-sm text-[var(--color-accent)] hover:underline">Gateway 1 →</Link>
           </div>
         )}
       </div>
