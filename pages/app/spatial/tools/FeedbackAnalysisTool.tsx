@@ -6,6 +6,7 @@ import { LoadingSpinner } from '../../shared/LoadingSpinner';
 import { Button } from '../../shared/Button';
 import { MarkdownContent } from '../../../../components/MarkdownContent';
 import { CONSULTATION_SAMPLES } from '../../../../data/consultationSamples';
+import { usePlan } from '../../../../contexts/PlanContext';
 
 interface FeedbackAnalysisToolProps {
   prompts: PromptFunctions;
@@ -24,11 +25,14 @@ interface Theme {
 }
 
 export const FeedbackAnalysisTool: React.FC<FeedbackAnalysisToolProps> = ({ prompts, councilId, initialText, initialThemes, autoRun, onSessionChange }) => {
+  const { activePlan, updatePlan } = usePlan();
   const [consultationText, setConsultationText] = useState('');
   const [themes, setThemes] = useState<Theme[]>([]);
   const [loading, setLoading] = useState(false);
   const [summaryLoading, setSummaryLoading] = useState(false);
   const [narrativeSummary, setNarrativeSummary] = useState('');
+  const [saving, setSaving] = useState(false);
+  const [saveStatus, setSaveStatus] = useState<string | null>(null);
 
   useEffect(() => {
     if (initialThemes && initialThemes.length) setThemes(initialThemes);
@@ -141,6 +145,37 @@ Task: Write a short, balanced markdown summary (150-250 words) covering who resp
     }
   }
 
+  const saveSummaryToPlan = () => {
+    if (!activePlan || !narrativeSummary.trim()) return;
+    setSaving(true);
+    const targetStage = activePlan.planStage === 'CONSULTATION_2' ? 'CONSULTATION_2' : 'CONSULTATION_1';
+    const existing = activePlan.consultationSummaries || [];
+    const mainIssues = themes.length
+      ? themes.map(t => `${t.title} (${t.sentiment}, ~${t.count}): ${t.summary}`)
+      : [narrativeSummary];
+    const newTags = themes.length
+      ? themes.map((t, idx) => ({ id: `rep_${Date.now()}_${idx}`, issue: t.title, sentiment: t.sentiment }))
+      : [];
+    const nextSummary = {
+      stageId: targetStage,
+      who: 'Draft summary',
+      when: new Date().toISOString(),
+      how: 'FeedbackAnalysisTool',
+      mainIssues,
+      intendedChanges: narrativeSummary
+    } as any;
+
+    const filtered = existing.filter(c => !(c.stageId === targetStage && c.how === 'FeedbackAnalysisTool'));
+    const repTags = activePlan.representationTags || [];
+    updatePlan(activePlan.id, {
+      consultationSummaries: [...filtered, nextSummary],
+      representationTags: newTags.length ? [...repTags, ...newTags] : repTags
+    });
+    setSaveStatus('Saved to plan');
+    setTimeout(() => setSaveStatus(null), 2000);
+    setSaving(false);
+  }
+
   const getSentimentColor = (sentiment: 'positive' | 'negative' | 'neutral') => {
     switch (sentiment) {
       case 'positive': return 'bg-green-50 text-green-700 border-green-400';
@@ -185,6 +220,10 @@ Task: Write a short, balanced markdown summary (150-250 words) covering who resp
         <Button onClick={generateNarrativeSummary} disabled={(summaryLoading || loading) || (!consultationText.trim() && themes.length === 0)} variant="secondary">
           {summaryLoading ? 'Summarizing…' : 'Generate narrative summary'}
         </Button>
+        <Button onClick={saveSummaryToPlan} disabled={saving || !narrativeSummary.trim() || !activePlan} variant="secondary">
+          {saving ? 'Saving…' : 'Save to plan'}
+        </Button>
+        {saveStatus && <span className="text-xs text-[var(--color-muted)]">{saveStatus}</span>}
         <button className="text-sm text-[var(--color-accent)] hover:underline" onClick={() => { setThemes([]); setConsultationText(''); setNarrativeSummary(''); }}>Paste your own instead</button>
       </div>
 

@@ -161,17 +161,19 @@ export function useStageInsights(plan: Plan | undefined, stageId: PlanStageId | 
             consultationSummaries: plan.consultationSummaries,
             preferredOptions: plan.preferredOptions,
           }
+        const consultationBias = stageId === 'CONSULTATION_1' || stageId === 'CONSULTATION_2'
         const prompt = [
           'You are a UK planning inspector reviewing a Local Plan under the CULP system.',
           'Return JSON only with fields: { "cards": [ { "title": string, "status": "R"|"A"|"G", "reason": string } ] }',
           'Each card reason should be 1–3 sentences. Do not include any summary field.',
           'Prioritise the top ~3 risks/issues across the whole plan. No extra text.',
           'If progress is good, lean to Amber/Green with concise positive framing while still noting any gaps.',
+          consultationBias ? 'Consultation weighting: score mainly on whether the consultation steps/outputs are in place (pack, questions, tags, summaries, SEA/HRA hook, SCI actions) rather than sentiment of responses. Default to green if most consultation actions are completed; only use red when statutory steps are missing.' : null,
           progressText,
           `Stage: ${stageMeta.label}`,
           `Plan: ${trimmedPlan.title} (${trimmedPlan.area})`,
           `Plan object: ${JSON.stringify(trimmedPlan)}`
-        ].join('\n')
+        ].filter(Boolean).join('\n')
         const raw = await callLLM(prompt)
         const parsed = extractJsonObject(raw)
         const summary = ''
