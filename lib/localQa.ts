@@ -5,6 +5,7 @@ export type RetrievedChunk = { text: string; source?: string }
 type PlanLike = {
   id: string
   visionStatements?: Array<{ id: string; text: string }>
+  smartOutcomes?: Array<{ id: string; outcomeStatement?: string; text?: string; theme?: string; measurable?: string }>
   sites?: Array<{ id: string; name: string; notes?: string; suitability?: string; availability?: string; achievability?: string }>
   // include SEA/HRA and SCI summary fields for retrieval
   seaHra?: { seaScopingStatus?: string; seaScopingNotes?: string; hraBaselineSummary?: string }
@@ -50,6 +51,11 @@ function buildTexts(plan: PlanLike, council?: CouncilLike): { texts: string[]; m
   // Outcomes
   for (const o of plan.visionStatements || []) {
     const t = `Outcome: ${o.text}`
+    texts.push(t)
+    meta.push({ text: t, source: 'outcome' })
+  }
+  for (const o of plan.smartOutcomes || []) {
+    const t = `SMART outcome (${o.theme || 'general'}): ${o.outcomeStatement || o.text} — measure: ${o.measurable || ''}`.trim()
     texts.push(t)
     meta.push({ text: t, source: 'outcome' })
   }
