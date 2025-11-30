@@ -17,6 +17,7 @@ export type StageMeta = {
   recommendedTools: Array<
     | 'EvidenceTool'
     | 'VisionConceptsTool'
+    | 'SmartOutcomesTool'
     | 'PolicyDrafterTool'
     | 'StrategyModelerTool'
     | 'SiteAssessmentTool'
@@ -35,16 +36,16 @@ export type StageMeta = {
     id: string
     label: string
     shortExplainer: string
-    primaryToolId?: 'EvidenceTool' | 'VisionConceptsTool' | 'PolicyDrafterTool' | 'StrategyModelerTool' | 'SiteAssessmentTool' | 'FeedbackAnalysisTool' | 'SEATool' | 'SCITool' | 'TimetableTool' | 'NoticeTool' | 'PrepRiskTool' | 'BaseliningTool' | 'Gateway1Tool'
+    primaryToolId?: 'EvidenceTool' | 'VisionConceptsTool' | 'SmartOutcomesTool' | 'PolicyDrafterTool' | 'StrategyModelerTool' | 'SiteAssessmentTool' | 'FeedbackAnalysisTool' | 'SEATool' | 'SCITool' | 'TimetableTool' | 'NoticeTool' | 'PrepRiskTool' | 'BaseliningTool' | 'Gateway1Tool'
     assistantPromptHint?: string
   }>
-  stageTools?: Array<'EvidenceTool' | 'VisionConceptsTool' | 'PolicyDrafterTool' | 'StrategyModelerTool' | 'SiteAssessmentTool' | 'FeedbackAnalysisTool' | 'SEATool' | 'SCITool' | 'TimetableTool' | 'NoticeTool' | 'PrepRiskTool' | 'BaseliningTool' | 'Gateway1Tool'>
+  stageTools?: Array<'EvidenceTool' | 'VisionConceptsTool' | 'SmartOutcomesTool' | 'PolicyDrafterTool' | 'StrategyModelerTool' | 'SiteAssessmentTool' | 'FeedbackAnalysisTool' | 'SEATool' | 'SCITool' | 'TimetableTool' | 'NoticeTool' | 'PrepRiskTool' | 'BaseliningTool' | 'Gateway1Tool'>
   aiTools?: {
     id: string
     name: string
     description: string
     status?: 'available' | 'planned'
-    launchToolId?: 'EvidenceTool' | 'VisionConceptsTool' | 'PolicyDrafterTool' | 'StrategyModelerTool' | 'SiteAssessmentTool' | 'FeedbackAnalysisTool' | 'SEATool' | 'SCITool' | 'TimetableTool' | 'NoticeTool' | 'PrepRiskTool' | 'BaseliningTool' | 'Gateway1Tool' | 'CULPToolkit'
+    launchToolId?: 'EvidenceTool' | 'VisionConceptsTool' | 'SmartOutcomesTool' | 'PolicyDrafterTool' | 'StrategyModelerTool' | 'SiteAssessmentTool' | 'FeedbackAnalysisTool' | 'SEATool' | 'SCITool' | 'TimetableTool' | 'NoticeTool' | 'PrepRiskTool' | 'BaseliningTool' | 'Gateway1Tool' | 'CULPToolkit'
   }[]
   qaNotes?: string[]
   qaChecks?: string[]
@@ -295,7 +296,7 @@ export const STAGES: StageMeta[] = [
       'SEA/HRA prompts baked into outcomes and spatial options',
       'Word clouds + national alignment checks with environmental guardrails',
     ],
-    recommendedTools: ['VisionConceptsTool', 'PolicyDrafterTool', 'StrategyModelerTool', 'SEATool'],
+    recommendedTools: ['VisionConceptsTool', 'SmartOutcomesTool', 'PolicyDrafterTool', 'StrategyModelerTool', 'SEATool'],
     tasks: [
       'Draft candidate vision statements rooted in baseline and national policy.',
       'Distil up to 10 outcomes with indicators/targets and time horizons.',
@@ -310,14 +311,14 @@ export const STAGES: StageMeta[] = [
     ],
     actionsRecommended: [
       { id: 'vision_assistant', label: 'Draft vision options', shortExplainer: 'Generate locally distinctive vision statements.', primaryToolId: 'VisionConceptsTool', assistantPromptHint: 'Draft a distinctive vision for this authority' },
-      { id: 'outcome_metrics', label: 'Curate outcomes & metrics', shortExplainer: 'Keep ≤10 outcomes with indicators/targets.', primaryToolId: 'PolicyDrafterTool', assistantPromptHint: 'Suggest outcomes with indicators and targets' },
-      { id: 'outcome_linker', label: 'Link outcomes to policies/sites', shortExplainer: 'Map each outcome to supporting policies/allocations.', primaryToolId: 'PolicyDrafterTool', assistantPromptHint: 'Which policies and sites support each outcome?' }
+      { id: 'outcome_metrics', label: 'Curate outcomes & metrics', shortExplainer: 'Keep ≤10 outcomes with indicators/targets.', primaryToolId: 'SmartOutcomesTool', assistantPromptHint: 'Suggest SMART outcomes with indicators and targets' },
+      { id: 'outcome_linker', label: 'Link outcomes to policies/sites', shortExplainer: 'Map each outcome to supporting policies/allocations.', primaryToolId: 'SmartOutcomesTool', assistantPromptHint: 'Which policies, sites, and SEA objectives support each outcome?' }
     ],
-    stageTools: ['VisionConceptsTool', 'PolicyDrafterTool', 'StrategyModelerTool', 'EvidenceTool', 'SEATool'],
+    stageTools: ['VisionConceptsTool', 'SmartOutcomesTool', 'PolicyDrafterTool', 'StrategyModelerTool', 'EvidenceTool', 'SEATool'],
     aiTools: [
       { id: 'vision_assistant', name: 'Vision Drafting Assistant', description: 'Draft locally distinctive vision options.', status: 'available', launchToolId: 'VisionConceptsTool' },
-      { id: 'outcome_metrics', name: 'Outcome Distiller & Metric Designer', description: 'Curate ≤10 outcomes with indicators and targets.', status: 'available', launchToolId: 'PolicyDrafterTool' },
-      { id: 'outcome_linker', name: 'Outcome-to-Policy/Site Linker', description: 'Suggest policy/site links per outcome to spot gaps.', status: 'available', launchToolId: 'PolicyDrafterTool' }
+      { id: 'outcome_metrics', name: 'Outcome Distiller & Metric Designer', description: 'Curate ≤10 outcomes with indicators and targets.', status: 'available', launchToolId: 'SmartOutcomesTool' },
+      { id: 'outcome_linker', name: 'Outcome-to-Policy/Site Linker', description: 'Suggest policy/site links per outcome to spot gaps.', status: 'available', launchToolId: 'SmartOutcomesTool' }
     ],
     qaNotes: ['No more than 10 outcomes with measurable indicators', 'Vision references baseline evidence and national policy', 'Each outcome has at least one supporting policy/site', 'SEA/HRA baseline influences outcomes and risks']
   },

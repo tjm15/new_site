@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CouncilData } from '../../../../data/types';
 import { PromptFunctions } from '../../../../prompts';
@@ -6,6 +6,7 @@ import { callLLM } from '../../../../utils/llmClient';
 import { LoadingSpinner } from '../../shared/LoadingSpinner';
 import { Button } from '../../shared/Button';
 import { MarkdownContent } from '../../../../components/MarkdownContent';
+import { usePlan } from '../../../../contexts/PlanContext';
 
 interface PolicyDrafterToolProps {
   councilData: CouncilData;
@@ -24,12 +25,26 @@ export const PolicyDrafterTool: React.FC<PolicyDrafterToolProps> = ({ councilDat
   const [draftPolicy, setDraftPolicy] = useState('');
   const [loading, setLoading] = useState(false);
   const [variants, setVariants] = useState<string[]>([]);
+  const [saveStatus, setSaveStatus] = useState<string | null>(null);
+  const { activePlan, updatePlan } = usePlan();
+  const planMatchesCouncil = !!(activePlan && activePlan.councilId === councilData.id);
+  const preferredPolicy = planMatchesCouncil ? activePlan?.preferredOptions?.policy : undefined;
+  const isPreferredPolicy = !!(planMatchesCouncil && preferredPolicy && preferredPolicy.draft === draftPolicy && (!preferredPolicy.topicId || preferredPolicy.topicId === selectedTopic));
+  const preferredHydratedRef = useRef(false);
 
   useEffect(() => {
     // Restore session if provided
     if (initialDraftPolicy) setDraftPolicy(initialDraftPolicy);
     if (initialVariants && initialVariants.length) setVariants(initialVariants);
     if (initialBrief) setPolicyBrief(initialBrief);
+
+    if (preferredPolicy?.draft && !preferredHydratedRef.current) {
+      if (preferredPolicy.topicId) setSelectedTopic(preferredPolicy.topicId);
+      if (preferredPolicy.brief) setPolicyBrief(preferredPolicy.brief);
+      setDraftPolicy(preferredPolicy.draft);
+      preferredHydratedRef.current = true;
+      return;
+    }
 
     // If initial props provided via autopick, run that first
     if (autoRun && (initialTopic || initialBrief)) {
@@ -53,12 +68,21 @@ export const PolicyDrafterTool: React.FC<PolicyDrafterToolProps> = ({ councilDat
   }, []);
 
   useEffect(() => {
+    if (!planMatchesCouncil || !preferredPolicy || preferredHydratedRef.current) return;
+    if (preferredPolicy.topicId) setSelectedTopic(preferredPolicy.topicId);
+    if (preferredPolicy.brief) setPolicyBrief(preferredPolicy.brief);
+    setDraftPolicy(preferredPolicy.draft);
+    preferredHydratedRef.current = true;
+  }, [planMatchesCouncil, preferredPolicy]);
+
+  useEffect(() => {
     if (onSessionChange) {
       onSessionChange({ selectedTopic, policyBrief, draftPolicy, variants });
     }
   }, [selectedTopic, policyBrief, draftPolicy, variants, onSessionChange]);
 
   const generatePolicyFromTopic = async (topicId: string, brief: string = '') => {
+    setSaveStatus(null);
     setLoading(true);
     try {
       const prompt = prompts.policyDraftPrompt(topicId, brief);
@@ -74,6 +98,23 @@ export const PolicyDrafterTool: React.FC<PolicyDrafterToolProps> = ({ councilDat
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleSavePreferred = () => {
+    if (!planMatchesCouncil || !activePlan || !draftPolicy) return;
+    const topicLabel = councilData.topics.find(t => t.id === selectedTopic)?.label;
+    updatePlan(activePlan.id, {
+      preferredOptions: {
+        ...(activePlan.preferredOptions || {}),
+        policy: {
+          topicId: selectedTopic || preferredPolicy?.topicId,
+          topicLabel,
+          brief: policyBrief || undefined,
+          draft: draftPolicy
+        }
+      }
+    });
+    setSaveStatus('Preferred policy saved to plan.');
   };
 
   return (
@@ -142,13 +183,24 @@ export const PolicyDrafterTool: React.FC<PolicyDrafterToolProps> = ({ councilDat
           >
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-semibold text-[var(--color-ink)]">📄 Draft Policy</h3>
-              <button
-                onClick={() => navigator.clipboard.writeText(draftPolicy)}
-                className="text-sm text-[var(--color-accent)] hover:underline"
-              >
-                Copy to Clipboard
-              </button>
+              <div className="flex items-center gap-2">
+                {planMatchesCouncil && (
+                  <button
+                    onClick={handleSavePreferred}
+                    className="text-sm px-3 py-1.5 rounded border border-[var(--color-edge)] bg-[var(--color-panel)] text-[var(--color-ink)] hover:border-[var(--color-accent)]"
+                  >
+                    {isPreferredPolicy ? 'Saved to plan' : 'Save as preferred'}
+                  </button>
+                )}
+                <button
+                  onClick={() => navigator.clipboard.writeText(draftPolicy)}
+                  className="text-sm text-[var(--color-accent)] hover:underline"
+                >
+                  Copy to Clipboard
+                </button>
+              </div>
             </div>
+            {saveStatus && <div className="text-xs text-green-700 mb-2">{saveStatus}</div>}
             <div className="bg-[var(--color-surface)] p-4 rounded-lg">
               <MarkdownContent content={draftPolicy} />
             </div>

@@ -145,6 +145,47 @@ export interface PlanTimetable {
   }>
 }
 
+export type IndicatorDifficulty = 'easy' | 'medium' | 'hard'
+
+export interface SmartIndicator {
+  id: string
+  name: string
+  baseline?: string
+  target?: string
+  source?: string
+  difficulty?: IndicatorDifficulty
+  frequency?: string
+}
+
+export interface SmartOutcomeCheck {
+  smartScore?: number
+  nppfWarnings?: string[]
+  evidenceGaps?: string[]
+  soundnessRisks?: string[]
+}
+
+export interface SmartOutcome {
+  id: string
+  theme: string
+  outcomeStatement: string
+  specific: string
+  measurable: string
+  achievable: string
+  relevant: string
+  timebound: string
+  indicators: SmartIndicator[]
+  linkedPolicies?: string[]
+  linkedSites?: string[]
+  linkedSeaObjectives?: string[]
+  spatialLayers?: string[]
+  monitoringFrequency?: string
+  risks?: string[]
+  status?: 'red' | 'amber' | 'green'
+  gatewayFlags?: { ready?: boolean; warnings?: string[] }
+  checks?: SmartOutcomeCheck
+  notes?: string
+}
+
 export interface VisionOutcome {
   id: string
   text: string
@@ -186,6 +227,13 @@ export interface EvidenceItem {
   title: string
   source?: string
   status?: EvidenceStatus
+  category?: string
+  year?: string
+  coverage?: 'borough' | 'partial' | 'site'
+  core?: boolean
+  seaHraRelevant?: boolean
+  why?: string
+  limitations?: string
   notes?: string
 }
 
@@ -206,6 +254,13 @@ export interface ConsultationSummary {
   intendedChanges?: string
 }
 
+export type PlanPreferredOptions = {
+  strategy?: { id: string; label?: string; analysis?: string; metrics?: { totalSites: number; totalCapacity: number } | null }
+  policy?: { topicId?: string; topicLabel?: string; brief?: string; draft: string }
+  site?: { id: string; name?: string; rationale?: string; appraisal?: string }
+  evidence?: { id: string; title: string; content: string; question?: string; topics?: string[]; reasoning?: string }
+}
+
 export interface Plan {
   id: string
   title: string
@@ -220,6 +275,8 @@ export interface Plan {
   currentStage?: PlanStageId
   // Primary workflow field
   planStage?: PlanStageId
+  // User-picked preferred options from tools
+  preferredOptions?: PlanPreferredOptions
   gateway1SummaryText?: string
   readinessAssessment?: ReadinessAssessment
   gateway1PublishedAt?: string
@@ -228,6 +285,8 @@ export interface Plan {
   baselineTrends?: Record<string, string> // topic -> markdown summary
   swot?: { strengths?: string[]; weaknesses?: string[]; opportunities?: string[]; threats?: string[] }
   baselineNarrative?: string
+  // SMART outcomes (Vision & Outcomes stage)
+  smartOutcomes?: SmartOutcome[]
   // Outcomes linkage
   outcomePolicyLinks?: Record<string, { policyIds?: string[]; siteIds?: string[] }>
   // Site decisions

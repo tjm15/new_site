@@ -6,6 +6,7 @@ import { callLLM } from '../../../../utils/llmClient';
 import { LoadingSpinner } from '../../shared/LoadingSpinner';
 import { Chip } from '../../shared/Chip';
 import { MarkdownContent } from '../../../../components/MarkdownContent';
+import { usePlan } from '../../../../contexts/PlanContext';
 
 interface EvidenceToolProps {
   councilData: CouncilData;
@@ -29,6 +30,9 @@ export const EvidenceTool: React.FC<EvidenceToolProps> = ({ councilData, prompts
   const hasInitialized = React.useRef(false);
   const [showReasoning, setShowReasoning] = useState<Record<string, boolean>>({});
   const nextId = React.useRef(0);
+  const { activePlan, updatePlan } = usePlan();
+  const planMatchesCouncil = !!(activePlan && activePlan.councilId === councilData.id);
+  const preferredEvidence = planMatchesCouncil ? activePlan?.preferredOptions?.evidence : undefined;
 
   const toggleTopic = (topicId: string) => {
     setSelectedTopics(prev =>
@@ -91,6 +95,26 @@ export const EvidenceTool: React.FC<EvidenceToolProps> = ({ councilData, prompts
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  useEffect(() => {
+    if (!planMatchesCouncil) return;
+    if (!preferredEvidence) return;
+    setCards(prev => {
+      if (prev.some(c => c.id === preferredEvidence.id)) return prev;
+      const newCard: EvidenceCard = {
+        id: preferredEvidence.id || `preferred_${Date.now()}`,
+        title: preferredEvidence.title,
+        content: preferredEvidence.content,
+        question: preferredEvidence.question,
+        reasoning: preferredEvidence.reasoning,
+      };
+      return [newCard, ...prev];
+    });
+    if (!query && preferredEvidence.question) setQuery(preferredEvidence.question);
+    if (!selectedTopicsOverride && selectedTopics.length === 0 && preferredEvidence.topics?.length) {
+      setSelectedTopics(preferredEvidence.topics);
+    }
+  }, [planMatchesCouncil, preferredEvidence, query, selectedTopics.length, selectedTopicsOverride]);
+
   // Emit session changes upward for persistence
   useEffect(() => {
     if (onSessionChange) {
@@ -101,6 +125,24 @@ export const EvidenceTool: React.FC<EvidenceToolProps> = ({ councilData, prompts
   const handleQuery = async () => {
     if (!query.trim()) return;
     await runPreset('Custom Analysis', query, selectedTopics);
+  };
+
+  const handleSavePreferred = (card: EvidenceCard) => {
+    if (!planMatchesCouncil || !activePlan) return;
+    const topics = selectedTopicsOverride || selectedTopics;
+    updatePlan(activePlan.id, {
+      preferredOptions: {
+        ...(activePlan.preferredOptions || {}),
+        evidence: {
+          id: card.id,
+          title: card.title,
+          content: card.content,
+          question: card.question,
+          topics,
+          reasoning: card.reasoning,
+        }
+      }
+    });
   };
 
   return (
@@ -179,7 +221,17 @@ export const EvidenceTool: React.FC<EvidenceToolProps> = ({ councilData, prompts
           <div className="grid grid-cols-1 gap-4">
             {cards.map((card) => (
               <motion.div key={card.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="bg-[var(--color-panel)] border border-[var(--color-edge)] rounded-xl p-6">
-                <h3 className="text-lg font-semibold text-[var(--color-ink)] mb-2">🗺️ {card.title}</h3>
+                <div className="flex items-start justify-between gap-3">
+                  <h3 className="text-lg font-semibold text-[var(--color-ink)] mb-2">🗺️ {card.title}</h3>
+                  {planMatchesCouncil && (
+                    <button
+                      className="text-xs px-3 py-1 rounded border border-[var(--color-edge)] bg-[var(--color-panel)] text-[var(--color-ink)] hover:border-[var(--color-accent)]"
+                      onClick={() => handleSavePreferred(card)}
+                    >
+                      {preferredEvidence?.id === card.id ? 'Saved' : 'Save to plan'}
+                    </button>
+                  )}
+                </div>
                 {card.question && <p className="text-xs text-[var(--color-muted)] mb-3">Question used: {card.question}</p>}
                 <MarkdownContent content={card.content} />
                 {card.reasoning && card.reasoning.trim() && (

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CouncilData } from '../../../../data/types';
 import { PromptFunctions } from '../../../../prompts';
@@ -7,6 +7,7 @@ import { LoadingSpinner } from '../../shared/LoadingSpinner';
 import { SpatialMap } from '../shared/SpatialMap';
 import { MarkdownContent } from '../../../../components/MarkdownContent';
 import type { GeoLayerSet } from '../../../../data/geojsonLayers';
+import { usePlan } from '../../../../contexts/PlanContext';
 
 interface StrategyModelerToolProps {
   councilData: CouncilData;
@@ -24,17 +25,39 @@ export const StrategyModelerTool: React.FC<StrategyModelerToolProps> = ({ counci
   const [analysis, setAnalysis] = useState('');
   const [loading, setLoading] = useState(false);
   const [metrics, setMetrics] = useState<{ totalSites: number; totalCapacity: number } | null>(null);
+  const [saveStatus, setSaveStatus] = useState<string | null>(null);
+  const hasAutoRun = useRef(false);
+  const { activePlan, updatePlan } = usePlan();
+  const planMatchesCouncil = !!(activePlan && activePlan.councilId === councilData.id);
+  const preferredStrategy = planMatchesCouncil ? activePlan?.preferredOptions?.strategy : undefined;
 
   // Auto-analyze first or provided strategy on mount
   useEffect(() => {
+    if (hasAutoRun.current) return;
     if (initialAnalysis) setAnalysis(initialAnalysis);
     if (initialMetrics) setMetrics(initialMetrics);
     if (initialStrategyId) setSelectedStrategy(initialStrategyId);
 
+    const preferredId = preferredStrategy?.id;
     const first = councilData.strategies && councilData.strategies.length > 0 ? councilData.strategies[0].id : null;
-    const initial = (autoRun && initialStrategyId) ? initialStrategyId : first;
-    if (initial && !initialAnalysis) analyzeStrategy(initial);
-  }, []);
+    const initial = (autoRun && (initialStrategyId || preferredId)) ? (initialStrategyId || preferredId) : (preferredId || first);
+    if (initial && !initialAnalysis) {
+      hasAutoRun.current = true;
+      analyzeStrategy(initial);
+      return;
+    }
+    hasAutoRun.current = true;
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [preferredStrategy?.id]);
+
+  useEffect(() => {
+    if (!planMatchesCouncil) return;
+    const saved = activePlan?.preferredOptions?.strategy;
+    if (!saved) return;
+    if (!selectedStrategy && saved.id) setSelectedStrategy(saved.id);
+    if (!analysis && saved.analysis) setAnalysis(saved.analysis);
+    if (!metrics && saved.metrics) setMetrics(saved.metrics);
+  }, [planMatchesCouncil, activePlan?.preferredOptions?.strategy, selectedStrategy, analysis, metrics, activePlan?.id]);
 
   useEffect(() => {
     if (onSessionChange) {
@@ -43,6 +66,7 @@ export const StrategyModelerTool: React.FC<StrategyModelerToolProps> = ({ counci
   }, [selectedStrategy, analysis, metrics, onSessionChange]);
 
   const analyzeStrategy = async (strategyId: string) => {
+    setSaveStatus(null);
     setSelectedStrategy(strategyId);
     setLoading(true);
 
@@ -68,6 +92,23 @@ export const StrategyModelerTool: React.FC<StrategyModelerToolProps> = ({ counci
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleSavePreferred = () => {
+    if (!planMatchesCouncil || !activePlan || !selectedStrategy) return;
+    const meta = councilData.strategies?.find(s => s.id === selectedStrategy);
+    updatePlan(activePlan.id, {
+      preferredOptions: {
+        ...(activePlan.preferredOptions || {}),
+        strategy: {
+          id: selectedStrategy,
+          label: meta?.label,
+          analysis: analysis || undefined,
+          metrics: metrics || null
+        }
+      }
+    });
+    setSaveStatus('Preferred strategy saved to plan.');
   };
 
   return (
@@ -151,6 +192,20 @@ export const StrategyModelerTool: React.FC<StrategyModelerToolProps> = ({ counci
             className="bg-[var(--color-panel)] border border-[var(--color-edge)] rounded-xl p-6"
           >
             <h3 className="text-lg font-semibold text-[var(--color-ink)] mb-1">Strategy Narrative</h3>
+            {planMatchesCouncil && selectedStrategy && (
+              <div className="flex items-center justify-between text-sm mb-3">
+                <div className="text-[var(--color-muted)]">
+                  {preferredStrategy?.id === selectedStrategy ? 'Saved as preferred option in this plan.' : 'Save this strategy as the preferred option for the plan.'}
+                </div>
+                <button
+                  onClick={handleSavePreferred}
+                  className="px-3 py-1.5 rounded bg-[var(--color-panel)] border border-[var(--color-edge)] text-[var(--color-ink)] text-xs hover:border-[var(--color-accent)]"
+                >
+                  {preferredStrategy?.id === selectedStrategy ? 'Saved' : 'Save to plan'}
+                </button>
+              </div>
+            )}
+            {saveStatus && <div className="text-xs text-green-700 mb-2">{saveStatus}</div>}
             {selectedStrategy && (
               <p className="text-xs text-[var(--color-muted)] mb-3">Current strategy: {councilData.strategies?.find(s=>s.id===selectedStrategy)?.label}</p>
             )}

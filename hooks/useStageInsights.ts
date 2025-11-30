@@ -56,6 +56,7 @@ export function useStageInsights(plan: Plan | undefined, stageId: PlanStageId | 
           const consultSummaries = plan.consultationSummaries || []
           const repTags = plan.representationTags || []
           const sites = plan.sites || []
+          const smartCount = plan.smartOutcomes?.length || 0
           const stagesWithDates = (plan.stages || []).filter(s => s.targetDate).length
           const milestoneCount = plan.timetable?.milestones?.length || 0
           switch (actionId) {
@@ -86,11 +87,11 @@ export function useStageInsights(plan: Plan | undefined, stageId: PlanStageId | 
             case 'base_narrative':
               return !!plan.baselineNarrative
             case 'vision_assistant':
-              return (plan.visionStatements || []).length > 0
+              return smartCount > 0 || (plan.visionStatements || []).length > 0
             case 'outcome_metrics':
-              return (plan.visionStatements || []).some(v => v.metric)
+              return smartCount > 0 || (plan.visionStatements || []).some(v => v.metric)
             case 'outcome_linker':
-              return !!(plan.outcomePolicyLinks && Object.keys(plan.outcomePolicyLinks).length > 0)
+              return (plan.smartOutcomes || []).some(o => (o.linkedPolicies?.length || o.linkedSites?.length || o.spatialLayers?.length)) || !!(plan.outcomePolicyLinks && Object.keys(plan.outcomePolicyLinks).length > 0)
             case 'site_profile':
               return sites.some(s => s.description || s.notes)
             case 'site_rag':
@@ -142,18 +143,19 @@ export function useStageInsights(plan: Plan | undefined, stageId: PlanStageId | 
         const actionsMeta = stageMeta.actionsRecommended || []
         const completedActions = actionsMeta.filter(a => actionDone(a.id))
         const progressText = `Stage progress: ${completedActions.length}/${actionsMeta.length} actions completed. Completed IDs: ${completedActions.map(a=>a.id).join(', ') || 'none'}. When progress is strong, lean to amber/green with concise positives and short gaps.`
-        const trimmedPlan = {
-          id: plan.id,
-          title: plan.title,
-          area: plan.area,
-          planStage: plan.planStage,
-          stages: plan.stages,
-          timetable: plan.timetable,
-          visionStatements: plan.visionStatements,
-          sites: plan.sites,
-          evidenceInventory: plan.evidenceInventory,
-          baselineNarrative: plan.baselineNarrative,
-          readinessAssessment: plan.readinessAssessment,
+          const trimmedPlan = {
+            id: plan.id,
+            title: plan.title,
+            area: plan.area,
+            planStage: plan.planStage,
+            stages: plan.stages,
+            timetable: plan.timetable,
+            smartOutcomes: plan.smartOutcomes,
+            visionStatements: plan.visionStatements,
+            sites: plan.sites,
+            evidenceInventory: plan.evidenceInventory,
+            baselineNarrative: plan.baselineNarrative,
+            readinessAssessment: plan.readinessAssessment,
           gateway1SummaryText: plan.gateway1SummaryText,
           seaHra: plan.seaHra,
           consultationSummaries: plan.consultationSummaries,

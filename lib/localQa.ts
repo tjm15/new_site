@@ -149,15 +149,23 @@ export async function retrieveContext(
   council?: CouncilLike,
   topK = 5
 ): Promise<RetrievedChunk[]> {
-  // In the browser, skip heavy local embedding and return empty context to avoid fetch/model errors.
-  if (typeof window !== 'undefined') {
-    return []
-  }
-  const model = await getModel()
+  const model = await getModel().catch(() => null)
   let cache = planCache[plan.id]
   if (!cache) {
     cache = planCache[plan.id] = buildTexts(plan, council)
   }
+  // Fallback: simple keyword scoring if the model cannot be loaded.
+  if (!model) {
+    const keywords = question.toLowerCase().split(/\W+/).filter(w => w.length > 3)
+    const scored = cache.meta.map((m, i) => {
+      const text = cache.texts[i].toLowerCase()
+      const score = keywords.reduce((acc, w) => acc + (text.includes(w) ? 1 : 0), 0)
+      return { i, score }
+    })
+    scored.sort((a, b) => b.score - a.score)
+    return scored.slice(0, topK).map(({ i }) => cache!.meta[i])
+  }
+
   if (!cache.embeddings) {
     cache.embeddings = await embedAll(model, cache.texts)
   }

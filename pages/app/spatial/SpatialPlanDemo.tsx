@@ -4,6 +4,7 @@ import { CouncilData } from '../../../data/types';
 import { getPrompts } from '../../../prompts';
 import { EvidenceTool } from './tools/EvidenceTool';
 import { VisionConceptsTool } from './tools/VisionConceptsTool';
+import { SmartOutcomesTool } from './tools/SmartOutcomesTool';
 import { PolicyDrafterTool } from './tools/PolicyDrafterTool';
 import { StrategyModelerTool } from './tools/StrategyModelerTool';
 import { SiteAssessmentTool } from './tools/SiteAssessmentTool';
@@ -35,7 +36,7 @@ interface SpatialPlanDemoProps {
   initialTool?: string | undefined;
 }
 
-type ToolId = 'gateway1' | 'timetable' | 'notice' | 'prepRisk' | 'baselining' | 'evidence' | 'vision' | 'policy' | 'strategy' | 'sites' | 'feedback' | 'sea' | 'sci';
+type ToolId = 'gateway1' | 'timetable' | 'notice' | 'prepRisk' | 'baselining' | 'evidence' | 'vision' | 'smartOutcomes' | 'policy' | 'strategy' | 'sites' | 'feedback' | 'sea' | 'sci';
 
 interface Tool {
   id: ToolId;
@@ -52,6 +53,7 @@ const TOOLS: Tool[] = [
   { id: 'baselining', label: 'Baselining Studio', icon: '📚', description: 'Generate datasets, trends, SWOT, and baseline narrative with plan-aware autofill.' },
   { id: 'evidence', label: 'Evidence Base', icon: '🗺️', description: 'Build your foundation by exploring geospatial data and querying a vast library of planning documents.' },
   { id: 'vision', label: 'Vision & Concepts', icon: '🎨', description: 'Translate data and policy into compelling visuals. Generate high-quality architectural and landscape imagery.' },
+  { id: 'smartOutcomes', label: 'SMART Outcomes', icon: '🎯', description: 'Draft Specific, Measurable, Achievable, Relevant, Time-bound outcomes with indicators and SEA links.' },
   { id: 'policy', label: 'Policy Drafter', icon: '📋', description: 'Draft, refine, and validate planning policy. Research, check for national compliance, and get editing suggestions.' },
   { id: 'strategy', label: 'Strategy Modeler', icon: '📊', description: 'Explore the future impact of high-level strategies. Model and compare complex scenarios for informed decisions.' },
   { id: 'sites', label: 'Site Assessment', icon: '📍', description: 'Conduct detailed, map-based site assessments. Generate grounded reports for any location or uploaded site data.' },
@@ -68,12 +70,14 @@ export const SpatialPlanDemo: React.FC<SpatialPlanDemoProps> = ({ councilData, o
   const [chatHistoryByPlan, setChatHistoryByPlan] = useState<Record<string, Array<{ role: 'user' | 'assistant'; text: string }>>>({});
   const [lastAnswerByPlan, setLastAnswerByPlan] = useState<Record<string, string>>({});
   const [showAnswerModal, setShowAnswerModal] = useState(false);
-  const { plans, getActiveForCouncil, setActiveForCouncil, setActivePlan, createPlan, updatePlan, setPlanStage } = usePlan();
+  const [customPromptChips, setCustomPromptChips] = useState<string[]>([]);
+  const { plans, activePlan: ctxActivePlan, getActiveForCouncil, setActiveForCouncil, setActivePlan, createPlan, updatePlan, setPlanStage } = usePlan();
   const [creating, setCreating] = useState(false);
   const [initialProps, setInitialProps] = useState<{
     evidence?: { initialQuery?: string; initialTopics?: string[]; initialCards?: { title: string; content: string; question?: string }[]; autoRun?: boolean };
     policy?: { initialTopic?: string; initialBrief?: string; initialDraftPolicy?: string; initialVariants?: string[]; autoRun?: boolean };
     vision?: { initialArea?: string; initialVisionText?: string; initialHighlightsText?: string; initialConceptImage?: string; autoRun?: boolean };
+    smartOutcomes?: { autoRun?: boolean; prefill?: Record<string, any> };
     strategy?: { initialStrategyId?: string; initialAnalysis?: string; initialMetrics?: { totalSites: number; totalCapacity: number } | null; autoRun?: boolean };
     sites?: { initialSiteId?: string; initialAppraisal?: string; initialDetails?: { constraints?: string[]; opportunities?: string[]; policies?: string[] } | null; autoRun?: boolean };
     feedback?: { initialText?: string; initialThemes?: any[]; autoRun?: boolean };
@@ -98,10 +102,13 @@ export const SpatialPlanDemo: React.FC<SpatialPlanDemoProps> = ({ councilData, o
     if (!activePlan) return;
     setBaselineState(prev => ({ ...prev, loading: true }));
     try {
+      const outcomeText = (activePlan.smartOutcomes && activePlan.smartOutcomes.length
+        ? activePlan.smartOutcomes.map(o => o.outcomeStatement).join('; ')
+        : (activePlan.visionStatements || []).map(v=>v.text).join('; ')) || 'None yet';
       const ctx = `
 Authority: ${activePlan.area}
 Plan: ${activePlan.title}
-Known outcomes: ${(activePlan.visionStatements || []).map(v=>v.text).join('; ') || 'None yet'}
+Known outcomes: ${outcomeText}
 Sites scored: ${activePlan.sites?.length || 0}
 `;
       const datasets = await callLLM({ mode: 'markdown', prompt: `List the top 8 datasets (with source suggestions) this authority should include in its Local Plan baseline. Return as markdown bullets.` });
@@ -123,6 +130,7 @@ Sites scored: ${activePlan.sites?.length || 0}
   const toolLaunchMap = useMemo<Record<string, ToolId>>(() => ({
     EvidenceTool: 'evidence',
     VisionConceptsTool: 'vision',
+    SmartOutcomesTool: 'smartOutcomes',
     PolicyDrafterTool: 'policy',
     StrategyModelerTool: 'strategy',
     SiteAssessmentTool: 'sites',
@@ -148,6 +156,7 @@ Sites scored: ${activePlan.sites?.length || 0}
     const consultSummaries = plan.consultationSummaries || [];
     const repTags = plan.representationTags || [];
     const sites = plan.sites || [];
+    const smartCount = plan.smartOutcomes?.length || 0;
     const stagesWithDates = (plan.stages || []).filter(s => s.targetDate).length;
     const milestoneCount = plan.timetable?.milestones?.length || 0;
     switch (actionId) {
@@ -172,11 +181,11 @@ Sites scored: ${activePlan.sites?.length || 0}
       case 'base_narrative':
         return Boolean(plan.baselineNarrative);
       case 'vision_assistant':
-        return (plan.visionStatements || []).length > 0;
+        return smartCount > 0 || (plan.visionStatements || []).length > 0;
       case 'outcome_metrics':
-        return (plan.visionStatements || []).some(v => v.metric);
+        return smartCount > 0 || (plan.visionStatements || []).some(v => v.metric);
       case 'outcome_linker':
-        return Boolean(plan.outcomePolicyLinks && Object.keys(plan.outcomePolicyLinks).length > 0);
+        return (plan.smartOutcomes || []).some(o => (o.linkedPolicies?.length || o.linkedSites?.length || o.spatialLayers?.length)) || Boolean(plan.outcomePolicyLinks && Object.keys(plan.outcomePolicyLinks).length > 0);
       case 'site_profile':
         return sites.some(s => s.description || s.notes);
       case 'site_rag':
@@ -270,7 +279,10 @@ Sites scored: ${activePlan.sites?.length || 0}
             </button>
           </div>
           <div className="mt-2 flex flex-wrap gap-2">
-            {((stageModel?.actionsRecommended || []).map(a => a.assistantPromptHint || '').filter(Boolean) as string[]).map((q, i) => (
+            {[
+              ...((stageModel?.actionsRecommended || []).map(a => a.assistantPromptHint || '').filter(Boolean) as string[]),
+              ...customPromptChips,
+            ].filter(Boolean).map((q, i) => (
               <button key={i} className="px-3 py-1.5 rounded-full bg-[var(--color-surface)] border border-[var(--color-edge)] text-xs text-[var(--color-muted)] hover:text-[var(--color-ink)]" onClick={()=>setQuestion(q)}>
                 {q}
               </button>
@@ -322,21 +334,30 @@ Sites scored: ${activePlan.sites?.length || 0}
 
   React.useEffect(() => {
     if (!initialTool) return;
-    const simpleMap: Record<string, ToolId> = { vision: 'vision', sites: 'sites', evidence: 'evidence', policy: 'policy', strategy: 'strategy', feedback: 'feedback', sea: 'sea', sci: 'sci', timetable: 'timetable', notice: 'notice', preprisk: 'prepRisk', prepRisk: 'prepRisk', baselining: 'baselining', baseline: 'baselining', gateway1: 'gateway1', g1: 'gateway1' };
+    const simpleMap: Record<string, ToolId> = { vision: 'vision', smart: 'smartOutcomes', smartoutcomes: 'smartOutcomes', outcomes: 'smartOutcomes', sites: 'sites', evidence: 'evidence', policy: 'policy', strategy: 'strategy', feedback: 'feedback', sea: 'sea', sci: 'sci', timetable: 'timetable', notice: 'notice', preprisk: 'prepRisk', prepRisk: 'prepRisk', baselining: 'baselining', baseline: 'baselining', gateway1: 'gateway1', g1: 'gateway1' };
     const picked = simpleMap[initialTool];
     if (picked) openTool(picked);
   }, [initialTool, openTool]);
 
   // Ensure a plan exists/active for this council
   React.useEffect(() => {
-    if (activePlan) return;
+    if (activePlan && activePlan.councilId === councilData.id) return;
     const fallback = plans.find(p => p.councilId === councilData.id);
     if (fallback) {
       setActivePlan(fallback.id);
       setActiveForCouncil(councilData.id, fallback.id);
       if (!fallback.planStage) setPlanStage(fallback.id, STAGES[0].id);
     }
-  }, [activePlan?.id, plans, councilData.id, setActivePlan, setActiveForCouncil, setPlanStage]);
+  }, [activePlan?.id, activePlan?.councilId, plans, councilData.id, setActivePlan, setActiveForCouncil, setPlanStage]);
+
+  // Keep PlanContext active plan aligned with the council-specific selection to avoid cross-council bleed.
+  React.useEffect(() => {
+    if (!activePlan) return;
+    if (ctxActivePlan?.id !== activePlan.id) {
+      setActivePlan(activePlan.id);
+      if (activePlan.councilId) setActiveForCouncil(activePlan.councilId, activePlan.id);
+    }
+  }, [activePlan?.id, activePlan?.councilId, ctxActivePlan?.id, setActivePlan, setActiveForCouncil]);
 
   const chatHistory = activePlan ? (chatHistoryByPlan[activePlan.id] || []) : [];
   const lastAnswer = activePlan ? lastAnswerByPlan[activePlan.id] : undefined;
@@ -345,7 +366,15 @@ Sites scored: ${activePlan.sites?.length || 0}
   // Clear tool workspace when switching plans to avoid cross-plan state bleed
   React.useEffect(() => {
     setSelectedTool(null);
+    setCustomPromptChips([]);
   }, [activePlanKey]);
+
+  // Reset tool-specific prompt chips when switching tools
+  React.useEffect(() => {
+    if (selectedTool !== 'baselining') {
+      setCustomPromptChips([]);
+    }
+  }, [selectedTool]);
 
   // Removed auto planNextStageSuggestion to avoid extra LLM calls; run only on demand if needed.
 
@@ -436,6 +465,8 @@ Sites scored: ${activePlan.sites?.length || 0}
           autoRun={initialProps.vision?.autoRun && !toolSessions.vision}
           onSessionChange={(session)=> setToolSessionsByPlan(s=> ({ ...s, [activePlanKey]: { ...(s[activePlanKey]||{}), vision: session } }))}
         />;
+      case 'smartOutcomes':
+        return <SmartOutcomesTool councilData={councilData} autoRun={initialProps.smartOutcomes?.autoRun} />;
       case 'policy':
         return <PolicyDrafterTool
           councilData={councilData}
@@ -509,7 +540,12 @@ Sites scored: ${activePlan.sites?.length || 0}
           plan={activePlan}
         />;
       case 'baselining':
-        return <BaseliningTool councilData={councilData} autoRun={initialProps.baselining?.autoRun} prefill={initialProps.baselining?.prefill} />;
+        return <BaseliningTool
+          councilData={councilData}
+          autoRun={initialProps.baselining?.autoRun}
+          prefill={initialProps.baselining?.prefill}
+          onPromptChipsChange={(chips) => setCustomPromptChips(chips || [])}
+        />;
       case 'timetable':
         return <TimetableTool councilData={councilData} autoRun={initialProps.timetable?.autoRun} plan={activePlan} />;
       default:
@@ -770,7 +806,7 @@ function stageDefaultSuggestions(stageId: string): string[] {
     case 'BASELINING':
       return ['Which datasets are missing for the baseline?', 'Summarise housing and economy trends', 'Draft a baseline narrative intro'];
     case 'VISION_OUTCOMES':
-      return ['Propose a distinctive vision statement', 'Suggest measurable outcomes with indicators', 'Which outcomes lack supporting evidence?'];
+      return ['Propose a distinctive vision statement', 'Draft SMART outcomes with indicators and targets', 'Which outcomes lack supporting evidence or SEA coverage?'];
     case 'SITE_SELECTION':
       return ['Which sites look weakest on deliverability?', 'Draft reasons to reject a site', 'Estimate capacity for key sites'];
     case 'CONSULTATION_1':

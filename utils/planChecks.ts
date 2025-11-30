@@ -11,11 +11,8 @@ export type CheckResult = {
 export async function runPlanChecks(plan: Plan): Promise<CheckResult[]> {
   const results: CheckResult[] = []
   // Simple pre-filters
-  if (!plan.visionStatements || plan.visionStatements.length === 0) {
-    results.push({ id: 'vision_present', status: 'fail', summary: 'No vision outcomes defined.' })
-  } else {
-    results.push({ id: 'vision_present', status: 'pass', summary: 'Vision outcomes present.' })
-  }
+  const hasOutcomes = (plan.smartOutcomes && plan.smartOutcomes.length > 0) || (plan.visionStatements && plan.visionStatements.length > 0)
+  results.push({ id: 'vision_present', status: hasOutcomes ? 'pass' : 'fail', summary: hasOutcomes ? 'Vision/SMART outcomes present.' : 'No vision or SMART outcomes defined.' })
   const anyRed = plan.sites?.some(s => s.suitability === 'R' || s.availability === 'R' || s.achievability === 'R')
   results.push({ id: 'site_red_flags', status: anyRed ? 'risk' : 'pass', summary: anyRed ? 'Some sites have Red flags.' : 'No Red flags on sites.' })
 
@@ -23,7 +20,8 @@ export async function runPlanChecks(plan: Plan): Promise<CheckResult[]> {
   try {
     const llmRes = await runLLMTask('plan_checklist_run', {
       authorityName: plan.area,
-      outcomes: plan.visionStatements,
+      outcomes: (plan.smartOutcomes && plan.smartOutcomes.length > 0) ? plan.smartOutcomes : plan.visionStatements,
+      smartOutcomes: plan.smartOutcomes,
       sites: plan.sites,
       timetable: plan.timetable
     })

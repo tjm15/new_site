@@ -27,11 +27,21 @@ export const SiteAssessmentTool: React.FC<SiteAssessmentToolProps> = ({ councilD
   const [loading, setLoading] = useState(false);
   const [details, setDetails] = useState<{ constraints?: string[]; opportunities?: string[]; policies?: string[] } | null>(null);
   const [rag, setRag] = useState<{ suitability?: 'R'|'A'|'G'; availability?: 'R'|'A'|'G'; achievability?: 'R'|'A'|'G'; overall?: 'R'|'A'|'G' } | null>(null);
+  const [decisionModalOpen, setDecisionModalOpen] = useState(false);
+  const [decisionChoice, setDecisionChoice] = useState<'selected' | 'rejected'>('selected');
+  const [decisionText, setDecisionText] = useState('');
+  const [savingDecision, setSavingDecision] = useState(false);
+  const [savingPreferredSite, setSavingPreferredSite] = useState(false);
   const { activePlan, updatePlan } = usePlan();
+  const planMatchesCouncil = !!(activePlan && activePlan.councilId === councilData.id);
+  const preferredSite = planMatchesCouncil ? activePlan?.preferredOptions?.site : undefined;
+  const preferredSiteId = preferredSite?.id;
 
   const assessSite = async (siteId: string) => {
     setSelectedSite(siteId);
     setLoading(true);
+    setRag(null);
+    setDecisionModalOpen(false);
 
     try {
       const site = councilData.spatialData.allocations.find(s => s.id === siteId);
@@ -59,7 +69,7 @@ export const SiteAssessmentTool: React.FC<SiteAssessmentToolProps> = ({ councilD
             suitability: ai?.suitability?.rag?.toUpperCase?.() as 'R'|'A'|'G',
             availability: ai?.availability?.rag?.toUpperCase?.() as 'R'|'A'|'G',
             achievability: ai?.achievability?.rag?.toUpperCase?.() as 'R'|'A'|'G',
-            overall: ai?.overall?.rag?.toUpperCase?.() as 'R'|'A'|'G'
+            overall: (ai?.overall?.rag || ai?.overall)?.toString()?.toUpperCase() as 'R'|'A'|'G'
           };
           setRag(normalized);
           if (activePlan && activePlan.councilId === councilData.id) {
@@ -104,10 +114,19 @@ export const SiteAssessmentTool: React.FC<SiteAssessmentToolProps> = ({ councilD
   }, []);
 
   useEffect(() => {
+    if (!planMatchesCouncil || !preferredSiteId) return;
+    if (selectedSite === preferredSiteId) return;
+    assessSite(preferredSiteId);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [planMatchesCouncil, preferredSiteId, selectedSite]);
+
+  useEffect(() => {
     if (onSessionChange) {
       onSessionChange({ selectedSite, appraisal, details });
     }
   }, [selectedSite, appraisal, details]);
+
+  const existingDecision = selectedSite && activePlan?.siteDecisions?.find(d => d.siteId === selectedSite);
 
   const selectedSiteData = selectedSite
     ? councilData.spatialData.allocations.find(s => s.id === selectedSite)
@@ -151,6 +170,48 @@ export const SiteAssessmentTool: React.FC<SiteAssessmentToolProps> = ({ councilD
           <h3 className="text-lg font-semibold text-[var(--color-ink)] mb-3">
             {selectedSiteData.name}
           </h3>
+          <div className="flex flex-wrap gap-2 mb-3">
+            <button
+              className="px-3 py-1.5 rounded border border-[var(--color-edge)] text-[var(--color-ink)] text-sm bg-[var(--color-panel)] hover:border-[var(--color-accent)]"
+              onClick={() => {
+                setDecisionChoice(existingDecision?.decision || 'selected');
+                setDecisionText(existingDecision?.rationale || '');
+                setDecisionModalOpen(true);
+              }}
+            >
+              Selection / rejection reasons
+            </button>
+            {planMatchesCouncil && (
+              <button
+                className="px-3 py-1.5 rounded border border-[var(--color-edge)] text-[var(--color-ink)] text-sm bg-[var(--color-panel)] hover:border-[var(--color-accent)] disabled:opacity-60"
+                disabled={savingPreferredSite}
+                onClick={() => {
+                  if (!activePlan || !selectedSiteData) return;
+                  setSavingPreferredSite(true);
+                  updatePlan(activePlan.id, {
+                    preferredOptions: {
+                      ...(activePlan.preferredOptions || {}),
+                      site: {
+                        id: selectedSiteData.id,
+                        name: selectedSiteData.name,
+                        rationale: existingDecision?.rationale || decisionText || undefined,
+                        appraisal: appraisal || undefined,
+                      }
+                    }
+                  });
+                  setSavingPreferredSite(false);
+                }}
+              >
+                {preferredSiteId === selectedSite ? 'Preferred option saved' : (savingPreferredSite ? 'Saving...' : 'Save as preferred')}
+              </button>
+            )}
+            {existingDecision?.decision && (
+              <span className="text-xs text-[var(--color-muted)]">Logged: {existingDecision.decision}</span>
+            )}
+            {preferredSiteId === selectedSite && (
+              <span className="text-xs text-green-700">Marked as preferred site for this plan</span>
+            )}
+          </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
             {selectedSiteData.area && (
               <div>
@@ -203,10 +264,31 @@ export const SiteAssessmentTool: React.FC<SiteAssessmentToolProps> = ({ councilD
                 </ul>
               </div>
               <div className="bg-[var(--color-panel)] border border-[var(--color-edge)] rounded-lg p-4">
-                <div className="font-semibold text-[var(--color-ink)] mb-2">📜 Relevant Policies</div>
-                <ul className="text-sm text-[var(--color-muted)] list-disc pl-5">
-                  {details.policies?.map((c, idx) => (<li key={idx}>{c}</li>))}
-                </ul>
+                <div className="font-semibold text-[var(--color-ink)] mb-2 flex items-center gap-2">
+                  <span>📜 Relevant Policies</span>
+                  {!details.policies?.length && <span className="text-xs text-amber-700 flex items-center gap-1">❗ Incomplete</span>}
+                </div>
+                {details.policies?.length ? (
+                  <ul className="text-sm text-[var(--color-muted)] list-disc pl-5">
+                    {details.policies.map((c, idx) => (<li key={idx}>{c}</li>))}
+                  </ul>
+                ) : (
+                  <div className="text-sm text-[var(--color-muted)]">
+                    No site-specific policies linked yet. Open the Policy Drafter to create site policies with indicators and obligations.
+                    <div className="mt-2">
+                      <button
+                        className="text-[var(--color-accent)] underline text-sm"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          window.dispatchEvent(new CustomEvent('openPolicyDrafter', { detail: { hint: 'site-policies' } }));
+                          localStorage.setItem('initialTool', 'policy');
+                        }}
+                      >
+                        → Draft site policy in Policy Drafter
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           )}
@@ -271,6 +353,86 @@ export const SiteAssessmentTool: React.FC<SiteAssessmentToolProps> = ({ councilD
           </motion.div>
         )}
       </AnimatePresence>
+      {decisionModalOpen && (
+        <div className="fixed inset-0 z-30 flex justify-end bg-black/20">
+          <div className="w-full max-w-md h-full bg-[var(--color-panel)] border-l border-[var(--color-edge)] shadow-2xl p-4 overflow-y-auto">
+            <div className="flex items-start justify-between gap-2 mb-3">
+              <div>
+                <div className="text-sm text-[var(--color-muted)]">Selection / Rejection</div>
+                <div className="text-lg font-semibold text-[var(--color-ink)]">{selectedSiteData?.name || 'Site'}</div>
+              </div>
+              <button className="text-sm text-[var(--color-muted)] hover:text-[var(--color-ink)]" onClick={() => setDecisionModalOpen(false)}>Close</button>
+            </div>
+            <div className="space-y-3">
+              <div>
+                <div className="text-xs text-[var(--color-muted)] mb-1">Decision</div>
+                <select
+                  value={decisionChoice}
+                  onChange={(e)=>setDecisionChoice(e.target.value as 'selected'|'rejected')}
+                  className="w-full border border-[var(--color-edge)] rounded-lg p-2 text-sm"
+                >
+                  <option value="selected">Selected</option>
+                  <option value="rejected">Rejected</option>
+                </select>
+              </div>
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <div className="text-xs text-[var(--color-muted)]">Reasoning</div>
+                  <button
+                    className="text-xs text-[var(--color-accent)] hover:underline"
+                    onClick={async ()=>{
+                      if (!selectedSiteData) return;
+                      const prompt = `
+Draft concise ${decisionChoice} rationale (3-5 bullets) for the site below. Include constraints, opportunities, policy alignment, and delivery/SEA considerations.
+Site: ${selectedSiteData.name}
+Category: ${selectedSiteData.category || ''}
+Capacity: ${selectedSiteData.capacity || 'n/a'}
+Constraints: ${(details?.constraints || []).join('; ')}
+Opportunities: ${(details?.opportunities || []).join('; ')}
+Policies: ${(details?.policies || []).join('; ')}
+RAG: ${rag ? JSON.stringify(rag) : 'n/a'}
+Decision: ${decisionChoice}
+Return plain text bullets.`;
+                      try {
+                        setSavingDecision(true);
+                        const text = await callLLM({ mode: 'markdown', prompt });
+                        setDecisionText(text || '');
+                      } catch {
+                        setDecisionText(decisionText || '');
+                      } finally {
+                        setSavingDecision(false);
+                      }
+                    }}
+                  >
+                    Auto-draft
+                  </button>
+                </div>
+                <textarea
+                  value={decisionText}
+                  onChange={(e)=>setDecisionText(e.target.value)}
+                  rows={8}
+                  className="w-full border border-[var(--color-edge)] rounded-lg p-3 text-sm bg-[var(--color-surface)]"
+                  placeholder="Log why this site is selected or rejected..."
+                />
+              </div>
+              <button
+                className="px-3 py-2 rounded bg-[var(--color-accent)] text-white text-sm"
+                disabled={savingDecision}
+                onClick={()=>{
+                  if (!activePlan || !selectedSiteData) return;
+                  const next = (activePlan.siteDecisions || []).filter(d => d.siteId !== selectedSiteData.id);
+                  next.push({ siteId: selectedSiteData.id, decision: decisionChoice, rationale: decisionText || 'Reason not provided' });
+                  updatePlan(activePlan.id, { siteDecisions: next });
+                  setSavingDecision(false);
+                  setDecisionModalOpen(false);
+                }}
+              >
+                {savingDecision ? 'Saving...' : 'Save decision'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

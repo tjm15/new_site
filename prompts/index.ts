@@ -27,7 +27,7 @@ Answer using local context for ${authority}. Do not ask what authority it is; as
 Keep it concise. Use clear, professional planning language.
 `,
 
-    policyDraftPrompt: (topic: string, brief: string) => `
+  policyDraftPrompt: (topic: string, brief: string) => `
 Act as a senior planning policy officer at ${authority}.
 Draft a new policy or supporting text specifically for ${authority} related to: ${topic}.
 User specific focus: "${brief || "General update based on best practice"}"
@@ -37,7 +37,8 @@ Ground the policy in ${authority}'s context (do not invent another authority), u
 Output format:
 1. Policy Title
 2. Policy Text (formal planning language)
-3. Short justification
+3. Site Allocation / Site-Specific Policy (if a site is specified, include obligations, mitigation, monitoring hooks)
+4. Short justification
 `,
 
     strategyPrompt: (strategyName: string, strategyDesc: string) => `
