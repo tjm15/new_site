@@ -25,7 +25,7 @@ const legacyStageIdMap: Record<string, PlanStageId> = {
 }
 
 function normalizePlan(plan: Plan): Plan {
-  if (plan.systemType !== 'new') return { ...plan, smartOutcomes: plan.smartOutcomes || [], preferredOptions: plan.preferredOptions || {}, strategyDraft: plan.strategyDraft || {}, consultationPack: plan.consultationPack || { sections: [] } }
+  if (plan.systemType !== 'new') return { ...plan, smartOutcomes: plan.smartOutcomes || [], preferredOptions: plan.preferredOptions || {}, strategyDraft: plan.strategyDraft || {}, consultationPack: plan.consultationPack || { sections: [] }, gateway2Pack: plan.gateway2Pack || { sections: [] } }
   const seaHraDefaults = {
     seaScopingStatus: 'Not started',
     seaScopingNotes: '',
@@ -73,7 +73,8 @@ function normalizePlan(plan: Plan): Plan {
     sci: { hasStrategy: false, keyStakeholders: [], methods: [], timelineNote: '', ...(plan.sci || {}) },
     smartOutcomes: plan.smartOutcomes || [],
     strategyDraft: plan.strategyDraft || {},
-    consultationPack: plan.consultationPack || { sections: [] }
+    consultationPack: plan.consultationPack || { sections: [] },
+    gateway2Pack: plan.gateway2Pack || { sections: [] }
   }
 }
 
@@ -134,6 +135,7 @@ export function PlanProvider({ children }: { children: React.ReactNode }) {
       strategyDraft: {},
       preferredOptions: {},
       consultationPack: { sections: [] },
+      gateway2Pack: { sections: [] },
       // initialize SEA/HRA and SCI blanks so components can safely read
       seaHra: {
         seaScopingStatus: 'Not started',

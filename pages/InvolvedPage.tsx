@@ -27,6 +27,7 @@ export function InvolvedPage() {
                 title={title}
                 desc={desc}
                 onClick={() => handleCardClick(title)}
+                ctaLabel="Contact us"
             />
         )}
       </div>

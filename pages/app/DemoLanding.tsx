@@ -122,6 +122,7 @@ export function DemoLanding({ selectedCouncil, onSelectCouncil, onSelectMode, on
                     title={council.name}
                     desc={council.description}
                     onClick={() => handleCouncilSelect(council.id)}
+                    ctaLabel={null}
                   />
                 </div>
               ))}

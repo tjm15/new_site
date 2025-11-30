@@ -5,9 +5,12 @@ interface ModuleCardProps {
     title: string;
     desc: string;
     onClick?: () => void;
+    ctaLabel?: string | null;
 }
 
-export function ModuleCard({ title, desc, onClick }: ModuleCardProps) {
+export function ModuleCard({ title, desc, onClick, ctaLabel = 'How it works →' }: ModuleCardProps) {
+  const showCta = Boolean(onClick && ctaLabel);
+
   return (
     <motion.div
       onClick={onClick}
@@ -20,9 +23,9 @@ export function ModuleCard({ title, desc, onClick }: ModuleCardProps) {
     >
       <div className="text-[var(--color-ink)] font-semibold">{title}</div>
       <p className="text-[var(--color-muted)] mt-2">{desc}</p>
-      {onClick && (
+      {showCta && (
         <span className="mt-4 inline-flex items-center text-sm font-semibold text-teal-500 hover:text-teal-600 transition-colors">
-          How it works &rarr;
+          {ctaLabel}
         </span>
       )}
     </motion.div>

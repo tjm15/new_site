@@ -31,6 +31,7 @@ import { PlanTimelineHorizontal } from '../../../components/PlanTimelineHorizont
 import { MarkdownContent } from '../../../components/MarkdownContent';
 import { Gateway1Tool } from './tools/Gateway1Tool';
 import { ReportDrafterTool } from './tools/ReportDrafterTool';
+import { Gateway2ReadinessTool } from './tools/Gateway2ReadinessTool';
 
 interface SpatialPlanDemoProps {
   councilData: CouncilData;
@@ -38,7 +39,7 @@ interface SpatialPlanDemoProps {
   initialTool?: string | undefined;
 }
 
-type ToolId = 'gateway1' | 'timetable' | 'notice' | 'prepRisk' | 'baselining' | 'evidence' | 'vision' | 'smartOutcomes' | 'policy' | 'strategy' | 'sites' | 'feedback' | 'sea' | 'sci' | 'consultationPack' | 'report';
+type ToolId = 'gateway1' | 'timetable' | 'notice' | 'prepRisk' | 'baselining' | 'evidence' | 'vision' | 'smartOutcomes' | 'policy' | 'strategy' | 'sites' | 'feedback' | 'sea' | 'sci' | 'consultationPack' | 'report' | 'gateway2Pack';
 
 interface Tool {
   id: ToolId;
@@ -64,6 +65,7 @@ const TOOLS: Tool[] = [
   { id: 'sci', label: 'Engagement / SCI', icon: '🗣️', description: 'Record who you will engage, how, and when for this plan.' },
   { id: 'consultationPack', label: 'Consultation Pack Generator', icon: '📑', description: 'Assemble a publishable consultation pack from vision, options, sites, evidence, and SEA scoping.' },
   { id: 'report', label: 'Report Drafter', icon: '📝', description: 'Generate a spatial strategy chapter and warnings from existing plan data.' },
+  { id: 'gateway2Pack', label: 'Gateway 2 Readiness Pack', icon: '🧭', description: 'Assemble the Gateway 2 submission pack with readiness checks, risks, and workshop briefing.' },
 ];
 
 const SCI_STAGE_PREFILLS: Record<string, Record<string, any>> = {
@@ -179,6 +181,7 @@ export const SpatialPlanDemo: React.FC<SpatialPlanDemoProps> = ({ councilData, o
     prepRisk?: { autoRun?: boolean; prefill?: Record<string, any>; initialGovernance?: string; initialResources?: string; initialScope?: string; initialRisks?: string; initialPidDone?: string };
     baselining?: { autoRun?: boolean; prefill?: Record<string, any>; initialTopics?: string; initialFocusNotes?: string };
     gateway1?: { autoRun?: boolean; prefill?: Record<string, any> };
+    gateway2Pack?: { autoRun?: boolean };
   }>({});
   const [toolSessionsByPlan, setToolSessionsByPlan] = useState<Record<string, Record<string, any>>>({});
   const activePlan = getActiveForCouncil(councilData.id);
@@ -234,6 +237,7 @@ Sites scored: ${activePlan.sites?.length || 0}
     BaseliningTool: 'baselining',
     Gateway1Tool: 'gateway1',
     ReportDrafterTool: 'report',
+    Gateway2ReadinessTool: 'gateway2Pack',
   }), []);
 
   const toolById = useMemo(() => {
@@ -666,6 +670,8 @@ Sites scored: ${activePlan.sites?.length || 0}
         return <TimetableTool councilData={councilData} autoRun={initialProps.timetable?.autoRun} plan={activePlan} />;
       case 'report':
         return <ReportDrafterTool plan={activePlan} councilData={councilData} />;
+      case 'gateway2Pack':
+        return <Gateway2ReadinessTool plan={activePlan} councilData={councilData} autoRun={initialProps.gateway2Pack?.autoRun} />;
       default:
         return null;
     }

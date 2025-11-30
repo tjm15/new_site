@@ -30,6 +30,8 @@ export type StageMeta = {
     | 'PrepRiskTool'
     | 'BaseliningTool'
     | 'Gateway1Tool'
+    | 'ReportDrafterTool'
+    | 'Gateway2ReadinessTool'
   >
   tasks: string[]
   coreTasks?: string[]
@@ -37,16 +39,16 @@ export type StageMeta = {
     id: string
     label: string
     shortExplainer: string
-    primaryToolId?: 'EvidenceTool' | 'VisionConceptsTool' | 'SmartOutcomesTool' | 'PolicyDrafterTool' | 'StrategyModelerTool' | 'SiteAssessmentTool' | 'FeedbackAnalysisTool' | 'SEATool' | 'SCITool' | 'ConsultationPackGeneratorTool' | 'TimetableTool' | 'NoticeTool' | 'PrepRiskTool' | 'BaseliningTool' | 'Gateway1Tool'
+    primaryToolId?: 'EvidenceTool' | 'VisionConceptsTool' | 'SmartOutcomesTool' | 'PolicyDrafterTool' | 'StrategyModelerTool' | 'SiteAssessmentTool' | 'FeedbackAnalysisTool' | 'SEATool' | 'SCITool' | 'ConsultationPackGeneratorTool' | 'TimetableTool' | 'NoticeTool' | 'PrepRiskTool' | 'BaseliningTool' | 'Gateway1Tool' | 'ReportDrafterTool' | 'Gateway2ReadinessTool'
     assistantPromptHint?: string
   }>
-  stageTools?: Array<'EvidenceTool' | 'VisionConceptsTool' | 'SmartOutcomesTool' | 'PolicyDrafterTool' | 'StrategyModelerTool' | 'SiteAssessmentTool' | 'FeedbackAnalysisTool' | 'SEATool' | 'SCITool' | 'ConsultationPackGeneratorTool' | 'TimetableTool' | 'NoticeTool' | 'PrepRiskTool' | 'BaseliningTool' | 'Gateway1Tool'>
+  stageTools?: Array<'EvidenceTool' | 'VisionConceptsTool' | 'SmartOutcomesTool' | 'PolicyDrafterTool' | 'StrategyModelerTool' | 'SiteAssessmentTool' | 'FeedbackAnalysisTool' | 'SEATool' | 'SCITool' | 'ConsultationPackGeneratorTool' | 'TimetableTool' | 'NoticeTool' | 'PrepRiskTool' | 'BaseliningTool' | 'Gateway1Tool' | 'ReportDrafterTool' | 'Gateway2ReadinessTool'>
   aiTools?: {
     id: string
     name: string
     description: string
     status?: 'available' | 'planned'
-    launchToolId?: 'EvidenceTool' | 'VisionConceptsTool' | 'SmartOutcomesTool' | 'PolicyDrafterTool' | 'StrategyModelerTool' | 'SiteAssessmentTool' | 'FeedbackAnalysisTool' | 'SEATool' | 'SCITool' | 'ConsultationPackGeneratorTool' | 'TimetableTool' | 'NoticeTool' | 'PrepRiskTool' | 'BaseliningTool' | 'Gateway1Tool' | 'CULPToolkit'
+    launchToolId?: 'EvidenceTool' | 'VisionConceptsTool' | 'SmartOutcomesTool' | 'PolicyDrafterTool' | 'StrategyModelerTool' | 'SiteAssessmentTool' | 'FeedbackAnalysisTool' | 'SEATool' | 'SCITool' | 'ConsultationPackGeneratorTool' | 'TimetableTool' | 'NoticeTool' | 'PrepRiskTool' | 'BaseliningTool' | 'Gateway1Tool' | 'ReportDrafterTool' | 'Gateway2ReadinessTool' | 'CULPToolkit'
   }[]
   qaNotes?: string[]
   qaChecks?: string[]
@@ -422,7 +424,7 @@ export const STAGES: StageMeta[] = [
       'Environmental Report progress panel with SEA/HRA gaps',
       'Mock regulation compliance and soundness risk heatmap',
     ],
-    recommendedTools: ['PolicyDrafterTool', 'StrategyModelerTool', 'EvidenceTool', 'SEATool'],
+    recommendedTools: ['Gateway2ReadinessTool', 'ReportDrafterTool'],
     tasks: [
       'Run completeness check on the Gateway 2 pack with gaps flagged.',
       'Generate top soundness/legal risks with suggested mitigations.',
@@ -436,17 +438,15 @@ export const STAGES: StageMeta[] = [
       'Review SEA/HRA Environmental Report progress and alternatives coverage.'
     ],
     actionsRecommended: [
-      { id: 'g2_completeness', label: 'Check Gateway 2 pack', shortExplainer: 'Flag missing/weak components.', primaryToolId: 'PolicyDrafterTool', assistantPromptHint: 'What is missing from the Gateway 2 pack?' },
-      { id: 'g2_risks', label: 'List soundness/legal risks', shortExplainer: 'Top risks with mitigation steps.', primaryToolId: 'PolicyDrafterTool', assistantPromptHint: 'List early soundness and legal risks and mitigations' },
-      { id: 'g2_matters', label: 'Draft matters to discuss', shortExplainer: 'Issues/questions for assessor meeting.', primaryToolId: 'PolicyDrafterTool', assistantPromptHint: 'Draft matters to discuss with the Gateway assessor' },
-      { id: 'g2_summary', label: 'Write submission summary', shortExplainer: 'Concise covering note for Gateway 2.', primaryToolId: 'PolicyDrafterTool', assistantPromptHint: 'Draft a short Gateway 2 submission summary' }
+      { id: 'g2_pack', label: 'Build Gateway 2 readiness pack', shortExplainer: 'Assemble pack sections with completeness and consistency diagnostics.', primaryToolId: 'Gateway2ReadinessTool', assistantPromptHint: 'Assemble the Gateway 2 readiness pack and highlight gaps' },
+      { id: 'g2_scorecard', label: 'Run readiness scorecard', shortExplainer: 'RAG scorecard with mitigations and assessor-facing questions.', primaryToolId: 'Gateway2ReadinessTool', assistantPromptHint: 'Run a Gateway 2 RAG and list likely assessor questions' },
+      { id: 'g2_strategy', label: 'Refresh spatial strategy draft', shortExplainer: 'Update the spatial strategy chapter for the pack.', primaryToolId: 'ReportDrafterTool', assistantPromptHint: 'Draft the spatial strategy chapter for Gateway 2' }
     ],
-    stageTools: ['PolicyDrafterTool', 'StrategyModelerTool', 'EvidenceTool', 'SEATool'],
+    stageTools: ['Gateway2ReadinessTool', 'ReportDrafterTool'],
     aiTools: [
-      { id: 'g2_completeness', name: 'Gateway 2 Pack Completeness Checker', description: 'Flag missing or weak components before assessor review.', status: 'available', launchToolId: 'PolicyDrafterTool' },
-      { id: 'g2_risks', name: 'Early Soundness Risk Snapshot', description: 'List top soundness/legal risks with plain-language mitigation.', status: 'available', launchToolId: 'PolicyDrafterTool' },
-      { id: 'g2_matters', name: 'Matters for Discussion Generator', description: 'Bullet questions/issues to raise with the assessor.', status: 'available', launchToolId: 'PolicyDrafterTool' },
-      { id: 'g2_summary', name: 'Gateway 2 Submission Summary Writer', description: 'Covering note for what is presented and feedback sought.', status: 'available', launchToolId: 'PolicyDrafterTool' }
+      { id: 'g2_pack', name: 'Gateway 2 Readiness Pack Builder', description: 'Assemble pack sections with completeness, risks, and workshop briefing.', status: 'available', launchToolId: 'Gateway2ReadinessTool' },
+      { id: 'g2_scorecard', name: 'Gateway 2 Readiness Scorecard', description: 'Generate RAG scorecard, mitigations, and likely assessor probes.', status: 'available', launchToolId: 'Gateway2ReadinessTool' },
+      { id: 'g2_strategy', name: 'Spatial Strategy Report Refresh', description: 'Regenerate the spatial strategy chapter for inclusion in the pack.', status: 'available', launchToolId: 'ReportDrafterTool' }
     ],
     qaNotes: ['Pack completeness checked', 'Soundness/legal risks noted with mitigation', 'Matters for discussion prepared', 'Environmental Report progress and alternatives completeness reviewed']
   },

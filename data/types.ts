@@ -261,6 +261,29 @@ export type PlanPreferredOptions = {
   evidence?: { id: string; title: string; content: string; question?: string; topics?: string[]; reasoning?: string }
 }
 
+export type Gateway2SectionStatus = 'draft' | 'needs_review' | 'ready' | 'locked'
+
+export interface Gateway2PackSection {
+  id: string
+  title: string
+  content?: string
+  status?: Gateway2SectionStatus
+  linkedSources?: string[]
+}
+
+export interface Gateway2Pack {
+  readinessScore?: number
+  readinessRag?: 'red' | 'amber' | 'green'
+  scorecard?: Array<{ id: string; title: string; rag: 'red' | 'amber' | 'green'; reason?: string }> | { overall?: string; areas?: Array<{ id: string; title: string; rag: 'red' | 'amber' | 'green'; reason?: string }> }
+  warningsMarkdown?: string
+  questions?: string[]
+  actions?: string[]
+  sections?: Gateway2PackSection[]
+  manifest?: Array<{ id: string; title: string; status: string; note?: string }>
+  diagnostics?: string
+  generatedAt?: string
+}
+
 export interface Plan {
   id: string
   title: string
@@ -307,6 +330,7 @@ export interface Plan {
   consultationSummaries?: ConsultationSummary[]
   representationTags?: RepresentationTag[]
   // Gateway 2/3
+  gateway2Pack?: Gateway2Pack
   gateway2Checklist?: string
   gateway2Risks?: string
   gateway2Summary?: string

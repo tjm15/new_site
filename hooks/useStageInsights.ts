@@ -106,12 +106,12 @@ export function useStageInsights(plan: Plan | undefined, stageId: PlanStageId | 
               return repTags.length > 0
             case 'c1_summary':
               return consultSummaries.some(c => c.stageId === 'CONSULTATION_1')
-            case 'g2_completeness':
-              return !!plan.gateway2Checklist
-            case 'g2_risks':
-              return !!plan.gateway2Risks
-            case 'g2_summary':
-              return !!plan.gateway2Summary
+            case 'g2_pack':
+              return !!(plan.gateway2Pack?.sections?.some(s => s.content) || plan.gateway2Checklist)
+            case 'g2_scorecard':
+              return !!(plan.gateway2Pack?.scorecard || plan.gateway2Pack?.readinessRag || plan.gateway2Risks)
+            case 'g2_strategy':
+              return !!plan.strategyDraft?.reportMarkdown
             case 'c2_tagger':
               return repTags.length > 0
             case 'c2_summary':
