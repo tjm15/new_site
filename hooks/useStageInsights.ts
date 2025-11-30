@@ -156,10 +156,11 @@ export function useStageInsights(plan: Plan | undefined, stageId: PlanStageId | 
             evidenceInventory: plan.evidenceInventory,
             baselineNarrative: plan.baselineNarrative,
             readinessAssessment: plan.readinessAssessment,
-          gateway1SummaryText: plan.gateway1SummaryText,
-          seaHra: plan.seaHra,
-          consultationSummaries: plan.consultationSummaries,
-        }
+            gateway1SummaryText: plan.gateway1SummaryText,
+            seaHra: plan.seaHra,
+            consultationSummaries: plan.consultationSummaries,
+            preferredOptions: plan.preferredOptions,
+          }
         const prompt = [
           'You are a UK planning inspector reviewing a Local Plan under the CULP system.',
           'Return JSON only with fields: { "cards": [ { "title": string, "status": "R"|"A"|"G", "reason": string } ] }',

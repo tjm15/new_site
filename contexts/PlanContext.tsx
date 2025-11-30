@@ -25,7 +25,7 @@ const legacyStageIdMap: Record<string, PlanStageId> = {
 }
 
 function normalizePlan(plan: Plan): Plan {
-  if (plan.systemType !== 'new') return { ...plan, smartOutcomes: plan.smartOutcomes || [], preferredOptions: plan.preferredOptions || {} }
+  if (plan.systemType !== 'new') return { ...plan, smartOutcomes: plan.smartOutcomes || [], preferredOptions: plan.preferredOptions || {}, strategyDraft: plan.strategyDraft || {}, consultationPack: plan.consultationPack || { sections: [] } }
   const seaHraDefaults = {
     seaScopingStatus: 'Not started',
     seaScopingNotes: '',
@@ -71,7 +71,9 @@ function normalizePlan(plan: Plan): Plan {
     timetable: { ...(plan.timetable || { milestones: [] }), milestones: migratedMilestones },
     seaHra: { ...seaHraDefaults, ...(plan.seaHra || {}) },
     sci: { hasStrategy: false, keyStakeholders: [], methods: [], timelineNote: '', ...(plan.sci || {}) },
-    smartOutcomes: plan.smartOutcomes || []
+    smartOutcomes: plan.smartOutcomes || [],
+    strategyDraft: plan.strategyDraft || {},
+    consultationPack: plan.consultationPack || { sections: [] }
   }
 }
 
@@ -129,7 +131,9 @@ export function PlanProvider({ children }: { children: React.ReactNode }) {
       sites: [],
       // New workflow-centric field
       planStage: STAGES[0].id,
+      strategyDraft: {},
       preferredOptions: {},
+      consultationPack: { sections: [] },
       // initialize SEA/HRA and SCI blanks so components can safely read
       seaHra: {
         seaScopingStatus: 'Not started',

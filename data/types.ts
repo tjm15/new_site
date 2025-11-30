@@ -275,6 +275,18 @@ export interface Plan {
   currentStage?: PlanStageId
   // Primary workflow field
   planStage?: PlanStageId
+  // Draft spatial strategy chapter
+  strategyDraft?: { reportMarkdown?: string; warningsMarkdown?: string }
+  // Consultation pack assembly
+  consultationPack?: {
+    sections?: Array<{ id: string; title: string; content?: string; include?: boolean; status?: 'draft' | 'edited' | 'reviewed' | 'locked'; questions?: string[] }>
+    warningsMarkdown?: string
+    summaryMarkdown?: string
+    easyReadMarkdown?: string
+    lastGeneratedAt?: string
+    tone?: string
+    readingLevel?: string
+  }
   // User-picked preferred options from tools
   preferredOptions?: PlanPreferredOptions
   gateway1SummaryText?: string

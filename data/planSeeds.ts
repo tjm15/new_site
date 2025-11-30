@@ -77,7 +77,12 @@ export const PLAN_SEEDS: Record<string, Plan> = {
       readinessScore: 52,
       readinessNotes: 'Baseline grid mostly filled; scoping consultation outstanding.',
       reportDraft: ''
-    }
+    },
+    consultationSummaries: [
+      { stageId: 'SCOPING', who: 'Residents drop-in (n=38)', when: 'Jan 2024', how: 'Town hall + online form', mainIssues: ['Height fears near stations', 'Support for car-free if bins/servicing are clear', 'Ask for youth space'] },
+      { stageId: 'CONSULTATION_1', who: 'Statutory bodies', when: 'Mar 2024', how: 'Portal submissions', mainIssues: ['SEA scoping misses cumulative rail impacts', 'Viability of 50% affordable questioned', 'Heritage massing sensitivity not shown'], intendedChanges: 'Add cumulative rail/SEA note, publish massing testing, include viability appendix headline.' },
+      { stageId: 'CONSULTATION_1', who: 'Anonymous online form', when: 'Mar 2024', how: 'Free text box', mainIssues: ['“Too tall, too late, but also please build quickly”', 'Mentions pigeons + bins repeatedly', 'Contradictory: wants housing but no lights at night'], intendedChanges: 'Flag as incoherent; extract any actionable item (lighting/bins) separately.' }
+    ]
   },
   cornwall: {
     id: 'cornwall_seed_plan',
@@ -126,7 +131,12 @@ export const PLAN_SEEDS: Record<string, Plan> = {
       readinessScore: 58,
       readinessNotes: 'Baseline strong; need formal scoping consultation write-up.',
       reportDraft: ''
-    }
+    },
+    consultationSummaries: [
+      { stageId: 'SCOPING', who: 'Parish hall session (n=22)', when: 'Feb 2024', how: 'In-person workshop', mainIssues: ['Fear of “village becoming town”', 'Ask for safe crossings and play space', 'Mixed feelings about tourism vs housing'], intendedChanges: 'Design play + crossing in concept; add calm construction commitments.' },
+      { stageId: 'CONSULTATION_1', who: 'Statutory consultees', when: 'Apr 2024', how: 'Email/portal', mainIssues: ['SANG boundary clarity', 'Bus frequency funding detail weak', 'Dark skies compliance for lighting'], intendedChanges: 'Update plans with SANG phasing, bus S106 schedule, dark sky lighting spec.' },
+      { stageId: 'CONSULTATION_1', who: 'Postcard drop (illegible)', when: 'Apr 2024', how: 'Paper card', mainIssues: ['Bats? Buses? “City people” complaint', 'Concern about cows losing field', 'Contradictory: wants jobs but no traffic'], intendedChanges: 'Log as incoherent; highlight bats/traffic/cows as possible signals.' }
+    ]
   },
   manchester: {
     id: 'manchester_seed_plan',
@@ -163,6 +173,11 @@ export const PLAN_SEEDS: Record<string, Plan> = {
       readinessScore: 30,
       readinessNotes: 'Baseline grid partially filled; start scoping consultation and SEA checklist.',
       reportDraft: ''
-    }
+    },
+    consultationSummaries: [
+      { stageId: 'SCOPING', who: 'Design review + residents (n=30)', when: 'Jan 2024', how: 'Hybrid workshop', mainIssues: ['Wind/cold canyon fears', 'Desire for youth/creative space at ground floor', 'Car-free welcomed if deliveries managed'], intendedChanges: 'Test wind mitigation, commit to youth/creative ground floor use, publish servicing plan.' },
+      { stageId: 'CONSULTATION_1', who: 'Civic groups + TfGM', when: 'Mar 2024', how: 'Portal + roundtable', mainIssues: ['Question 22-storey height vs heritage context', 'Cycle parking ratios liked but detail missing', 'Ask for Bee Network contributions to be ring-fenced'], intendedChanges: 'Add heritage massing rationale, show cycle layouts, specify Bee Network spend locations.' },
+      { stageId: 'CONSULTATION_1', who: 'Anonymous stream', when: 'Mar 2024', how: 'Online box', mainIssues: ['Mentions “microbrewery smell ok, but no more vents”', 'Says dogs need space and bins already overflow', 'Random note about wind + drones'], intendedChanges: 'Surface as noisy/contradictory feedback; extract dog space/bins as potential actions.' }
+    ]
   }
 }

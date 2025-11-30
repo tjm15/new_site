@@ -95,6 +95,18 @@ Parking provision aligns with Cornwall Council standards: 2 spaces per dwelling 
         type: "object",
         summary: "Concern about development outside settlement boundary and impact on local services",
         fullText: "The Town Council objects to the application as the site lies outside the settlement boundary. There are concerns about the cumulative impact on local infrastructure..."
+      },
+      {
+        respondent: "Local resident (Truro Road)",
+        type: "comment",
+        summary: "Worried about traffic but also wants new play area",
+        fullText: "Traffic is already bad on Truro Road; this will make it worse. But if it must happen, please provide a proper play area, a safe crossing to the bus stop, and keep construction trucks off school run hours."
+      },
+      {
+        respondent: "Anonymous postcard (illegible)",
+        type: "object",
+        summary: "Disjointed remarks about bats, buses, and \"city folk\"",
+        fullText: "Bats. Buses. People from city bringing noise. No more lights! Also where do the cows go? This is NOT the town centre. (handwriting unclear and contradictory)"
       }
     ]
   },
@@ -151,6 +163,18 @@ Parking will be provided on existing hardstanding areas, with no new areas of su
         type: "support",
         summary: "Supportive of conservation-led approach",
         fullText: "The AONB Unit supports the application, which will secure the future of a traditional farm building using appropriate materials and minimal intervention..."
+      },
+      {
+        respondent: "Neighbour (unverified email)",
+        type: "object",
+        summary: "Confused about access, drainage, and whether barn is listed",
+        fullText: "Is this barn listed? Not sure. Worried the lane will flood if more drains are added. Also how do ambulances turn? Please explain in words people can understand, not just drawings."
+      },
+      {
+        respondent: "Parish council clerk",
+        type: "comment",
+        summary: "Neutral but requests construction hours and lighting limits",
+        fullText: "No formal objection provided hours are limited (08:00-18:00 weekdays), lighting is downward-facing and minimal due to dark skies, and bats are checked before any roof removal."
       }
     ]
   }

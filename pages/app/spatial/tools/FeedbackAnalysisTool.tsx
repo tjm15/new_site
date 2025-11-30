@@ -5,13 +5,15 @@ import { callLLM } from '../../../../utils/llmClient';
 import { LoadingSpinner } from '../../shared/LoadingSpinner';
 import { Button } from '../../shared/Button';
 import { MarkdownContent } from '../../../../components/MarkdownContent';
+import { CONSULTATION_SAMPLES } from '../../../../data/consultationSamples';
 
 interface FeedbackAnalysisToolProps {
   prompts: PromptFunctions;
+  councilId?: string;
   initialText?: string;
   initialThemes?: Theme[];
   autoRun?: boolean;
-  onSessionChange?: (session: { consultationText: string; themes: Theme[] }) => void;
+  onSessionChange?: (session: { consultationText: string; themes: Theme[]; summary?: string }) => void;
 }
 
 interface Theme {
@@ -21,10 +23,12 @@ interface Theme {
   summary: string;
 }
 
-export const FeedbackAnalysisTool: React.FC<FeedbackAnalysisToolProps> = ({ prompts, initialText, initialThemes, autoRun, onSessionChange }) => {
+export const FeedbackAnalysisTool: React.FC<FeedbackAnalysisToolProps> = ({ prompts, councilId, initialText, initialThemes, autoRun, onSessionChange }) => {
   const [consultationText, setConsultationText] = useState('');
   const [themes, setThemes] = useState<Theme[]>([]);
   const [loading, setLoading] = useState(false);
+  const [summaryLoading, setSummaryLoading] = useState(false);
+  const [narrativeSummary, setNarrativeSummary] = useState('');
 
   useEffect(() => {
     if (initialThemes && initialThemes.length) setThemes(initialThemes);
@@ -32,13 +36,13 @@ export const FeedbackAnalysisTool: React.FC<FeedbackAnalysisToolProps> = ({ prom
       setConsultationText(initialText as string);
       return;
     }
-    // Pre-fill with sample block (lightweight demo text)
-    const sample = `Theme 1: Affordable housing\nSentiment: positive\nMentions: 24\nA strong desire to see genuinely affordable homes delivered in town centre sites, with support for higher density near transit.\n\nTheme 2: Tall buildings\nSentiment: negative\nMentions: 18\nConcerns about height and massing in certain locations, preference for mid-rise typologies with good design and sunlight.\n\nTheme 3: Active travel\nSentiment: positive\nMentions: 30\nSupport for safer cycling and walking routes, street improvements, and car-free development policies.`;
+    // Pre-fill with a long, unstructured dump to show summarising large free text, scoped by council if available
+    const sample = (councilId && CONSULTATION_SAMPLES[councilId]) || Object.values(CONSULTATION_SAMPLES)[0];
     setConsultationText(sample);
-  }, []);
+  }, [councilId]);
   useEffect(() => {
-    if (onSessionChange) onSessionChange({ consultationText, themes });
-  }, [consultationText, themes, onSessionChange]);
+    if (onSessionChange) onSessionChange({ consultationText, themes, summary: narrativeSummary });
+  }, [consultationText, themes, narrativeSummary, onSessionChange]);
 
   const analyzeFeedback = async () => {
     if (!consultationText.trim()) return;
@@ -114,6 +118,29 @@ export const FeedbackAnalysisTool: React.FC<FeedbackAnalysisToolProps> = ({ prom
     ];
   };
 
+  const generateNarrativeSummary = async () => {
+    if (!consultationText.trim() && themes.length === 0) return;
+    setSummaryLoading(true);
+    try {
+      const themeText = themes.length ? themes.map(t => `- ${t.title} (${t.sentiment}, ~${t.count}): ${t.summary}`).join('\n') : 'No themes parsed yet.'
+      const prompt = `You are drafting a concise narrative summary of consultation feedback for a Local Plan.
+
+Source feedback (raw):
+${consultationText || 'No raw text provided.'}
+
+Parsed themes (if any):
+${themeText}
+
+Task: Write a short, balanced markdown summary (150-250 words) covering who responded, main issues, positives/concerns, and any contradictions. Keep neutral tone and note evidence gaps.`
+      const result = await callLLM({ mode: 'markdown', prompt })
+      setNarrativeSummary(result || 'No summary generated.')
+    } catch (e) {
+      setNarrativeSummary('Could not generate a summary right now.')
+    } finally {
+      setSummaryLoading(false)
+    }
+  }
+
   const getSentimentColor = (sentiment: 'positive' | 'negative' | 'neutral') => {
     switch (sentiment) {
       case 'positive': return 'bg-green-50 text-green-700 border-green-400';
@@ -151,11 +178,14 @@ export const FeedbackAnalysisTool: React.FC<FeedbackAnalysisToolProps> = ({ prom
       </div>
 
       {/* Primary action */}
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-3 flex-wrap">
         <Button onClick={analyzeFeedback} disabled={loading || !consultationText.trim()} variant="primary">
-          {loading ? 'Analyzing...' : 'Analyze sample feedback'}
+          {loading ? 'Analyzing...' : 'Analyze feedback'}
         </Button>
-        <button className="text-sm text-[var(--color-accent)] hover:underline" onClick={() => { setThemes([]); setConsultationText(''); }}>Paste your own instead</button>
+        <Button onClick={generateNarrativeSummary} disabled={(summaryLoading || loading) || (!consultationText.trim() && themes.length === 0)} variant="secondary">
+          {summaryLoading ? 'Summarizing…' : 'Generate narrative summary'}
+        </Button>
+        <button className="text-sm text-[var(--color-accent)] hover:underline" onClick={() => { setThemes([]); setConsultationText(''); setNarrativeSummary(''); }}>Paste your own instead</button>
       </div>
 
       {/* Input (optional) */}
@@ -228,6 +258,21 @@ export const FeedbackAnalysisTool: React.FC<FeedbackAnalysisToolProps> = ({ prom
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Narrative summary */}
+      <div className="bg-[var(--color-panel)] border border-[var(--color-edge)] rounded-xl p-4">
+        <div className="flex items-center justify-between mb-2">
+          <h3 className="text-lg font-semibold text-[var(--color-ink)]">Narrative summary</h3>
+          {summaryLoading && <span className="text-xs text-[var(--color-muted)]">Generating…</span>}
+        </div>
+        {narrativeSummary ? (
+          <div className="prose prose-sm max-w-none text-[var(--color-ink)]">
+            <MarkdownContent content={narrativeSummary} />
+          </div>
+        ) : (
+          <p className="text-sm text-[var(--color-muted)]">Generate to produce a short, balanced Consultation 1/2 narrative.</p>
+        )}
+      </div>
     </div>
   );
 };

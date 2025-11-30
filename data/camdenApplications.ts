@@ -89,6 +89,18 @@ Servicing and refuse collection will take place from Kentish Town Road during of
         type: "object",
         summary: "Concerns about overshadowing and loss of daylight to neighbouring properties",
         fullText: "I object to this application on the grounds that the proposed building will overshadow our property and result in an unacceptable loss of daylight..."
+      },
+      {
+        respondent: "Camden Cycling Campaign",
+        type: "comment",
+        summary: "Support car-free but baffled by bin store on desire line",
+        fullText: "Support the car-free stance and extra cycle parking. However the refuse store blocks the only step-free desire line to Kentish Town Road which makes no sense; please redesign or you will create your own conflict point."
+      },
+      {
+        respondent: "Anonymous online form",
+        type: "object",
+        summary: "Stream-of-consciousness note about height, bins, pigeons",
+        fullText: "this block is too high too near too soon. pigeons will live in the balconies. Also where do the bins go? If the bins are wrong then the building is wrong. (ps: still want the affordable homes but not like this)"
       }
     ]
   },
@@ -143,6 +155,18 @@ Front rooflights have been specified as conservation-style units with slim profi
         type: "comment",
         summary: "No objection in principle, recommend lead for dormer cladding",
         fullText: "The Victorian Society has reviewed the application and has no objection in principle to the modest extensions proposed, which are typical of alterations to Victorian terraces..."
+      },
+      {
+        respondent: "Neighbour (Grafton Rd)",
+        type: "object",
+        summary: "Worried about party wall noise and dust",
+        fullText: "We already had scaffolding from three different jobs on this street this year. Another dormer means more drilling into the party wall; we need reassurance on noise hours and dust suppression or we will keep objecting."
+      },
+      {
+        respondent: "Design student (unclear)",
+        type: "comment",
+        summary: "Incoherent aesthetic critique",
+        fullText: "Dormers are fine but if you flip the fenestration to align with solar punk ideals it could be nice? Unsure. Please do not do pastiche, but also don't do glass. You know?"
       }
     ]
   }

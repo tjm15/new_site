@@ -24,6 +24,7 @@ export type StageMeta = {
     | 'FeedbackAnalysisTool'
     | 'SEATool'
     | 'SCITool'
+    | 'ConsultationPackGeneratorTool'
     | 'TimetableTool'
     | 'NoticeTool'
     | 'PrepRiskTool'
@@ -36,16 +37,16 @@ export type StageMeta = {
     id: string
     label: string
     shortExplainer: string
-    primaryToolId?: 'EvidenceTool' | 'VisionConceptsTool' | 'SmartOutcomesTool' | 'PolicyDrafterTool' | 'StrategyModelerTool' | 'SiteAssessmentTool' | 'FeedbackAnalysisTool' | 'SEATool' | 'SCITool' | 'TimetableTool' | 'NoticeTool' | 'PrepRiskTool' | 'BaseliningTool' | 'Gateway1Tool'
+    primaryToolId?: 'EvidenceTool' | 'VisionConceptsTool' | 'SmartOutcomesTool' | 'PolicyDrafterTool' | 'StrategyModelerTool' | 'SiteAssessmentTool' | 'FeedbackAnalysisTool' | 'SEATool' | 'SCITool' | 'ConsultationPackGeneratorTool' | 'TimetableTool' | 'NoticeTool' | 'PrepRiskTool' | 'BaseliningTool' | 'Gateway1Tool'
     assistantPromptHint?: string
   }>
-  stageTools?: Array<'EvidenceTool' | 'VisionConceptsTool' | 'SmartOutcomesTool' | 'PolicyDrafterTool' | 'StrategyModelerTool' | 'SiteAssessmentTool' | 'FeedbackAnalysisTool' | 'SEATool' | 'SCITool' | 'TimetableTool' | 'NoticeTool' | 'PrepRiskTool' | 'BaseliningTool' | 'Gateway1Tool'>
+  stageTools?: Array<'EvidenceTool' | 'VisionConceptsTool' | 'SmartOutcomesTool' | 'PolicyDrafterTool' | 'StrategyModelerTool' | 'SiteAssessmentTool' | 'FeedbackAnalysisTool' | 'SEATool' | 'SCITool' | 'ConsultationPackGeneratorTool' | 'TimetableTool' | 'NoticeTool' | 'PrepRiskTool' | 'BaseliningTool' | 'Gateway1Tool'>
   aiTools?: {
     id: string
     name: string
     description: string
     status?: 'available' | 'planned'
-    launchToolId?: 'EvidenceTool' | 'VisionConceptsTool' | 'SmartOutcomesTool' | 'PolicyDrafterTool' | 'StrategyModelerTool' | 'SiteAssessmentTool' | 'FeedbackAnalysisTool' | 'SEATool' | 'SCITool' | 'TimetableTool' | 'NoticeTool' | 'PrepRiskTool' | 'BaseliningTool' | 'Gateway1Tool' | 'CULPToolkit'
+    launchToolId?: 'EvidenceTool' | 'VisionConceptsTool' | 'SmartOutcomesTool' | 'PolicyDrafterTool' | 'StrategyModelerTool' | 'SiteAssessmentTool' | 'FeedbackAnalysisTool' | 'SEATool' | 'SCITool' | 'ConsultationPackGeneratorTool' | 'TimetableTool' | 'NoticeTool' | 'PrepRiskTool' | 'BaseliningTool' | 'Gateway1Tool' | 'CULPToolkit'
   }[]
   qaNotes?: string[]
   qaChecks?: string[]
@@ -336,7 +337,7 @@ export const STAGES: StageMeta[] = [
       'Click-and-compare strategy options with SEA objectives overlay',
       'Mitigation builder and cumulative effects visualisation',
     ],
-    recommendedTools: ['SiteAssessmentTool', 'StrategyModelerTool', 'PolicyDrafterTool', 'SEATool'],
+    recommendedTools: ['SiteAssessmentTool', 'StrategyModelerTool', 'PolicyDrafterTool', 'SEATool', 'ReportDrafterTool'],
     tasks: [
       'Generate structured site profiles with constraints/context.',
       'Pre-fill RAG for suitability/availability/achievability with reasons.',
@@ -355,7 +356,7 @@ export const STAGES: StageMeta[] = [
       { id: 'site_capacity', label: 'Estimate capacity', shortExplainer: 'Indicative dwellings/sqm using standards/typology.', primaryToolId: 'SiteAssessmentTool', assistantPromptHint: 'Estimate capacity for key sites with policy standards' },
       { id: 'site_decision', label: 'Draft selection/rejection reasons', shortExplainer: 'Log why sites were selected or rejected.', primaryToolId: 'PolicyDrafterTool', assistantPromptHint: 'Draft reasons for selecting or rejecting candidate sites' }
     ],
-    stageTools: ['SiteAssessmentTool', 'StrategyModelerTool', 'PolicyDrafterTool', 'EvidenceTool', 'SEATool'],
+    stageTools: ['SiteAssessmentTool', 'StrategyModelerTool', 'PolicyDrafterTool', 'EvidenceTool', 'SEATool', 'ReportDrafterTool'],
     aiTools: [
       { id: 'site_profile', name: 'Site Context Summariser', description: 'Create concise site profiles from geometry/constraints.', status: 'available', launchToolId: 'SiteAssessmentTool' },
       { id: 'site_rag', name: 'RAG Site Assessor', description: 'Auto-score S/A/A with rationale.', status: 'available', launchToolId: 'SiteAssessmentTool' },
@@ -378,7 +379,7 @@ export const STAGES: StageMeta[] = [
       'Comment clustering and sentiment distribution',
       'SEA/HRA scope/baseline completeness check inline with consultation themes',
     ],
-    recommendedTools: ['FeedbackAnalysisTool', 'EvidenceTool', 'SEATool'],
+    recommendedTools: ['FeedbackAnalysisTool', 'SCITool', 'ConsultationPackGeneratorTool'],
     tasks: [
       'Plan who to consult and which methods match the issues.',
       'Draft neutral, open consultation questions tied to issues/options.',
@@ -392,12 +393,13 @@ export const STAGES: StageMeta[] = [
       'Capture SEA/HRA baseline issues raised and gaps.'
     ],
     actionsRecommended: [
-      { id: 'c1_plan', label: 'Draft consultation plan', shortExplainer: 'Audiences, methods, and web copy.', primaryToolId: 'FeedbackAnalysisTool', assistantPromptHint: 'Design the Consultation 1 plan and methods' },
-      { id: 'c1_questions', label: 'Generate consultation questions', shortExplainer: 'Open, unbiased questions aligned to issues.', primaryToolId: 'FeedbackAnalysisTool', assistantPromptHint: 'Draft neutral questions for Consultation 1' },
+      { id: 'c1_pack', label: 'Assemble consultation pack', shortExplainer: 'Build the publishable pack from vision, options, sites, and evidence.', primaryToolId: 'ConsultationPackGeneratorTool', assistantPromptHint: 'Assemble the Consultation 1 pack' },
+      { id: 'c1_plan', label: 'Draft consultation plan', shortExplainer: 'Audiences, methods, and web copy.', primaryToolId: 'SCITool', assistantPromptHint: 'Design the Consultation 1 plan and methods' },
+      { id: 'c1_questions', label: 'Generate consultation questions', shortExplainer: 'Open, unbiased questions aligned to issues.', primaryToolId: 'ConsultationPackGeneratorTool', assistantPromptHint: 'Draft neutral questions for Consultation 1' },
       { id: 'c1_cluster', label: 'Cluster early responses', shortExplainer: 'Turn reps into themes with example quotes.', primaryToolId: 'FeedbackAnalysisTool', assistantPromptHint: 'Cluster early responses into themes' },
-      { id: 'c1_summary', label: 'Write C1 summary', shortExplainer: 'Who/when/how, main issues, and influence.', primaryToolId: 'PolicyDrafterTool', assistantPromptHint: 'Draft the Consultation 1 summary' }
+      { id: 'c1_summary', label: 'Write C1 summary', shortExplainer: 'Who/when/how, main issues, and influence.', primaryToolId: 'FeedbackAnalysisTool', assistantPromptHint: 'Draft the Consultation 1 summary' }
     ],
-    stageTools: ['FeedbackAnalysisTool', 'EvidenceTool', 'PolicyDrafterTool', 'SEATool'],
+    stageTools: ['FeedbackAnalysisTool', 'SCITool', 'ConsultationPackGeneratorTool'],
     aiTools: [
       { id: 'c1_plan', name: 'Consultation Plan Generator', description: 'Suggest audiences, methods, and draft web copy.', status: 'available', launchToolId: 'FeedbackAnalysisTool' },
       { id: 'c1_questions', name: 'Consultation Question Designer', description: 'Write plain-language, unbiased questions for surveys/web forms.', status: 'available', launchToolId: 'FeedbackAnalysisTool' },
@@ -462,7 +464,7 @@ export const STAGES: StageMeta[] = [
       'SEA/HRA consultation responses tracked alongside representations',
       'Conformity checker with SDS and statutory consultation status',
     ],
-    recommendedTools: ['FeedbackAnalysisTool', 'PolicyDrafterTool', 'SEATool'],
+    recommendedTools: ['FeedbackAnalysisTool', 'SCITool', 'ConsultationPackGeneratorTool'],
     tasks: [
       'Tag each representation against policies/sites with sentiment.',
       'Summarise soundness/legal objections as main issues with counts.',
@@ -476,11 +478,12 @@ export const STAGES: StageMeta[] = [
       'Capture SEA/HRA consultation feedback and any statutory issues.'
     ],
     actionsRecommended: [
+      { id: 'c2_pack', label: 'Assemble consultation pack', shortExplainer: 'Draft the publishable pack for Consultation 2.', primaryToolId: 'ConsultationPackGeneratorTool', assistantPromptHint: 'Assemble the Consultation 2 pack' },
       { id: 'c2_tagger', label: 'Tag reps to policies/sites', shortExplainer: 'Issues + sentiment per policy/site.', primaryToolId: 'FeedbackAnalysisTool', assistantPromptHint: 'Tag representations to policies and sites with sentiment' },
       { id: 'c2_soundness', label: 'Summarise objections', shortExplainer: 'Likely main issues with counts/examples.', primaryToolId: 'FeedbackAnalysisTool', assistantPromptHint: 'Summarise soundness objections and likely main issues' },
       { id: 'c2_summary', label: 'Draft C2 summary', shortExplainer: 'Who/when/how, issues, intended changes.', primaryToolId: 'PolicyDrafterTool', assistantPromptHint: 'Draft the Consultation 2 summary' }
     ],
-    stageTools: ['FeedbackAnalysisTool', 'PolicyDrafterTool', 'SEATool'],
+    stageTools: ['FeedbackAnalysisTool', 'SCITool', 'ConsultationPackGeneratorTool'],
     aiTools: [
       { id: 'c2_tagger', name: 'Policy/Site Issue Tagger', description: 'Map reps to policies/sites and sentiment.', status: 'available', launchToolId: 'FeedbackAnalysisTool' },
       { id: 'c2_soundness', name: 'Soundness Objection Summariser', description: 'List likely main issues with counts/examples.', status: 'available', launchToolId: 'FeedbackAnalysisTool' },

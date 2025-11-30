@@ -97,6 +97,18 @@ The development will contribute £286,000 (£1,000 per unit) toward sustainable 
         type: "object",
         summary: "Concern about height, density, and cumulative impact on local services",
         fullText: "Whilst we support regeneration of this brownfield site, we have significant concerns about the height of the towers at 22 storeys and the cumulative impact of multiple high-density schemes on local infrastructure..."
+      },
+      {
+        respondent: "Studio tenant (anonymous)",
+        type: "comment",
+        summary: "Stream of consciousness about wind, dogs, and microbrewery smells",
+        fullText: "Wind tunnels already make the courtyard cold; adding two more blocks could turn it into an ice canyon. Dogs need somewhere to go. The brewery fumes are fine but please don't add more extraction stacks right under my window??"
+      },
+      {
+        respondent: "Ancoats Youth Collective",
+        type: "support",
+        summary: "Backs the scheme if youth space delivered",
+        fullText: "We support dense housing and car-free living if there is a ground floor youth studio or indoor sports zone. Without that, it's another 'luxury' place with nowhere for us to go. Keep the roof terraces open to locals."
       }
     ]
   },
@@ -153,6 +165,18 @@ All materials will be high quality and sympathetic to the host building: red fac
         type: "comment",
         summary: "No objection subject to matching materials and retention of existing features",
         fullText: "The Victorian Society has reviewed the application and has no objection in principle, subject to the use of matching materials and the retention of all existing architectural details..."
+      },
+      {
+        respondent: "Neighbour (Burton Road)",
+        type: "object",
+        summary: "Wants clarity on bin storage and overshadowing of kitchen",
+        fullText: "Where will the bins go? We already have overflow. The rear extension may block morning light to our kitchen — please provide a proper daylight test, not just a sketch."
+      },
+      {
+        respondent: "Local blogger",
+        type: "comment",
+        summary: "Rambling note about heritage vs modern glazing",
+        fullText: "Love the house, hate the UPVC. If you are going to do aluminium at the back, make it matte, not shiny spaceship. Heritage matters at the front; back can be modern but not Miami. Sorry if this is contradictory."
       }
     ]
   }

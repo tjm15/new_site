@@ -15,6 +15,7 @@ import { TimetableTool } from './tools/TimetableTool';
 import { NoticeToCommenceTool } from './tools/NoticeToCommenceTool';
 import { PrepRiskTool } from './tools/PrepRiskTool';
 import { BaseliningTool } from './tools/BaseliningTool';
+import { ConsultationPackGeneratorTool } from './tools/ConsultationPackGeneratorTool';
 import { STAGES } from '../../../data/stageMeta';
 import { usePlan } from '../../../contexts/PlanContext';
 import { suggestToolPrefill, runLLMTask } from '../../../utils/llmTasks';
@@ -29,6 +30,7 @@ import { STAGES as STAGE_MODEL } from '../../../data/stageMeta';
 import { PlanTimelineHorizontal } from '../../../components/PlanTimelineHorizontal';
 import { MarkdownContent } from '../../../components/MarkdownContent';
 import { Gateway1Tool } from './tools/Gateway1Tool';
+import { ReportDrafterTool } from './tools/ReportDrafterTool';
 
 interface SpatialPlanDemoProps {
   councilData: CouncilData;
@@ -36,7 +38,7 @@ interface SpatialPlanDemoProps {
   initialTool?: string | undefined;
 }
 
-type ToolId = 'gateway1' | 'timetable' | 'notice' | 'prepRisk' | 'baselining' | 'evidence' | 'vision' | 'smartOutcomes' | 'policy' | 'strategy' | 'sites' | 'feedback' | 'sea' | 'sci';
+type ToolId = 'gateway1' | 'timetable' | 'notice' | 'prepRisk' | 'baselining' | 'evidence' | 'vision' | 'smartOutcomes' | 'policy' | 'strategy' | 'sites' | 'feedback' | 'sea' | 'sci' | 'consultationPack' | 'report';
 
 interface Tool {
   id: ToolId;
@@ -60,7 +62,94 @@ const TOOLS: Tool[] = [
   { id: 'feedback', label: 'Feedback Analysis', icon: '💬', description: 'Instantly synthesize public and stakeholder feedback. Analyze unstructured text to find actionable insights.' },
   { id: 'sea', label: 'SEA / HRA', icon: '🌊', description: 'Capture SEA scoping and HRA baseline with quick drafting support.' },
   { id: 'sci', label: 'Engagement / SCI', icon: '🗣️', description: 'Record who you will engage, how, and when for this plan.' },
+  { id: 'consultationPack', label: 'Consultation Pack Generator', icon: '📑', description: 'Assemble a publishable consultation pack from vision, options, sites, evidence, and SEA scoping.' },
+  { id: 'report', label: 'Report Drafter', icon: '📝', description: 'Generate a spatial strategy chapter and warnings from existing plan data.' },
 ];
+
+const SCI_STAGE_PREFILLS: Record<string, Record<string, any>> = {
+  CONSULTATION_1: {
+    commitments: [
+      'Front-load engagement on issues/options before preferred strategy is fixed',
+      'Plain-English materials with quick feedback loops into preferred options',
+      'Transparency on how SEA/HRA baseline issues raised are handled'
+    ],
+    audiences: [
+      { group: 'Statutory consultees', channels: ['Formal letters', 'Email alerts'], methods: ['Briefing note with timetable, scope, and SEA/HRA focus'] },
+      { group: 'Residents and community groups', channels: ['Email bulletins', 'Social media', 'Schools/youth channels'], methods: ['Issue-based survey', 'Interactive map comments'], barriers: ['Digital exclusion'] },
+      { group: 'Businesses and landowners', channels: ['Business forums', 'Direct email'], methods: ['Webinars on growth/economy', 'Drop-ins on site/options'] }
+    ],
+    methods: {
+      digital: ['Issue/topic response form with tags', 'Interactive map for comments on options and sites', 'Consultation timer and weekly updates', 'Accessible HTML/PDF summaries'],
+      inPerson: ['Roadshow drop-ins across settlements', 'Youth and seldom-heard workshops', 'Stakeholder briefings with Q&A']
+    },
+    planCycle: {
+      create: {
+        earlyEngagement: [
+          'Publish issues/options explainer with visuals and map links',
+          'Targeted outreach to seldom-heard groups and youth on priorities',
+          'Brief statutory consultees on scope, timetable, and evidence gaps'
+        ],
+        drafting: [
+          'Structured response form aligned to issues/options with tagging',
+          'Weekly sentiment/theme snapshot shared openly',
+          'Log how early feedback is influencing preferred options and SEA baseline'
+        ],
+        finalPlan: [
+          'C1 summary published with who/when/how and intended changes before Gateway 2',
+          'Explain environmental issues raised and how they are being handled'
+        ]
+      },
+      update: {
+        continuous: ['Keep feedback inbox live post-C1 and signpost how to stay involved']
+      }
+    },
+    review: {
+      frequency: 'Update after Consultation 1 and before Gateway 2',
+      triggers: ['New statutory feedback', 'Material change to options/issues', 'Digital inclusion issues identified'],
+      consultation: 'Publish any SCI changes if engagement approach shifts after C1'
+    },
+    narrative: 'Consultation 1 prefill: early engagement around scope/issues/options with structured feedback routes.'
+  },
+  CONSULTATION_2: {
+    commitments: [
+      'Clear statutory Consultation 2 with transparent change log',
+      'Structured responses per policy/site plus SEA/HRA content',
+      'Accessible deposit points and support for seldom-heard groups'
+    ],
+    audiences: [
+      { group: 'General public and community groups', channels: ['Plan website', 'Email alerts', 'Libraries/deposit points'], methods: ['Policy/site comment forms', 'Plain-language summary booklet'], barriers: ['Accessibility and digital exclusion'] },
+      { group: 'Statutory consultees', channels: ['Formal letters', 'Email with submission pack links'], methods: ['Technical briefing on policies map, Environmental Report, and HRA'] },
+      { group: 'Developers and agents', channels: ['Portal accounts', 'Direct email'], methods: ['Webinars on submission requirements', 'Workshops on main modifications handling'] }
+    ],
+    methods: {
+      digital: ['Structured response form by policy/site', 'Upload support for evidence with metadata', 'Issue tracker showing received themes', 'Countdown timer and clear deadline banner'],
+      inPerson: ['Public exhibitions with QR codes to the response form', 'Officer-led drop-ins at deposit locations', 'Briefings for parish/ward members']
+    },
+    planCycle: {
+      create: {
+        finalPlan: [
+          'Publish Proposed Local Plan, Policies Map, and Environmental Report with change log',
+          'Open structured form by policy/site/main issue with deadline countdown',
+          'Explain how to request alternative formats and how representations will be processed'
+        ]
+      },
+      examine: [
+        'Prepare summary of main issues and intended changes for submission bundle',
+        'Notify participants about next steps and examination timeline'
+      ],
+      update: {
+        material: ['Keep consultation open for focussed updates if main modifications arise'],
+        continuous: ['Maintain representation log, issue tracker, and response transparency']
+      }
+    },
+    review: {
+      frequency: 'Review SCI before submission once Consultation 2 closes',
+      triggers: ['Inspector advice', 'Main modifications', 'Significant accessibility feedback'],
+      consultation: 'Publish how representations were handled and any SCI changes before submission'
+    },
+    narrative: 'Consultation 2 prefill: emphasises statutory publication of the proposed Local Plan with structured responses linked to policies and sites.'
+  }
+};
 
 export const SpatialPlanDemo: React.FC<SpatialPlanDemoProps> = ({ councilData, onBack, initialTool }) => {
   const [selectedTool, setSelectedTool] = useState<ToolId | null>(null);
@@ -83,6 +172,7 @@ export const SpatialPlanDemo: React.FC<SpatialPlanDemoProps> = ({ councilData, o
     feedback?: { initialText?: string; initialThemes?: any[]; autoRun?: boolean };
     sea?: { autoRun?: boolean; prefill?: Record<string, any> };
     sci?: { autoRun?: boolean; prefill?: Record<string, any> };
+    consultationPack?: { autoRun?: boolean; prefill?: Record<string, any> };
     culp?: { autoRun?: boolean };
     timetable?: { autoRun?: boolean };
     notice?: { autoRun?: boolean; prefill?: Record<string, any>; initialPublicationDate?: string; initialTimetableUrl?: string; initialDraft?: string; initialInstructions?: string };
@@ -137,11 +227,13 @@ Sites scored: ${activePlan.sites?.length || 0}
     FeedbackAnalysisTool: 'feedback',
     SEATool: 'sea',
     SCITool: 'sci',
+    ConsultationPackGeneratorTool: 'consultationPack',
     TimetableTool: 'timetable',
     NoticeTool: 'notice',
     PrepRiskTool: 'prepRisk',
     BaseliningTool: 'baselining',
     Gateway1Tool: 'gateway1',
+    ReportDrafterTool: 'report',
   }), []);
 
   const toolById = useMemo(() => {
@@ -194,6 +286,8 @@ Sites scored: ${activePlan.sites?.length || 0}
         return sites.some(s => s.capacityEstimate);
       case 'site_decision':
         return (plan.siteDecisions || []).length > 0;
+      case 'c1_pack':
+        return Boolean(plan.consultationPack?.sections && plan.consultationPack.sections.length > 0);
       case 'c1_plan':
         return consultSummaries.some(c => c.stageId === 'CONSULTATION_1');
       case 'c1_questions':
@@ -216,6 +310,8 @@ Sites scored: ${activePlan.sites?.length || 0}
         return repTags.some(t => t.issue);
       case 'c2_summary':
         return consultSummaries.some(c => c.stageId === 'CONSULTATION_2');
+      case 'c2_pack':
+        return Boolean(plan.consultationPack?.sections && plan.consultationPack.sections.length > 0);
       case 'g3_requirements':
         return Boolean(plan.requirementsCheck);
       case 'g3_compliance':
@@ -311,7 +407,17 @@ Sites scored: ${activePlan.sites?.length || 0}
 
   const openTool = useCallback((picked: ToolId, opts?: { prefill?: Record<string, any>; autoRun?: boolean }) => {
     (async () => {
+      let autoRun = opts?.autoRun ?? true;
       let suggested = opts?.prefill;
+
+      if (!suggested && picked === 'sci') {
+        const stagePrefill = SCI_STAGE_PREFILLS[currentStageId];
+        if (stagePrefill) {
+          suggested = stagePrefill;
+          autoRun = false; // keep the prefill rather than overriding with an auto-draft
+        }
+      }
+
       if (!suggested && activePlan) {
         try {
           suggested = await suggestToolPrefill(picked, activePlan, activePlan.planStage);
@@ -320,7 +426,6 @@ Sites scored: ${activePlan.sites?.length || 0}
         }
       }
       const base = suggested && typeof suggested === 'object' ? suggested : {};
-      const autoRun = opts?.autoRun ?? true;
       if (picked === 'sea') {
         setInitialProps(prev => ({ ...prev, sea: { autoRun, prefill: suggested || base } } as any));
       } else if (picked === 'sci') {
@@ -330,11 +435,11 @@ Sites scored: ${activePlan.sites?.length || 0}
       }
       setSelectedTool(picked);
     })();
-  }, [activePlan]);
+  }, [activePlan, currentStageId]);
 
   React.useEffect(() => {
     if (!initialTool) return;
-    const simpleMap: Record<string, ToolId> = { vision: 'vision', smart: 'smartOutcomes', smartoutcomes: 'smartOutcomes', outcomes: 'smartOutcomes', sites: 'sites', evidence: 'evidence', policy: 'policy', strategy: 'strategy', feedback: 'feedback', sea: 'sea', sci: 'sci', timetable: 'timetable', notice: 'notice', preprisk: 'prepRisk', prepRisk: 'prepRisk', baselining: 'baselining', baseline: 'baselining', gateway1: 'gateway1', g1: 'gateway1' };
+    const simpleMap: Record<string, ToolId> = { vision: 'vision', smart: 'smartOutcomes', smartoutcomes: 'smartOutcomes', outcomes: 'smartOutcomes', sites: 'sites', evidence: 'evidence', policy: 'policy', strategy: 'strategy', feedback: 'feedback', sea: 'sea', sci: 'sci', timetable: 'timetable', notice: 'notice', preprisk: 'prepRisk', prepRisk: 'prepRisk', baselining: 'baselining', baseline: 'baselining', gateway1: 'gateway1', g1: 'gateway1', consultationpack: 'consultationPack', consultation: 'consultationPack' };
     const picked = simpleMap[initialTool];
     if (picked) openTool(picked);
   }, [initialTool, openTool]);
@@ -398,6 +503,13 @@ Sites scored: ${activePlan.sites?.length || 0}
     }).join(' | ') || 'no sites captured';
     const evidence = (activePlan.evidenceInventory || []).map(ev => `${ev.title}${ev.status ? ` [${ev.status}]` : ''}`).join(' | ') || 'no evidence logged';
     const readiness = activePlan.readinessAssessment?.overallStatus ? `Readiness RAG: ${activePlan.readinessAssessment.overallStatus}` : 'Readiness: not assessed';
+    const preferred = activePlan.preferredOptions || {};
+    const preferredSummary = [
+      preferred.strategy?.label ? `Strategy: ${preferred.strategy.label}` : null,
+      preferred.policy?.topicLabel ? `Policy topic: ${preferred.policy.topicLabel}` : null,
+      preferred.site?.name ? `Site: ${preferred.site.name}` : null,
+      preferred.evidence?.title ? `Evidence: ${preferred.evidence.title}` : null,
+    ].filter(Boolean).join(' | ') || 'none picked';
     const planState = [
       `Authority: ${councilData.name}`,
       `Plan title: ${activePlan.title}`,
@@ -409,6 +521,7 @@ Sites scored: ${activePlan.sites?.length || 0}
       `Sites: ${sites}`,
       `Evidence: ${evidence}`,
       readiness,
+      `Preferred options: ${preferredSummary}`,
     ].join('\n');
     const ctxText = (ctx || []).map((c:any)=>c.text).filter(Boolean).join(' | ') || 'No retrieved context';
     const prompt = [
@@ -506,6 +619,7 @@ Sites scored: ${activePlan.sites?.length || 0}
       case 'feedback':
         return <FeedbackAnalysisTool
           prompts={prompts}
+          councilId={councilData.id}
           {...(initialProps.feedback || {})}
           initialText={toolSessions.feedback?.consultationText || initialProps.feedback?.initialText}
           initialThemes={toolSessions.feedback?.themes || initialProps.feedback?.initialThemes}
@@ -516,6 +630,8 @@ Sites scored: ${activePlan.sites?.length || 0}
         return <SEATool councilData={councilData} autoRun={initialProps.sea?.autoRun} initialData={initialProps.sea?.prefill} onSaved={() => { /* noop */ }} />;
       case 'sci':
         return <SCITool councilData={councilData} autoRun={initialProps.sci?.autoRun} initialData={initialProps.sci?.prefill} onSaved={() => { /* noop */ }} />;
+      case 'consultationPack':
+        return <ConsultationPackGeneratorTool plan={activePlan} councilData={councilData} autoRun={initialProps.consultationPack?.autoRun} initialData={initialProps.consultationPack?.prefill} />;
       case 'notice':
         return <NoticeToCommenceTool
           councilData={councilData}
@@ -548,6 +664,8 @@ Sites scored: ${activePlan.sites?.length || 0}
         />;
       case 'timetable':
         return <TimetableTool councilData={councilData} autoRun={initialProps.timetable?.autoRun} plan={activePlan} />;
+      case 'report':
+        return <ReportDrafterTool plan={activePlan} councilData={councilData} />;
       default:
         return null;
     }
@@ -810,11 +928,11 @@ function stageDefaultSuggestions(stageId: string): string[] {
     case 'SITE_SELECTION':
       return ['Which sites look weakest on deliverability?', 'Draft reasons to reject a site', 'Estimate capacity for key sites'];
     case 'CONSULTATION_1':
-      return ['Who should we engage for Consultation 1?', 'Draft neutral questions on scope and vision', 'How should early feedback shape options?'];
+      return ['Who should we engage for Consultation 1?', 'Draft neutral questions on scope and vision', 'How should early feedback shape options?', 'Assemble a Consultation 1 pack from vision, options, sites, and evidence'];
     case 'GATEWAY_2':
       return ['What belongs in the Gateway 2 pack?', 'List emerging soundness risks', 'What to ask the assessor about?'];
     case 'CONSULTATION_2':
-      return ['Tag issues raised against policies and sites', 'Summarise likely main issues', 'Draft the Consultation 2 summary outline'];
+      return ['Assemble the Consultation 2 pack from current content', 'Tag issues raised against policies and sites', 'Summarise likely main issues', 'Draft the Consultation 2 summary outline'];
     case 'GATEWAY_3':
       return ['Run a prescribed requirements checklist', 'Draft a Statement of Soundness intro', 'What logistics should the readiness statement cover?'];
     case 'SUBMISSION_EXAM':
