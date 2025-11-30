@@ -71,6 +71,29 @@ function buildTexts(plan: PlanLike, council?: CouncilLike): { texts: string[]; m
       texts.push(t)
       meta.push({ text: t, source: 'hra' })
     }
+    if (s.baselineGrid) {
+      Object.entries(s.baselineGrid).forEach(([k, v]) => {
+        if (!v) return
+        const t = `SEA baseline (${k}): ${v}`
+        texts.push(t)
+        meta.push({ text: t, source: 'sea' })
+      })
+    }
+    if (Array.isArray(s.keyRisks)) {
+      const t = `SEA/HRA risks: ${s.keyRisks.join('; ')}`
+      texts.push(t)
+      meta.push({ text: t, source: 'sea' })
+    }
+    if (Array.isArray(s.mitigationIdeas)) {
+      const t = `SEA/HRA mitigation ideas: ${s.mitigationIdeas.join('; ')}`
+      texts.push(t)
+      meta.push({ text: t, source: 'sea' })
+    }
+    if (s.cumulativeEffects) {
+      const t = `Cumulative effects: ${s.cumulativeEffects}`
+      texts.push(t)
+      meta.push({ text: t, source: 'sea' })
+    }
   }
   // SCI / engagement
   if (plan.sci) {

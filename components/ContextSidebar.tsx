@@ -51,7 +51,7 @@ export function ContextSidebar({ councilData, selectedTopics = [], onToggleTopic
         )}
         {activePlan?.systemType === 'new' && activePlan?.councilId === councilData.id && (
           <div className="mt-3">
-            <Link to="/app/gateway1" className="text-sm text-[var(--color-accent)] hover:underline">Gateway 1 →</Link>
+            <Link to="/app?tool=gateway1" className="text-sm text-[var(--color-accent)] hover:underline">Gateway 1 →</Link>
           </div>
         )}
       </div>

@@ -27,6 +27,7 @@ import { prepareAssistantMarkdown } from '../../../utils/markdown';
 import { STAGES as STAGE_MODEL } from '../../../data/stageMeta';
 import { PlanTimelineHorizontal } from '../../../components/PlanTimelineHorizontal';
 import { MarkdownContent } from '../../../components/MarkdownContent';
+import { Gateway1Tool } from './tools/Gateway1Tool';
 
 interface SpatialPlanDemoProps {
   councilData: CouncilData;
@@ -34,7 +35,7 @@ interface SpatialPlanDemoProps {
   initialTool?: string | undefined;
 }
 
-type ToolId = 'timetable' | 'notice' | 'prepRisk' | 'baselining' | 'evidence' | 'vision' | 'policy' | 'strategy' | 'sites' | 'feedback' | 'sea' | 'sci';
+type ToolId = 'gateway1' | 'timetable' | 'notice' | 'prepRisk' | 'baselining' | 'evidence' | 'vision' | 'policy' | 'strategy' | 'sites' | 'feedback' | 'sea' | 'sci';
 
 interface Tool {
   id: ToolId;
@@ -44,6 +45,7 @@ interface Tool {
 }
 
 const TOOLS: Tool[] = [
+  { id: 'gateway1', label: 'Gateway 1 Readiness', icon: '✅', description: 'Answer readiness questions, run RAG with AI, and publish the summary.' },
   { id: 'timetable', label: 'Timetable Drafting', icon: '📆', description: 'Lay out a 30-month timetable visually, auto-draft with AI, and save milestones to the plan.' },
   { id: 'notice', label: 'Notice to Commence', icon: '📢', description: 'Generate compliant notice text ready for publication with timetable link.' },
   { id: 'prepRisk', label: 'Preparation Risk Assessor', icon: '⚠️', description: 'RAG governance/resources before Gateway 1 with actions.' },
@@ -82,6 +84,7 @@ export const SpatialPlanDemo: React.FC<SpatialPlanDemoProps> = ({ councilData, o
     notice?: { autoRun?: boolean; prefill?: Record<string, any>; initialPublicationDate?: string; initialTimetableUrl?: string; initialDraft?: string; initialInstructions?: string };
     prepRisk?: { autoRun?: boolean; prefill?: Record<string, any>; initialGovernance?: string; initialResources?: string; initialScope?: string; initialRisks?: string; initialPidDone?: string };
     baselining?: { autoRun?: boolean; prefill?: Record<string, any>; initialTopics?: string; initialFocusNotes?: string };
+    gateway1?: { autoRun?: boolean; prefill?: Record<string, any> };
   }>({});
   const [toolSessionsByPlan, setToolSessionsByPlan] = useState<Record<string, Record<string, any>>>({});
   const activePlan = getActiveForCouncil(councilData.id);
@@ -89,7 +92,6 @@ export const SpatialPlanDemo: React.FC<SpatialPlanDemoProps> = ({ councilData, o
   const currentStageId = (activePlan?.planStage || STAGES[0].id) as (typeof STAGES)[number]['id'];
   const stageMeta = useMemo(() => STAGES.find(s => s.id === currentStageId) || STAGES[0], [currentStageId]);
   const geoLayers = useMemo(() => getGeoLayerSet(councilData.id), [councilData.id]);
-  const [gatewayState, setGatewayState] = useState<{ summary?: string; readiness?: any; loading?: boolean }>({});
   const [baselineState, setBaselineState] = useState<{ datasets?: string; trends?: string; swot?: string; narrative?: string; loading?: boolean }>({});
 
   const runBaseline = useCallback(async () => {
@@ -131,6 +133,7 @@ Sites scored: ${activePlan.sites?.length || 0}
     NoticeTool: 'notice',
     PrepRiskTool: 'prepRisk',
     BaseliningTool: 'baselining',
+    Gateway1Tool: 'gateway1',
   }), []);
 
   const toolById = useMemo(() => {
@@ -139,6 +142,95 @@ Sites scored: ${activePlan.sites?.length || 0}
     return map;
   }, []);
   const stageModel = useMemo(() => STAGE_MODEL.find(s => s.id === currentStageId), [currentStageId]);
+
+  const actionComplete = useCallback((actionId: string, plan?: Plan): boolean => {
+    if (!plan) return false;
+    const consultSummaries = plan.consultationSummaries || [];
+    const repTags = plan.representationTags || [];
+    const sites = plan.sites || [];
+    const stagesWithDates = (plan.stages || []).filter(s => s.targetDate).length;
+    const milestoneCount = plan.timetable?.milestones?.length || 0;
+    switch (actionId) {
+      case 'prep_timetable':
+        return milestoneCount > 0 || stagesWithDates > 0;
+      case 'prep_notice':
+        return Boolean(plan.prepNoticeText);
+      case 'prep_risk':
+        return Boolean(plan.prepRiskAssessment?.areas?.length);
+      case 'g1_rag':
+        return Boolean(plan.readinessAssessment);
+      case 'g1_summary':
+        return Boolean(plan.gateway1SummaryText);
+      case 'g1_guidance':
+        return Boolean(plan.readinessAssessment);
+      case 'base_datasets':
+        return (plan.evidenceInventory || []).length > 0;
+      case 'base_trends':
+        return Boolean(plan.baselineTrends && Object.keys(plan.baselineTrends).length > 0);
+      case 'base_swot':
+        return Boolean(plan.swot && Object.values(plan.swot || {}).some(v => Array.isArray(v) ? v.length : v));
+      case 'base_narrative':
+        return Boolean(plan.baselineNarrative);
+      case 'vision_assistant':
+        return (plan.visionStatements || []).length > 0;
+      case 'outcome_metrics':
+        return (plan.visionStatements || []).some(v => v.metric);
+      case 'outcome_linker':
+        return Boolean(plan.outcomePolicyLinks && Object.keys(plan.outcomePolicyLinks).length > 0);
+      case 'site_profile':
+        return sites.some(s => s.description || s.notes);
+      case 'site_rag':
+        return sites.some(s => s.suitability || s.availability || s.achievability);
+      case 'site_capacity':
+        return sites.some(s => s.capacityEstimate);
+      case 'site_decision':
+        return (plan.siteDecisions || []).length > 0;
+      case 'c1_plan':
+        return consultSummaries.some(c => c.stageId === 'CONSULTATION_1');
+      case 'c1_questions':
+        return consultSummaries.some(c => c.stageId === 'CONSULTATION_1' && (c.mainIssues?.length || c.intendedChanges));
+      case 'c1_cluster':
+        return repTags.length > 0;
+      case 'c1_summary':
+        return consultSummaries.some(c => c.stageId === 'CONSULTATION_1');
+      case 'g2_completeness':
+        return Boolean(plan.gateway2Checklist);
+      case 'g2_risks':
+        return Boolean(plan.gateway2Risks);
+      case 'g2_matters':
+        return Boolean(plan.gateway2Summary);
+      case 'g2_summary':
+        return Boolean(plan.gateway2Summary);
+      case 'c2_tagger':
+        return repTags.length > 0;
+      case 'c2_soundness':
+        return repTags.some(t => t.issue);
+      case 'c2_summary':
+        return consultSummaries.some(c => c.stageId === 'CONSULTATION_2');
+      case 'g3_requirements':
+        return Boolean(plan.requirementsCheck);
+      case 'g3_compliance':
+        return Boolean(plan.statementCompliance);
+      case 'g3_soundness':
+        return Boolean(plan.statementSoundness);
+      case 'g3_readiness':
+        return Boolean(plan.examReadinessNote);
+      case 'sub_bundle':
+        return (plan.submissionBundle || []).length > 0;
+      case 'sub_rehearsal':
+        return Boolean(plan.examRehearsalNotes);
+      case 'adopt_compliance':
+        return Boolean(plan.adoptionChecklist);
+      case 'adopt_indicators':
+        return (plan.monitoringIndicators || []).length > 0;
+      case 'adopt_monitoring':
+        return (plan.annualMonitoringNarratives || []).length > 0;
+      case 'adopt_eval':
+        return Boolean(plan.year4Evaluation);
+      default:
+        return false;
+    }
+  }, []);
 
   const renderAssistantPanel = () => {
     if (!activePlan) {
@@ -230,7 +322,7 @@ Sites scored: ${activePlan.sites?.length || 0}
 
   React.useEffect(() => {
     if (!initialTool) return;
-    const simpleMap: Record<string, ToolId> = { vision: 'vision', sites: 'sites', evidence: 'evidence', policy: 'policy', strategy: 'strategy', feedback: 'feedback', sea: 'sea', sci: 'sci', timetable: 'timetable', notice: 'notice', preprisk: 'prepRisk', prepRisk: 'prepRisk', baselining: 'baselining', baseline: 'baselining' };
+    const simpleMap: Record<string, ToolId> = { vision: 'vision', sites: 'sites', evidence: 'evidence', policy: 'policy', strategy: 'strategy', feedback: 'feedback', sea: 'sea', sci: 'sci', timetable: 'timetable', notice: 'notice', preprisk: 'prepRisk', prepRisk: 'prepRisk', baselining: 'baselining', baseline: 'baselining', gateway1: 'gateway1', g1: 'gateway1' };
     const picked = simpleMap[initialTool];
     if (picked) openTool(picked);
   }, [initialTool, openTool]);
@@ -256,54 +348,6 @@ Sites scored: ${activePlan.sites?.length || 0}
   }, [activePlanKey]);
 
   // Removed auto planNextStageSuggestion to avoid extra LLM calls; run only on demand if needed.
-
-  // Auto-run Gateway 1 readiness when entering the stage
-  React.useEffect(() => {
-    if (!activePlan || currentStageId !== 'GATEWAY_1') return;
-    if (gatewayState.loading) return;
-    if (activePlan.readinessAssessment) {
-      setGatewayState({ summary: activePlan.gateway1SummaryText, readiness: activePlan.readinessAssessment, loading: false });
-      return;
-    }
-    setGatewayState(prev => ({ ...prev, loading: true }));
-    (async () => {
-      try {
-        const payload = {
-          authorityName: activePlan.area,
-          planId: activePlan.id,
-          timetableInfo: activePlan.timetable,
-          answers: {
-            timetable: { hasDraftTimetable: 'Yes', criticalMilestones: 'Gateway 1, Baselining, Consultation windows', projectManager: 'Named lead officer' },
-            governance: { decisionMaker: 'Cabinet/Mayor', hasBoard: 'Yes', boardFrequency: 'Monthly' },
-            engagement: { hasStrategy: 'Yes', keyStakeholders: 'Members; communities; statutory bodies' },
-            evidence: { evidenceAudit: 'Yes', plannedCommissions: 'Housing needs, viability, transport' },
-            sea: { seaScoping: 'Drafted', hraBaseline: 'Baseline in progress' }
-          },
-          notes: {},
-        };
-        const readiness = await runLLMTask('gateway1_readiness_rag', payload);
-        const assessed = {
-          areas: readiness?.areas || [],
-          overallStatus: readiness?.overallStatus || 'amber',
-          overallComment: readiness?.overallComment || '',
-          assessedAt: new Date().toISOString(),
-        };
-        updatePlan(activePlan.id, { readinessAssessment: assessed });
-        const summary = await runLLMTask('gateway1_summary', {
-          authorityName: activePlan.area,
-          gatewayStatus: assessed.overallStatus,
-          readinessAssessment: assessed,
-          timetable: activePlan.timetable,
-          planOverview: { title: activePlan.title, area: activePlan.area },
-        });
-        const text = typeof summary === 'string' ? summary : JSON.stringify(summary, null, 2);
-        updatePlan(activePlan.id, { gateway1SummaryText: text });
-        setGatewayState({ summary: text, readiness: assessed, loading: false });
-      } catch {
-        setGatewayState({ loading: false });
-      }
-    })();
-  }, [activePlan?.id, currentStageId, gatewayState.loading, updatePlan]);
 
   // Auto-run baselining helpers when entering baselining stage
   React.useEffect(() => {
@@ -367,6 +411,8 @@ Sites scored: ${activePlan.sites?.length || 0}
 
   const renderToolWorkspace = () => {
     switch (selectedTool) {
+      case 'gateway1':
+        return <Gateway1Tool councilData={councilData} plan={activePlan} autoRun={initialProps.gateway1?.autoRun} />;
       case 'evidence':
         return <EvidenceTool
           councilData={councilData}
@@ -448,6 +494,7 @@ Sites scored: ${activePlan.sites?.length || 0}
           initialTimetableUrl={initialProps.notice?.initialTimetableUrl}
           initialDraft={initialProps.notice?.initialDraft}
           initialInstructions={initialProps.notice?.initialInstructions}
+          plan={activePlan}
         />;
       case 'prepRisk':
         return <PrepRiskTool
@@ -459,11 +506,12 @@ Sites scored: ${activePlan.sites?.length || 0}
           initialScope={initialProps.prepRisk?.initialScope}
           initialRisks={initialProps.prepRisk?.initialRisks}
           initialPidDone={initialProps.prepRisk?.initialPidDone}
+          plan={activePlan}
         />;
       case 'baselining':
         return <BaseliningTool councilData={councilData} autoRun={initialProps.baselining?.autoRun} prefill={initialProps.baselining?.prefill} />;
       case 'timetable':
-        return <TimetableTool councilData={councilData} autoRun={initialProps.timetable?.autoRun} />;
+        return <TimetableTool councilData={councilData} autoRun={initialProps.timetable?.autoRun} plan={activePlan} />;
       default:
         return null;
     }
@@ -472,85 +520,6 @@ Sites scored: ${activePlan.sites?.length || 0}
   const renderStageInline = () => {
     if (!activePlan) return null;
     switch (currentStageId) {
-      case 'GATEWAY_1': {
-        const readiness = activePlan.readinessAssessment || gatewayState.readiness;
-        const summary = activePlan.gateway1SummaryText || gatewayState.summary;
-        const statusBadge = (s?: string) => {
-          const base = 'px-2 py-1 text-xs rounded-full border';
-          if (!s) return `${base} border-[var(--color-edge)] text-[var(--color-muted)]`;
-          const st = s.toLowerCase();
-          if (st.startsWith('g')) return `${base} bg-green-100 text-green-800 border-green-200`;
-          if (st.startsWith('a')) return `${base} bg-amber-100 text-amber-800 border-amber-200`;
-          return `${base} bg-red-100 text-red-800 border-red-200`;
-        };
-        const runGateway = async () => {
-          setGatewayState(prev => ({ ...prev, loading: true }));
-          try {
-            const payload = {
-              authorityName: activePlan.area,
-              planId: activePlan.id,
-              timetableInfo: activePlan.timetable,
-              answers: {
-                timetable: { hasDraftTimetable: 'Yes', criticalMilestones: 'Gateway 1, Baselining, Consultation windows', projectManager: 'Named lead officer' },
-                governance: { decisionMaker: 'Cabinet/Mayor', hasBoard: 'Yes', boardFrequency: 'Monthly' },
-                engagement: { hasStrategy: 'Yes', keyStakeholders: 'Members; communities; statutory bodies' },
-                evidence: { evidenceAudit: 'Yes', plannedCommissions: 'Housing needs, viability, transport' },
-                sea: { seaScoping: 'Drafted', hraBaseline: 'Baseline in progress' }
-              },
-              notes: {},
-            };
-            const readinessRes = await runLLMTask('gateway1_readiness_rag', payload);
-            const assessed = {
-              areas: readinessRes?.areas || [],
-              overallStatus: readinessRes?.overallStatus || 'amber',
-              overallComment: readinessRes?.overallComment || '',
-              assessedAt: new Date().toISOString(),
-            };
-            updatePlan(activePlan.id, { readinessAssessment: assessed });
-            const summaryRes = await runLLMTask('gateway1_summary', {
-              authorityName: activePlan.area,
-              gatewayStatus: assessed.overallStatus,
-              readinessAssessment: assessed,
-              timetable: activePlan.timetable,
-              planOverview: { title: activePlan.title, area: activePlan.area },
-            });
-            const text = typeof summaryRes === 'string' ? summaryRes : JSON.stringify(summaryRes, null, 2);
-            updatePlan(activePlan.id, { gateway1SummaryText: text });
-            setGatewayState({ summary: text, readiness: assessed, loading: false });
-          } catch {
-            setGatewayState({ loading: false });
-          }
-        };
-
-        return (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-            <div className="bg-[var(--color-panel)] border border-[var(--color-edge)] rounded-xl p-4 lg:col-span-2">
-              <div className="flex items-center justify-between mb-2">
-                <div>
-                  <div className="text-xs text-[var(--color-muted)]">Gateway 1 readiness</div>
-                  <div className="text-lg font-semibold text-[var(--color-ink)]">Self-assessment snapshot</div>
-                </div>
-                <span className={statusBadge(readiness?.overallStatus)}>Overall {readiness?.overallStatus?.toUpperCase?.() || 'N/A'}</span>
-              </div>
-              <div className="flex gap-2 mb-3">
-                <button className="px-3 py-2 bg-[var(--color-accent)] text-white rounded text-sm" onClick={runGateway} disabled={gatewayState.loading}>
-                  {gatewayState.loading ? 'Running…' : 'Re-run with AI'}
-                </button>
-                <Link to="/app/gateway1" className="px-3 py-2 bg-[var(--color-panel)] border border-[var(--color-edge)] rounded text-sm text-[var(--color-ink)]">Open full Gateway 1 form</Link>
-              </div>
-              {summary ? (
-                <MarkdownContent content={summary} />
-              ) : (
-                <div className="text-sm text-[var(--color-muted)]">No summary yet — run the assessment to populate.</div>
-              )}
-            </div>
-            <div className="bg-[var(--color-panel)] border border-[var(--color-edge)] rounded-xl p-4">
-              <div className="text-sm font-semibold text-[var(--color-ink)] mb-2">Stage map</div>
-              {geoLayers ? <MapLibreFrame layers={geoLayers} height={260} /> : <div className="text-xs text-[var(--color-muted)]">No map available.</div>}
-            </div>
-          </div>
-        );
-      }
       case 'BASELINING': {
         return (
           <div className="bg-[var(--color-panel)] border border-[var(--color-edge)] rounded-xl p-4">
@@ -629,6 +598,19 @@ Sites scored: ${activePlan.sites?.length || 0}
                       <span className="px-3 py-1 text-xs rounded-full bg-[var(--color-surface)] border border-[var(--color-edge)]">Stage owner: you</span>
                     </div>
                     <p className="text-sm text-[var(--color-ink)] mt-3 leading-relaxed">{stageMeta.aim}</p>
+                    {stageMeta.seaHraFocus && (
+                      <div className="mt-3 border border-[var(--color-edge)] rounded-lg p-3 bg-[var(--color-surface)]">
+                        <div className="text-xs text-[var(--color-muted)]">SEA/HRA focus</div>
+                        <div className="text-sm text-[var(--color-ink)] font-semibold">{stageMeta.seaHraFocus}</div>
+                        {stageMeta.dashboardNotes && stageMeta.dashboardNotes.length > 0 && (
+                          <ul className="list-disc ml-5 text-xs text-[var(--color-muted)] mt-2 space-y-1">
+                            {stageMeta.dashboardNotes.slice(0, 4).map((note, idx) => (
+                              <li key={idx}>{note}</li>
+                            ))}
+                          </ul>
+                        )}
+                      </div>
+                    )}
                   </div>
 
                   {/* Next steps (authoritative actions) */}
@@ -642,17 +624,21 @@ Sites scored: ${activePlan.sites?.length || 0}
                     <div className="space-y-3">
                       {(stageModel?.actionsRecommended || []).map(action => {
                         const mapped = action.primaryToolId ? toolLaunchMap[action.primaryToolId] : undefined;
+                        const done = actionComplete(action.id, activePlan);
                         return (
-                          <div key={action.id} className="border border-[var(--color-edge)] rounded-lg p-3 bg-[var(--color-surface)]">
+                          <div key={action.id} className={`border border-[var(--color-edge)] rounded-lg p-3 bg-[var(--color-surface)] ${done ? 'opacity-70' : ''}`}>
                             <div className="flex items-center justify-between gap-2">
-                              <div className="font-semibold text-[var(--color-ink)]">{action.label}</div>
+                              <div className="flex items-center gap-2">
+                                {done && <span className="text-green-600">✓</span>}
+                                <div className={`font-semibold ${done ? 'text-[var(--color-muted)] line-through' : 'text-[var(--color-ink)]'}`}>{action.label}</div>
+                              </div>
                               {mapped && (
-                                <button className="text-sm text-[var(--color-accent)] hover:underline" onClick={()=>openTool(mapped)}>
+                                <button className={`text-sm ${done ? 'text-[var(--color-muted)] cursor-default' : 'text-[var(--color-accent)] hover:underline'}`} onClick={()=>!done && openTool(mapped)} disabled={done}>
                                   Open tool
                                 </button>
                               )}
                             </div>
-                            <p className="text-sm text-[var(--color-muted)]">{action.shortExplainer}</p>
+                            <p className={`text-sm ${done ? 'text-[var(--color-muted)] line-through' : 'text-[var(--color-muted)]'}`}>{action.shortExplainer}</p>
                           </div>
                         )
                       })}
@@ -670,7 +656,9 @@ Sites scored: ${activePlan.sites?.length || 0}
                         <p className="text-xs text-[var(--color-muted)]">Descriptive context to progress before moving on.</p>
                       </div>
                       {stageMeta.id === 'GATEWAY_1' && (
-                        <Link to="/app/gateway1" className="text-sm text-[var(--color-accent)] hover:underline">Open Gateway 1</Link>
+                        <button className="text-sm text-[var(--color-accent)] hover:underline" onClick={() => openTool('gateway1', { autoRun: false })}>
+                          Open Gateway 1
+                        </button>
                       )}
                     </div>
                     <ul className="list-disc ml-5 text-sm text-[var(--color-ink)] space-y-1">
@@ -772,8 +760,11 @@ const AnswerModal: React.FC<{
 
 function stageDefaultSuggestions(stageId: string): string[] {
   switch (stageId) {
-    case 'PREP':
-      return ['Draft a 30-month timetable for this plan', 'Draft a Notice to Commence for this authority', 'RAG our governance/resources before Gateway 1', 'What goes into Gateway 1 readiness?', 'List the biggest risks before Gateway 1'];
+    case 'TIMETABLE':
+    case 'NOTICE':
+    case 'SCOPING':
+      return ['Draft a 30-month timetable for this plan', 'Draft a Notice to Commence for this authority', 'Plan the scoping consultation audiences/methods', 'What goes into Gateway 1 readiness?', 'List the biggest risks before Gateway 1'];
+    case 'G1_SUMMARY':
     case 'GATEWAY_1':
       return ['Are we Gateway 1 ready?', 'Generate a short Gateway 1 summary', 'What gaps remain before baselining?'];
     case 'BASELINING':
@@ -792,7 +783,9 @@ function stageDefaultSuggestions(stageId: string): string[] {
       return ['Run a prescribed requirements checklist', 'Draft a Statement of Soundness intro', 'What logistics should the readiness statement cover?'];
     case 'SUBMISSION_EXAM':
       return ['What is missing from the submission bundle?', 'Simulate inspector questions for a policy', 'Highlight cross-exam lines for contentious sites'];
-    case 'ADOPTION_MONITORING':
+    case 'ADOPTION':
+      return ['Check adoption compliance items', 'Prepare adoption statement text', 'What should the policies map include?'];
+    case 'MONITORING':
       return ['Suggest indicators and baselines per outcome', 'What to include in the annual monitoring text?', 'How to approach the year-4 evaluation?'];
     default:
       return ['What should I do next in this stage?', 'Where are the biggest risks right now?', 'Which tool should I open first?'];

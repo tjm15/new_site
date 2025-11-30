@@ -113,8 +113,11 @@ export interface CouncilData {
 export type PlanSystemType = 'legacy' | 'new'
 
 export type PlanStageId =
-  | 'PREP'
+  | 'TIMETABLE'
+  | 'NOTICE'
+  | 'SCOPING'
   | 'GATEWAY_1'
+  | 'G1_SUMMARY'
   | 'BASELINING'
   | 'VISION_OUTCOMES'
   | 'SITE_SELECTION'
@@ -123,11 +126,13 @@ export type PlanStageId =
   | 'CONSULTATION_2'
   | 'GATEWAY_3'
   | 'SUBMISSION_EXAM'
-  | 'ADOPTION_MONITORING'
+  | 'ADOPTION'
+  | 'MONITORING'
 
 export interface PlanStage {
   id: PlanStageId
   title: string
+  band?: 'get-ready' | 'plan-making'
   targetDate?: string // ISO date
   status?: 'not-started' | 'active' | 'completed'
 }
@@ -193,7 +198,7 @@ export interface RepresentationTag {
 }
 
 export interface ConsultationSummary {
-  stageId: 'CONSULTATION_1' | 'CONSULTATION_2'
+  stageId: 'SCOPING' | 'CONSULTATION_1' | 'CONSULTATION_2'
   who: string
   when: string
   how: string
@@ -238,6 +243,14 @@ export interface Plan {
   statementCompliance?: string
   statementSoundness?: string
   examReadinessNote?: string
+  // Preparation / notice
+  prepNoticeText?: string
+  prepRiskAssessment?: {
+    areas: Array<{ id: string; rag: 'red' | 'amber' | 'green'; summary?: string; actions?: string[] }>
+    overallStatus?: 'red' | 'amber' | 'green'
+    overallComment?: string
+    assessedAt?: string
+  }
   // Submission / exam
   submissionBundle?: Array<{ id: string; title: string; status?: 'present' | 'missing' | 'outdated' }>
   examRehearsalNotes?: string
@@ -251,6 +264,23 @@ export interface Plan {
     seaScopingStatus?: 'Not started' | 'Drafted' | 'Consulted'
     seaScopingNotes?: string
     hraBaselineSummary?: string
+    baselineGrid?: {
+      biodiversity?: string
+      water?: string
+      climate?: string
+      landscape?: string
+      heritage?: string
+    }
+    baselineCompleteness?: 'red' | 'amber' | 'green'
+    readinessScore?: number
+    readinessNotes?: string
+    mitigationIdeas?: string[]
+    cumulativeEffects?: string
+    consultationStatus?: 'not_started' | 'live' | 'complete'
+    consultationNotes?: string
+    reportDraft?: string
+    environmentalDatabase?: string[]
+    keyRisks?: string[]
   }
   // Statement of community involvement / engagement capture
   sci?: {
@@ -258,6 +288,22 @@ export interface Plan {
     keyStakeholders?: string[]
     methods?: string[]
     timelineNote?: string
+  }
+  // Expanded digital-first SCI
+  sciFull?: {
+    commitments?: string[]
+    audiences?: Array<{ group: string; channels?: string[]; methods?: string[]; barriers?: string[] }>
+    methods?: { digital?: string[]; inPerson?: string[] }
+    planCycle?: {
+      create?: { earlyEngagement?: string[]; drafting?: string[]; finalPlan?: string[] }
+      examine?: string[]
+      adopt?: string[]
+      update?: { minor?: string[]; material?: string[]; continuous?: string[] }
+    }
+    developmentManagement?: { publicity?: string[]; commenting?: string[]; transparency?: string[] }
+    dataStandards?: { data?: string[]; accessibility?: string[]; transparency?: string[] }
+    review?: { frequency?: string; triggers?: string[]; consultation?: string }
+    narrative?: string
   }
   // AI suggestions
   aiSuggestedStageId?: PlanStageId

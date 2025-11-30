@@ -119,11 +119,14 @@ export const CurrentStagePanel: React.FC<{ councilData: any; showAllTools: () =>
 
 function stageDefaultSuggestions(stageId: string): string[] {
   switch (stageId) {
-    case 'PREP':
+    case 'TIMETABLE':
+    case 'NOTICE':
+    case 'SCOPING':
       return [
         'What should go in my Notice to Commence?',
         'What evidence do I already have?',
-        'What’s a realistic timetable for this council?'
+        'What’s a realistic timetable for this council?',
+        'RAG governance and resources before Gateway 1'
       ]
     case 'BASELINING':
       return [
@@ -132,6 +135,7 @@ function stageDefaultSuggestions(stageId: string): string[] {
         'What indicators should I monitor?'
       ]
     case 'GATEWAY_1':
+    case 'G1_SUMMARY':
       return [
         'Are we Gateway 1 ready?',
         'Draft a Gateway 1 summary',

@@ -1,7 +1,11 @@
 import * as React from 'react'
 
 const tools = [
+  { id: 'TimetableTool', label: 'Timetable Drafting', icon: '📆' },
   { id: 'EvidenceTool', label: 'Evidence Base', icon: '🗺️' },
+  { id: 'NoticeTool', label: 'Notice to Commence', icon: '📢' },
+  { id: 'PrepRiskTool', label: 'Preparation Risk Assessor', icon: '⚠️' },
+  { id: 'BaseliningTool', label: 'Baselining Studio', icon: '📚' },
   { id: 'VisionConceptsTool', label: 'Vision & Concepts', icon: '🎨' },
   { id: 'PolicyDrafterTool', label: 'Policy Drafter', icon: '📋' },
   { id: 'StrategyModelerTool', label: 'Strategy Modeler', icon: '📊' },

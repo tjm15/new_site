@@ -1,5 +1,6 @@
 import * as React from 'react'
 import type { Plan, PlanStageId } from '../data/types'
+import { STAGES } from '../data/stageMeta'
 import { useStageInsights } from '../hooks/useStageInsights'
 
 export type StageInsightsPanelProps = {
@@ -71,22 +72,8 @@ export const StageInsightsPanel: React.FC<StageInsightsPanelProps> = ({ plan, st
 }
 
 function stageIdToLabel(id: PlanStageId) {
-  const map: Record<string, string> = {
-    PREP: 'Preparation / Notice to Commence',
-    GATEWAY_1: 'Gateway 1',
-    BASELINING: 'Baselining & Evidence',
-    VISION_OUTCOMES: 'Vision & Outcomes',
-    SITE_SELECTION: 'Site Selection & Spatial Strategy',
-    CONSULTATION_1: 'Consultation 1',
-    GATEWAY_2: 'Gateway 2',
-    CONSULTATION_2: 'Consultation 2',
-    GATEWAY_3: 'Gateway 3',
-    SUBMISSION_EXAM: 'Submission & Examination Rehearsal',
-    ADOPTION_MONITORING: 'Adoption & Monitoring',
-    SUBMISSION: 'Submission',
-    ADOPTION: 'Adoption',
-  }
-  return map[id] || id
+  const meta = STAGES.find(s => s.id === id)
+  return meta?.label || id
 }
 
 function timeAgo(ts: number) {

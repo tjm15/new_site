@@ -18,13 +18,35 @@ type PlanCtx = {
 const Ctx = createContext<PlanCtx | null>(null)
 
 const legacyStageIdMap: Record<string, PlanStageId> = {
+  PREP: 'TIMETABLE',
   SUBMISSION: 'SUBMISSION_EXAM',
-  ADOPTION: 'ADOPTION_MONITORING',
+  ADOPTION: 'ADOPTION',
+  ADOPTION_MONITORING: 'ADOPTION',
 }
 
 function normalizePlan(plan: Plan): Plan {
   if (plan.systemType !== 'new') return plan
+  const seaHraDefaults = {
+    seaScopingStatus: 'Not started',
+    seaScopingNotes: '',
+    hraBaselineSummary: '',
+    baselineGrid: {},
+    baselineCompleteness: 'red' as 'red' | 'amber' | 'green',
+    readinessScore: 0,
+    readinessNotes: '',
+    mitigationIdeas: [] as string[],
+    cumulativeEffects: '',
+    consultationStatus: 'not_started' as 'not_started' | 'live' | 'complete',
+    consultationNotes: '',
+    reportDraft: '',
+    environmentalDatabase: [] as string[],
+    keyRisks: [] as string[],
+  }
   const mappedStage = (legacyStageIdMap[plan.planStage as string] || plan.planStage || legacyStageIdMap[plan.currentStage as string] || plan.currentStage || NEW_SYSTEM_STAGES[0].id) as PlanStageId
+  const milestoneMap = (plan.timetable?.milestones || []).reduce<Record<string, string>>((acc, m) => {
+    if (m.stageId && m.date) acc[m.stageId] = m.date
+    return acc
+  }, {})
   const existingById = (plan.stages || []).reduce<Record<string, any>>((acc, stage) => {
     const normalizedId = (legacyStageIdMap[stage.id as string] as PlanStageId) || stage.id
     acc[normalizedId] = { ...stage, id: normalizedId }
@@ -33,7 +55,9 @@ function normalizePlan(plan: Plan): Plan {
   const mergedStages = NEW_SYSTEM_STAGES.map(stage => ({
     id: stage.id,
     title: stage.title,
+    band: stage.band,
     ...(existingById[stage.id] || {}),
+    targetDate: (existingById[stage.id]?.targetDate) || milestoneMap[stage.id],
   }))
   const migratedMilestones = (plan.timetable?.milestones || []).map(m => ({
     ...m,
@@ -44,6 +68,8 @@ function normalizePlan(plan: Plan): Plan {
     stages: mergedStages,
     planStage: mappedStage,
     timetable: { ...(plan.timetable || { milestones: [] }), milestones: migratedMilestones },
+    seaHra: { ...seaHraDefaults, ...(plan.seaHra || {}) },
+    sci: { hasStrategy: false, keyStakeholders: [], methods: [], timelineNote: '', ...(plan.sci || {}) }
   }
 }
 
@@ -87,7 +113,7 @@ export function PlanProvider({ children }: { children: React.ReactNode }) {
 
   const createPlan: PlanCtx['createPlan'] = (partial) => {
     const id = `plan_${Date.now()}`
-    const stages = NEW_SYSTEM_STAGES.map(s => ({ id: s.id, title: s.title }))
+    const stages = NEW_SYSTEM_STAGES.map(s => ({ id: s.id, title: s.title, band: s.band }))
     const plan: Plan = {
       id,
       title: partial.title,
@@ -101,7 +127,22 @@ export function PlanProvider({ children }: { children: React.ReactNode }) {
       // New workflow-centric field
       planStage: STAGES[0].id,
       // initialize SEA/HRA and SCI blanks so components can safely read
-      seaHra: { seaScopingStatus: 'Not started', seaScopingNotes: '', hraBaselineSummary: '' },
+      seaHra: {
+        seaScopingStatus: 'Not started',
+        seaScopingNotes: '',
+        hraBaselineSummary: '',
+        baselineGrid: {},
+        baselineCompleteness: 'red',
+        readinessScore: 0,
+        readinessNotes: '',
+        mitigationIdeas: [],
+        cumulativeEffects: '',
+        consultationStatus: 'not_started',
+        consultationNotes: '',
+        reportDraft: '',
+        environmentalDatabase: [],
+        keyRisks: []
+      },
       sci: { hasStrategy: false, keyStakeholders: [], methods: [], timelineNote: '' }
     }
     setPlans(prev => [...prev, plan])

@@ -1,4 +1,6 @@
 
+import { NEW_SYSTEM_STAGES } from '../constants'
+
 export const PLAN_CONTEXT = {
   title: "Camden Local Plan",
   authority: "London Borough of Camden",
@@ -106,24 +108,14 @@ export const POLICIES = [
 ];
 
 // Sample new-system plan seed (optional demo)
+import { NEW_SYSTEM_STAGES } from '../constants'
+
 export const CAMDEN_SAMPLE_PLAN = {
   id: 'camden_new_plan',
   title: 'Camden Local Plan (New System Demo)',
   area: 'London Borough of Camden',
   systemType: 'new',
-  stages: [
-    { id: 'PREP', title: 'Preparation / Notice to Commence' },
-    { id: 'GATEWAY_1', title: 'Gateway 1: Readiness' },
-    { id: 'BASELINING', title: 'Baselining & Evidence' },
-    { id: 'VISION_OUTCOMES', title: 'Vision & Outcomes' },
-    { id: 'SITE_SELECTION', title: 'Site Selection & Spatial Strategy' },
-    { id: 'CONSULTATION_1', title: 'Consultation 1 (Scope & Early Vision)' },
-    { id: 'GATEWAY_2', title: 'Gateway 2: Submission Ready' },
-    { id: 'CONSULTATION_2', title: 'Consultation 2 (Proposed Plan)' },
-    { id: 'GATEWAY_3', title: 'Gateway 3: Examination Readiness' },
-    { id: 'SUBMISSION_EXAM', title: 'Submission & Examination Rehearsal' },
-    { id: 'ADOPTION_MONITORING', title: 'Adoption & Monitoring' }
-  ],
+  stages: NEW_SYSTEM_STAGES.map(s => ({ id: s.id, title: s.title, band: s.band })),
   timetable: { milestones: [] },
   visionStatements: [
     { id: 'v1', text: 'Deliver inclusive growth with net zero development.', metric: 'Annual emissions trajectory' }
@@ -132,5 +124,5 @@ export const CAMDEN_SAMPLE_PLAN = {
     { id: 'site_regis_road', name: 'Regis Road', location: 'Kentish Town' },
     { id: 'site_murphys_yard', name: "Murphy's Yard", location: 'Kentish Town' }
   ],
-  currentStage: 'PREP'
+  currentStage: 'TIMETABLE'
 } as const

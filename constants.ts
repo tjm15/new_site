@@ -1,4 +1,7 @@
 
+import type { PlanStageId } from './data/types'
+import { STAGES } from './data/stageMeta'
+
 // Role-based theme tokens (easier to tune than brand colors directly)
 export const theme = {
   surface: "#F7F8FB", // page background (very light neutral)
@@ -11,16 +14,5 @@ export const theme = {
 };
 
 // New Local Plan stages for the 30-month system
-export const NEW_SYSTEM_STAGES: { id: import('./data/types').PlanStageId; title: string }[] = [
-  { id: 'PREP', title: 'Preparation / Notice to Commence' },
-  { id: 'GATEWAY_1', title: 'Gateway 1: Readiness' },
-  { id: 'BASELINING', title: 'Baselining & Evidence' },
-  { id: 'VISION_OUTCOMES', title: 'Vision & Outcomes' },
-  { id: 'SITE_SELECTION', title: 'Site Selection & Spatial Strategy' },
-  { id: 'CONSULTATION_1', title: 'Consultation 1 (Scope & Early Vision)' },
-  { id: 'GATEWAY_2', title: 'Gateway 2: Submission Ready' },
-  { id: 'CONSULTATION_2', title: 'Consultation 2 (Proposed Plan)' },
-  { id: 'GATEWAY_3', title: 'Gateway 3: Examination Readiness' },
-  { id: 'SUBMISSION_EXAM', title: 'Submission & Examination Rehearsal' },
-  { id: 'ADOPTION_MONITORING', title: 'Adoption & Monitoring' }
-]
+export const NEW_SYSTEM_STAGES: { id: PlanStageId; title: string; band: 'get-ready' | 'plan-making'; timingNote?: string }[] =
+  STAGES.map(({ id, label, band, timingNote }) => ({ id, title: label, band, timingNote }))
