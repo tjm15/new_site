@@ -10,6 +10,10 @@ import { SiteAssessmentTool } from './tools/SiteAssessmentTool';
 import { FeedbackAnalysisTool } from './tools/FeedbackAnalysisTool';
 import { SEATool } from './tools/SEATool';
 import { SCITool } from './tools/SCITool';
+import { TimetableTool } from './tools/TimetableTool';
+import { NoticeToCommenceTool } from './tools/NoticeToCommenceTool';
+import { PrepRiskTool } from './tools/PrepRiskTool';
+import { BaseliningTool } from './tools/BaseliningTool';
 import { STAGES } from '../../../data/stageMeta';
 import { usePlan } from '../../../contexts/PlanContext';
 import { suggestToolPrefill, runLLMTask } from '../../../utils/llmTasks';
@@ -30,7 +34,7 @@ interface SpatialPlanDemoProps {
   initialTool?: string | undefined;
 }
 
-type ToolId = 'evidence' | 'vision' | 'policy' | 'strategy' | 'sites' | 'feedback' | 'sea' | 'sci';
+type ToolId = 'timetable' | 'notice' | 'prepRisk' | 'baselining' | 'evidence' | 'vision' | 'policy' | 'strategy' | 'sites' | 'feedback' | 'sea' | 'sci';
 
 interface Tool {
   id: ToolId;
@@ -40,6 +44,10 @@ interface Tool {
 }
 
 const TOOLS: Tool[] = [
+  { id: 'timetable', label: 'Timetable Drafting', icon: '📆', description: 'Lay out a 30-month timetable visually, auto-draft with AI, and save milestones to the plan.' },
+  { id: 'notice', label: 'Notice to Commence', icon: '📢', description: 'Generate compliant notice text ready for publication with timetable link.' },
+  { id: 'prepRisk', label: 'Preparation Risk Assessor', icon: '⚠️', description: 'RAG governance/resources before Gateway 1 with actions.' },
+  { id: 'baselining', label: 'Baselining Studio', icon: '📚', description: 'Generate datasets, trends, SWOT, and baseline narrative with plan-aware autofill.' },
   { id: 'evidence', label: 'Evidence Base', icon: '🗺️', description: 'Build your foundation by exploring geospatial data and querying a vast library of planning documents.' },
   { id: 'vision', label: 'Vision & Concepts', icon: '🎨', description: 'Translate data and policy into compelling visuals. Generate high-quality architectural and landscape imagery.' },
   { id: 'policy', label: 'Policy Drafter', icon: '📋', description: 'Draft, refine, and validate planning policy. Research, check for national compliance, and get editing suggestions.' },
@@ -70,9 +78,14 @@ export const SpatialPlanDemo: React.FC<SpatialPlanDemoProps> = ({ councilData, o
     sea?: { autoRun?: boolean; prefill?: Record<string, any> };
     sci?: { autoRun?: boolean; prefill?: Record<string, any> };
     culp?: { autoRun?: boolean };
+    timetable?: { autoRun?: boolean };
+    notice?: { autoRun?: boolean; prefill?: Record<string, any>; initialPublicationDate?: string; initialTimetableUrl?: string; initialDraft?: string; initialInstructions?: string };
+    prepRisk?: { autoRun?: boolean; prefill?: Record<string, any>; initialGovernance?: string; initialResources?: string; initialScope?: string; initialRisks?: string; initialPidDone?: string };
+    baselining?: { autoRun?: boolean; prefill?: Record<string, any>; initialTopics?: string; initialFocusNotes?: string };
   }>({});
-  const [toolSessions, setToolSessions] = useState<Record<string, any>>({});
+  const [toolSessionsByPlan, setToolSessionsByPlan] = useState<Record<string, Record<string, any>>>({});
   const activePlan = getActiveForCouncil(councilData.id);
+  const activePlanKey = activePlan?.id || 'no-plan';
   const currentStageId = (activePlan?.planStage || STAGES[0].id) as (typeof STAGES)[number]['id'];
   const stageMeta = useMemo(() => STAGES.find(s => s.id === currentStageId) || STAGES[0], [currentStageId]);
   const geoLayers = useMemo(() => getGeoLayerSet(councilData.id), [councilData.id]);
@@ -114,6 +127,10 @@ Sites scored: ${activePlan.sites?.length || 0}
     FeedbackAnalysisTool: 'feedback',
     SEATool: 'sea',
     SCITool: 'sci',
+    TimetableTool: 'timetable',
+    NoticeTool: 'notice',
+    PrepRiskTool: 'prepRisk',
+    BaseliningTool: 'baselining',
   }), []);
 
   const toolById = useMemo(() => {
@@ -122,6 +139,55 @@ Sites scored: ${activePlan.sites?.length || 0}
     return map;
   }, []);
   const stageModel = useMemo(() => STAGE_MODEL.find(s => s.id === currentStageId), [currentStageId]);
+
+  const renderAssistantPanel = () => {
+    if (!activePlan) {
+      return (
+        <div className="bg-[var(--color-panel)] border border-[var(--color-edge)] rounded-lg p-4">
+          <div className="font-semibold text-[var(--color-ink)] mb-1">Inspector</div>
+          <p className="text-sm text-[var(--color-muted)]">Start a plan to see AI guidance, QA checks, and warnings.</p>
+        </div>
+      );
+    }
+    return (
+      <>
+        <StageInsightsPanel plan={activePlan} stageId={currentStageId} qaNotes={stageMeta.qaNotes} />
+        <div className="bg-[var(--color-panel)] border border-[var(--color-edge)] rounded-lg p-4">
+          <div className="font-semibold text-[var(--color-ink)] mb-2">Plan-aware assistant (Ask anything)</div>
+          <div className="text-xs text-[var(--color-muted)] mb-2">Context: {stageMeta.label}</div>
+          <div className="space-y-2 max-h-48 overflow-auto border border-[var(--color-edge)] rounded p-2 bg-[var(--color-surface)]">
+            {chatHistory.length === 0 && <div className="text-xs text-[var(--color-muted)]">No messages yet. Ask a question to start.</div>}
+            {chatHistory.map((msg, idx) => (
+              <div key={idx} className={`text-sm ${msg.role === 'assistant' ? 'text-[var(--color-ink)]' : 'text-[var(--color-muted)]'}`}>
+                <span className="font-semibold">{msg.role === 'assistant' ? 'Assistant: ' : 'You: '}</span>{msg.text}
+              </div>
+            ))}
+          </div>
+          {lastAnswer && (
+            <button className="mt-2 text-xs text-[var(--color-accent)] hover:underline" onClick={()=>setShowAnswerModal(true)}>Open last answer</button>
+          )}
+          <div className="mt-2 flex gap-2">
+            <input value={question} onChange={(e)=>setQuestion(e.target.value)} className="flex-1 px-3 py-2 text-[var(--color-ink)] bg-[var(--color-surface)] border border-[var(--color-edge)] rounded" placeholder="Ask about this stage, evidence, sites, or guidance" />
+            <button
+              className="px-3 py-2 bg-[var(--color-brand)] rounded text-[var(--color-ink)] transition transform hover:scale-[1.01] active:scale-[0.99]"
+              onClick={handleAsk}
+              aria-label="Ask the assistant"
+              title="Send question to the assistant"
+            >
+              Ask
+            </button>
+          </div>
+          <div className="mt-2 flex flex-wrap gap-2">
+            {((stageModel?.actionsRecommended || []).map(a => a.assistantPromptHint || '').filter(Boolean) as string[]).map((q, i) => (
+              <button key={i} className="px-3 py-1.5 rounded-full bg-[var(--color-surface)] border border-[var(--color-edge)] text-xs text-[var(--color-muted)] hover:text-[var(--color-ink)]" onClick={()=>setQuestion(q)}>
+                {q}
+              </button>
+            ))}
+          </div>
+        </div>
+      </>
+    );
+  };
 
   const handleCreatePlan = async () => {
     setCreating(true);
@@ -156,7 +222,7 @@ Sites scored: ${activePlan.sites?.length || 0}
       } else if (picked === 'sci') {
         setInitialProps(prev => ({ ...prev, sci: { autoRun, prefill: suggested || base } } as any));
       } else {
-        setInitialProps(prev => ({ ...prev, [picked]: { autoRun, ...(base as any) } } as any));
+        setInitialProps(prev => ({ ...prev, [picked]: { autoRun, prefill: suggested || base, ...(base as any) } } as any));
       }
       setSelectedTool(picked);
     })();
@@ -164,7 +230,7 @@ Sites scored: ${activePlan.sites?.length || 0}
 
   React.useEffect(() => {
     if (!initialTool) return;
-    const simpleMap: Record<string, ToolId> = { vision: 'vision', sites: 'sites', evidence: 'evidence', policy: 'policy', strategy: 'strategy', feedback: 'feedback', sea: 'sea', sci: 'sci' };
+    const simpleMap: Record<string, ToolId> = { vision: 'vision', sites: 'sites', evidence: 'evidence', policy: 'policy', strategy: 'strategy', feedback: 'feedback', sea: 'sea', sci: 'sci', timetable: 'timetable', notice: 'notice', preprisk: 'prepRisk', prepRisk: 'prepRisk', baselining: 'baselining', baseline: 'baselining' };
     const picked = simpleMap[initialTool];
     if (picked) openTool(picked);
   }, [initialTool, openTool]);
@@ -182,6 +248,12 @@ Sites scored: ${activePlan.sites?.length || 0}
 
   const chatHistory = activePlan ? (chatHistoryByPlan[activePlan.id] || []) : [];
   const lastAnswer = activePlan ? lastAnswerByPlan[activePlan.id] : undefined;
+  const toolSessions = toolSessionsByPlan[activePlanKey] || {};
+
+  // Clear tool workspace when switching plans to avoid cross-plan state bleed
+  React.useEffect(() => {
+    setSelectedTool(null);
+  }, [activePlanKey]);
 
   // Removed auto planNextStageSuggestion to avoid extra LLM calls; run only on demand if needed.
 
@@ -245,15 +317,36 @@ Sites scored: ${activePlan.sites?.length || 0}
     const history = chatHistoryByPlan[activePlan.id] || [];
     const stage = stageMeta;
     const ctx = await retrieveContext(question, activePlan, councilData);
+    const milestones = (activePlan.timetable?.milestones || []).map(m => `${m.stageId}:${m.date}`).join('; ') || 'none logged';
+    const outcomes = (activePlan.visionStatements || []).map(v => v.text).join(' | ') || 'none recorded';
+    const sites = (activePlan.sites || []).map(s => {
+      const rag = [s.suitability, s.availability, s.achievability].filter(Boolean).join('/');
+      return `${s.name}${rag ? ` (${rag})` : ''}`;
+    }).join(' | ') || 'no sites captured';
+    const evidence = (activePlan.evidenceInventory || []).map(ev => `${ev.title}${ev.status ? ` [${ev.status}]` : ''}`).join(' | ') || 'no evidence logged';
+    const readiness = activePlan.readinessAssessment?.overallStatus ? `Readiness RAG: ${activePlan.readinessAssessment.overallStatus}` : 'Readiness: not assessed';
+    const planState = [
+      `Authority: ${councilData.name}`,
+      `Plan title: ${activePlan.title}`,
+      `Plan area: ${activePlan.area}`,
+      `Current stage: ${stage?.label} (${currentStageId})`,
+      `Stage aim: ${stage?.aim}`,
+      `Milestones: ${milestones}`,
+      `Vision/outcomes: ${outcomes}`,
+      `Sites: ${sites}`,
+      `Evidence: ${evidence}`,
+      readiness,
+    ].join('\n');
+    const ctxText = (ctx || []).map((c:any)=>c.text).filter(Boolean).join(' | ') || 'No retrieved context';
     const prompt = [
-      `You are the plan-aware assistant for ${activePlan.area} (${activePlan.title}).`,
-      `Current stage: ${stage?.label}. Aim: ${stage?.aim}`,
+      `You are the plan-aware assistant for ${councilData.name}. Anchor every answer in this authority and its current plan state. Do not invent other places (avoid placeholders like "Testborough").`,
+      `Plan snapshot:\n${planState}`,
       `Core tasks: ${(stage?.coreTasks || stage?.tasks || []).join(' • ')}`,
       `QA reminders: ${(stage?.qaNotes || []).join(' • ')}`,
       `Recent chat:`,
       ...history.slice(-4).map(m => `${m.role === 'assistant' ? 'Assistant' : 'User'}: ${m.text}`),
-      `Context snippets: ${(ctx || []).map((c:any)=>c.text).join(' | ')}`,
-      `User: ${question}`,
+      `Context snippets: ${ctxText}`,
+      `User question (respond concisely in professional planning language): ${question}`,
       `Assistant:`
     ].join('\n');
     try {
@@ -283,7 +376,7 @@ Sites scored: ${activePlan.sites?.length || 0}
           initialQuery={toolSessions.evidence?.query || initialProps.evidence?.initialQuery}
           initialTopics={toolSessions.evidence?.selectedTopics || initialProps.evidence?.initialTopics}
           autoRun={initialProps.evidence?.autoRun && !toolSessions.evidence}
-          onSessionChange={(session)=> setToolSessions(s=> ({ ...s, evidence: session }))}
+          onSessionChange={(session)=> setToolSessionsByPlan(s=> ({ ...s, [activePlanKey]: { ...(s[activePlanKey]||{}), evidence: session } }))}
         />;
       case 'vision':
         return <VisionConceptsTool
@@ -295,7 +388,7 @@ Sites scored: ${activePlan.sites?.length || 0}
           initialHighlightsText={toolSessions.vision?.highlightsText || initialProps.vision?.initialHighlightsText}
           initialConceptImage={toolSessions.vision?.conceptImage || initialProps.vision?.initialConceptImage}
           autoRun={initialProps.vision?.autoRun && !toolSessions.vision}
-          onSessionChange={(session)=> setToolSessions(s=> ({ ...s, vision: session }))}
+          onSessionChange={(session)=> setToolSessionsByPlan(s=> ({ ...s, [activePlanKey]: { ...(s[activePlanKey]||{}), vision: session } }))}
         />;
       case 'policy':
         return <PolicyDrafterTool
@@ -307,7 +400,7 @@ Sites scored: ${activePlan.sites?.length || 0}
           initialDraftPolicy={toolSessions.policy?.draftPolicy || initialProps.policy?.initialDraftPolicy}
           initialVariants={toolSessions.policy?.variants || initialProps.policy?.initialVariants}
           autoRun={initialProps.policy?.autoRun && !toolSessions.policy}
-          onSessionChange={(session)=> setToolSessions(s=> ({ ...s, policy: session }))}
+          onSessionChange={(session)=> setToolSessionsByPlan(s=> ({ ...s, [activePlanKey]: { ...(s[activePlanKey]||{}), policy: session } }))}
         />;
       case 'strategy':
         return <StrategyModelerTool
@@ -318,7 +411,7 @@ Sites scored: ${activePlan.sites?.length || 0}
           initialAnalysis={toolSessions.strategy?.analysis || initialProps.strategy?.initialAnalysis}
           initialMetrics={toolSessions.strategy?.metrics || initialProps.strategy?.initialMetrics}
           autoRun={initialProps.strategy?.autoRun && !toolSessions.strategy}
-          onSessionChange={(session)=> setToolSessions(s=> ({ ...s, strategy: session }))}
+          onSessionChange={(session)=> setToolSessionsByPlan(s=> ({ ...s, [activePlanKey]: { ...(s[activePlanKey]||{}), strategy: session } }))}
           geoLayers={geoLayers}
         />;
       case 'sites':
@@ -330,7 +423,7 @@ Sites scored: ${activePlan.sites?.length || 0}
           initialAppraisal={toolSessions.sites?.appraisal || initialProps.sites?.initialAppraisal}
           initialDetails={toolSessions.sites?.details || initialProps.sites?.initialDetails}
           autoRun={initialProps.sites?.autoRun && !toolSessions.sites}
-          onSessionChange={(session)=> setToolSessions(s=> ({ ...s, sites: session }))}
+          onSessionChange={(session)=> setToolSessionsByPlan(s=> ({ ...s, [activePlanKey]: { ...(s[activePlanKey]||{}), sites: session } }))}
           geoLayers={geoLayers}
         />;
       case 'feedback':
@@ -340,12 +433,37 @@ Sites scored: ${activePlan.sites?.length || 0}
           initialText={toolSessions.feedback?.consultationText || initialProps.feedback?.initialText}
           initialThemes={toolSessions.feedback?.themes || initialProps.feedback?.initialThemes}
           autoRun={initialProps.feedback?.autoRun && !toolSessions.feedback}
-          onSessionChange={(session)=> setToolSessions(s=> ({ ...s, feedback: session }))}
+          onSessionChange={(session)=> setToolSessionsByPlan(s=> ({ ...s, [activePlanKey]: { ...(s[activePlanKey]||{}), feedback: session } }))}
         />;
       case 'sea':
         return <SEATool councilData={councilData} autoRun={initialProps.sea?.autoRun} initialData={initialProps.sea?.prefill} onSaved={() => { /* noop */ }} />;
       case 'sci':
         return <SCITool councilData={councilData} autoRun={initialProps.sci?.autoRun} initialData={initialProps.sci?.prefill} onSaved={() => { /* noop */ }} />;
+      case 'notice':
+        return <NoticeToCommenceTool
+          councilData={councilData}
+          autoRun={initialProps.notice?.autoRun}
+          prefill={initialProps.notice?.prefill}
+          initialPublicationDate={initialProps.notice?.initialPublicationDate}
+          initialTimetableUrl={initialProps.notice?.initialTimetableUrl}
+          initialDraft={initialProps.notice?.initialDraft}
+          initialInstructions={initialProps.notice?.initialInstructions}
+        />;
+      case 'prepRisk':
+        return <PrepRiskTool
+          councilData={councilData}
+          autoRun={initialProps.prepRisk?.autoRun}
+          prefill={initialProps.prepRisk?.prefill}
+          initialGovernance={initialProps.prepRisk?.initialGovernance}
+          initialResources={initialProps.prepRisk?.initialResources}
+          initialScope={initialProps.prepRisk?.initialScope}
+          initialRisks={initialProps.prepRisk?.initialRisks}
+          initialPidDone={initialProps.prepRisk?.initialPidDone}
+        />;
+      case 'baselining':
+        return <BaseliningTool councilData={councilData} autoRun={initialProps.baselining?.autoRun} prefill={initialProps.baselining?.prefill} />;
+      case 'timetable':
+        return <TimetableTool councilData={councilData} autoRun={initialProps.timetable?.autoRun} />;
       default:
         return null;
     }
@@ -597,49 +715,7 @@ Sites scored: ${activePlan.sites?.length || 0}
             </section>
 
               <aside className="lg:sticky lg:top-20 space-y-3">
-                {activePlan ? (
-                  <>
-                    <StageInsightsPanel plan={activePlan} stageId={currentStageId} qaNotes={stageMeta.qaNotes} />
-                    <div className="bg-[var(--color-panel)] border border-[var(--color-edge)] rounded-lg p-4">
-                      <div className="font-semibold text-[var(--color-ink)] mb-2">Plan-aware assistant (Ask anything)</div>
-                      <div className="text-xs text-[var(--color-muted)] mb-2">Context: {stageMeta.label}</div>
-                      <div className="space-y-2 max-h-48 overflow-auto border border-[var(--color-edge)] rounded p-2 bg-[var(--color-surface)]">
-                        {chatHistory.length === 0 && <div className="text-xs text-[var(--color-muted)]">No messages yet. Ask a question to start.</div>}
-                        {chatHistory.map((msg, idx) => (
-                          <div key={idx} className={`text-sm ${msg.role === 'assistant' ? 'text-[var(--color-ink)]' : 'text-[var(--color-muted)]'}`}>
-                            <span className="font-semibold">{msg.role === 'assistant' ? 'Assistant: ' : 'You: '}</span>{msg.text}
-                          </div>
-                        ))}
-                      </div>
-                      {lastAnswer && (
-                        <button className="mt-2 text-xs text-[var(--color-accent)] hover:underline" onClick={()=>setShowAnswerModal(true)}>Open last answer</button>
-                      )}
-                    <div className="mt-2 flex gap-2">
-                      <input value={question} onChange={(e)=>setQuestion(e.target.value)} className="flex-1 px-3 py-2 text-[var(--color-ink)] bg-[var(--color-surface)] border border-[var(--color-edge)] rounded" placeholder="Ask about this stage, evidence, sites, or guidance" />
-                      <button
-                        className="px-3 py-2 bg-[var(--color-brand)] rounded text-[var(--color-ink)] transition transform hover:scale-[1.01] active:scale-[0.99]"
-                        onClick={handleAsk}
-                        aria-label="Ask the assistant"
-                        title="Send question to the assistant"
-                      >
-                        Ask
-                      </button>
-                    </div>
-                    <div className="mt-2 flex flex-wrap gap-2">
-                      {((stageModel?.actionsRecommended || []).map(a => a.assistantPromptHint || '').filter(Boolean) as string[]).map((q, i) => (
-                        <button key={i} className="px-3 py-1.5 rounded-full bg-[var(--color-surface)] border border-[var(--color-edge)] text-xs text-[var(--color-muted)] hover:text-[var(--color-ink)]" onClick={()=>setQuestion(q)}>
-                          {q}
-                        </button>
-                      ))}
-                      </div>
-                    </div>
-                  </>
-                ) : (
-                  <div className="bg-[var(--color-panel)] border border-[var(--color-edge)] rounded-lg p-4">
-                    <div className="font-semibold text-[var(--color-ink)] mb-1">Inspector</div>
-                    <p className="text-sm text-[var(--color-muted)]">Start a plan to see AI guidance, QA checks, and warnings.</p>
-                  </div>
-                )}
+                {renderAssistantPanel()}
               </aside>
             </div>
           </div>
@@ -657,7 +733,7 @@ Sites scored: ${activePlan.sites?.length || 0}
               </div>
             </section>
             <aside className="lg:sticky lg:top-20 space-y-3">
-              {activePlan && <StageInsightsPanel plan={activePlan} stageId={currentStageId} qaNotes={stageMeta.qaNotes} />}
+              {renderAssistantPanel()}
             </aside>
           </div>
         )}
@@ -697,7 +773,7 @@ const AnswerModal: React.FC<{
 function stageDefaultSuggestions(stageId: string): string[] {
   switch (stageId) {
     case 'PREP':
-      return ['Draft a Notice to Commence for this authority', 'What goes into Gateway 1 readiness?', 'List the biggest risks before Gateway 1'];
+      return ['Draft a 30-month timetable for this plan', 'Draft a Notice to Commence for this authority', 'RAG our governance/resources before Gateway 1', 'What goes into Gateway 1 readiness?', 'List the biggest risks before Gateway 1'];
     case 'GATEWAY_1':
       return ['Are we Gateway 1 ready?', 'Generate a short Gateway 1 summary', 'What gaps remain before baselining?'];
     case 'BASELINING':
