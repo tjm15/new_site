@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ModuleCard } from '../../components/ModuleCard';
 import { ArrowLeft } from 'lucide-react';
@@ -66,6 +66,12 @@ export function DemoLanding({ selectedCouncil, onSelectCouncil, onSelectMode, on
   const [title, setTitle] = useState('New Local Plan');
   const [area, setArea] = useState('');
   const [councilIdInput, setCouncilIdInput] = useState<string>(selectedCouncil || '');
+
+  useEffect(() => {
+    if (selectedCouncil) {
+      setStage('mode');
+    }
+  }, [selectedCouncil]);
 
   const handleCouncilSelect = (councilId: string) => {
     onSelectCouncil(councilId);

@@ -32,6 +32,11 @@ export type StageMeta = {
     | 'Gateway1Tool'
     | 'ReportDrafterTool'
     | 'Gateway2ReadinessTool'
+    | 'Gateway3PackBuilder'
+    | 'Gateway3Inspector'
+    | 'AdoptionTool'
+    | 'MonitoringBuilderTool'
+    | 'Year4EvaluationTool'
   >
   tasks: string[]
   coreTasks?: string[]
@@ -39,16 +44,16 @@ export type StageMeta = {
     id: string
     label: string
     shortExplainer: string
-    primaryToolId?: 'EvidenceTool' | 'VisionConceptsTool' | 'SmartOutcomesTool' | 'PolicyDrafterTool' | 'StrategyModelerTool' | 'SiteAssessmentTool' | 'FeedbackAnalysisTool' | 'SEATool' | 'SCITool' | 'ConsultationPackGeneratorTool' | 'TimetableTool' | 'NoticeTool' | 'PrepRiskTool' | 'BaseliningTool' | 'Gateway1Tool' | 'ReportDrafterTool' | 'Gateway2ReadinessTool'
+    primaryToolId?: 'EvidenceTool' | 'VisionConceptsTool' | 'SmartOutcomesTool' | 'PolicyDrafterTool' | 'StrategyModelerTool' | 'SiteAssessmentTool' | 'FeedbackAnalysisTool' | 'SEATool' | 'SCITool' | 'ConsultationPackGeneratorTool' | 'TimetableTool' | 'NoticeTool' | 'PrepRiskTool' | 'BaseliningTool' | 'Gateway1Tool' | 'ReportDrafterTool' | 'Gateway2ReadinessTool' | 'Gateway3PackBuilder' | 'Gateway3Inspector' | 'AdoptionTool' | 'MonitoringBuilderTool' | 'Year4EvaluationTool'
     assistantPromptHint?: string
   }>
-  stageTools?: Array<'EvidenceTool' | 'VisionConceptsTool' | 'SmartOutcomesTool' | 'PolicyDrafterTool' | 'StrategyModelerTool' | 'SiteAssessmentTool' | 'FeedbackAnalysisTool' | 'SEATool' | 'SCITool' | 'ConsultationPackGeneratorTool' | 'TimetableTool' | 'NoticeTool' | 'PrepRiskTool' | 'BaseliningTool' | 'Gateway1Tool' | 'ReportDrafterTool' | 'Gateway2ReadinessTool'>
+  stageTools?: Array<'EvidenceTool' | 'VisionConceptsTool' | 'SmartOutcomesTool' | 'PolicyDrafterTool' | 'StrategyModelerTool' | 'SiteAssessmentTool' | 'FeedbackAnalysisTool' | 'SEATool' | 'SCITool' | 'ConsultationPackGeneratorTool' | 'TimetableTool' | 'NoticeTool' | 'PrepRiskTool' | 'BaseliningTool' | 'Gateway1Tool' | 'ReportDrafterTool' | 'Gateway2ReadinessTool' | 'Gateway3PackBuilder' | 'Gateway3Inspector' | 'AdoptionTool' | 'MonitoringBuilderTool' | 'Year4EvaluationTool'>
   aiTools?: {
     id: string
     name: string
     description: string
     status?: 'available' | 'planned'
-    launchToolId?: 'EvidenceTool' | 'VisionConceptsTool' | 'SmartOutcomesTool' | 'PolicyDrafterTool' | 'StrategyModelerTool' | 'SiteAssessmentTool' | 'FeedbackAnalysisTool' | 'SEATool' | 'SCITool' | 'ConsultationPackGeneratorTool' | 'TimetableTool' | 'NoticeTool' | 'PrepRiskTool' | 'BaseliningTool' | 'Gateway1Tool' | 'ReportDrafterTool' | 'Gateway2ReadinessTool' | 'CULPToolkit'
+    launchToolId?: 'EvidenceTool' | 'VisionConceptsTool' | 'SmartOutcomesTool' | 'PolicyDrafterTool' | 'StrategyModelerTool' | 'SiteAssessmentTool' | 'FeedbackAnalysisTool' | 'SEATool' | 'SCITool' | 'ConsultationPackGeneratorTool' | 'TimetableTool' | 'NoticeTool' | 'PrepRiskTool' | 'BaseliningTool' | 'Gateway1Tool' | 'ReportDrafterTool' | 'Gateway2ReadinessTool' | 'Gateway3PackBuilder' | 'Gateway3Inspector' | 'AdoptionTool' | 'MonitoringBuilderTool' | 'Year4EvaluationTool' | 'CULPToolkit'
   }[]
   qaNotes?: string[]
   qaChecks?: string[]
@@ -494,156 +499,105 @@ export const STAGES: StageMeta[] = [
   {
     id: 'GATEWAY_3',
     band: 'plan-making',
-    label: 'Gateway 3',
-    description: 'Prescribed requirements and examination readiness check.',
+    label: 'Gateway 3: Examination & Submission',
+    description: 'Finalise the submission pack with requirements RAG, mandated statements, readiness note, and bundle validation in one workspace.',
     timingNote: 'Around month 29 | 4–6 weeks expected',
-    aim: 'Check legal/prescribed requirements and draft the three key statements.',
+    aim: 'Run prescribed requirements, draft Compliance/Soundness/Readiness statements, and validate the submission bundle before lodging for examination.',
     llmTaskId: 'plan_stage_help_gateway3',
-    seaHraFocus: 'SEA compliance check baked into Statement of Compliance alongside prescribed requirements.',
+    seaHraFocus: 'SEA/HRA compliance held through Statement of Compliance, Statement of Soundness, and submission bundle manifest.',
     dashboardNotes: [
-      'Submission-ready checklist with SEA/HRA compliance ticks',
-      'Statement of Compliance builder with SEA/HRA section prompts',
-      'Soundness risk heatmap feeding mitigation actions',
+      'Gateway 3 Pack Builder single screen with tabs for RAG, statements, readiness note, and bundle validator',
+      'Versioned statements with provenance and inspector-ready explanations',
+      'Manifest-driven bundle validator including policies map checks and warnings'
     ],
-    recommendedTools: ['PolicyDrafterTool', 'EvidenceTool', 'SEATool'],
+    recommendedTools: ['Gateway3PackBuilder', 'Gateway3Inspector'],
     tasks: [
-      'Run prescribed-requirements check with reasons for any fails/uncertainty.',
-      'Draft Statement of Compliance and Statement of Soundness.',
-      'Draft Examination Readiness Statement with practical arrangements.',
-      'Check SEA/HRA compliance status and evidence coverage.'
+      'Run the prescribed requirements checklist with requirement-level RAG, explanations, and fixes.',
+      'Draft the Statement of Compliance from the national template with LPA metadata and evidence links.',
+      'Draft the Statement of Soundness against NPPF tests with inline warnings for gaps.',
+      'Prepare the Examination Readiness Note covering team, logistics, and expected inspector focus areas.',
+      'Validate the submission bundle (documents, datasets, policies map) and lock the manifest.'
     ],
     coreTasks: [
-      'Check prescribed requirements with reasons for fails/uncertainty.',
-      'Draft Statement of Compliance and Statement of Soundness.',
-      'Draft Examination Readiness Statement with practical arrangements.',
-      'Confirm SEA/HRA compliance story and sign-off.'
+      'Complete the requirements RAG with explanations and officer overrides.',
+      'Draft and version the three mandatory statements.',
+      'Validate the submission bundle manifest with warnings resolved.'
     ],
     actionsRecommended: [
-      { id: 'g3_requirements', label: 'Run requirements check', shortExplainer: 'Requirement-by-requirement RAG with explanations.', primaryToolId: 'PolicyDrafterTool', assistantPromptHint: 'Run prescribed requirements checklist and flag gaps' },
-      { id: 'g3_compliance', label: 'Draft Statement of Compliance', shortExplainer: 'Narrative on compliance with regs/requirements.', primaryToolId: 'PolicyDrafterTool', assistantPromptHint: 'Draft a Statement of Compliance' },
-      { id: 'g3_soundness', label: 'Draft Statement of Soundness', shortExplainer: 'Tests of soundness with evidence references.', primaryToolId: 'PolicyDrafterTool', assistantPromptHint: 'Draft a Statement of Soundness' },
-      { id: 'g3_readiness', label: 'Draft Examination Readiness', shortExplainer: 'Practical readiness note (team, logistics).', primaryToolId: 'PolicyDrafterTool', assistantPromptHint: 'Draft an Examination Readiness Statement' }
+      { id: 'g3_requirements', label: 'Run requirements RAG', shortExplainer: 'Requirement-by-requirement RAG with explanations and fixes.', primaryToolId: 'Gateway3PackBuilder', assistantPromptHint: 'Run the Gateway 3 requirements checklist and propose fixes' },
+      { id: 'g3_compliance', label: 'Draft Statement of Compliance', shortExplainer: 'Auto-assemble the compliance statement from RAG + metadata.', primaryToolId: 'Gateway3PackBuilder', assistantPromptHint: 'Draft the Statement of Compliance from the RAG outputs' },
+      { id: 'g3_soundness', label: 'Draft Statement of Soundness', shortExplainer: 'NPPF tests with evidence links and amber bubbles for gaps.', primaryToolId: 'Gateway3PackBuilder', assistantPromptHint: 'Draft the Statement of Soundness with evidence references' },
+      { id: 'g3_readiness', label: 'Prepare Examination Readiness Note', shortExplainer: 'Logistics, roles, programme officer briefing, focus areas.', primaryToolId: 'Gateway3PackBuilder', assistantPromptHint: 'Draft the Examination Readiness Note' },
+      { id: 'sub_bundle', label: 'Validate submission bundle', shortExplainer: 'Manifest-driven validation of documents, datasets, and policies map.', primaryToolId: 'Gateway3PackBuilder', assistantPromptHint: 'Validate the submission bundle manifest and flag risks' },
+      { id: 'g3_inspector', label: 'Run final AI inspection', shortExplainer: 'Inspector-style verdict with topic RAG, show-stoppers, and submission checklist.', primaryToolId: 'Gateway3Inspector', assistantPromptHint: 'Run a final AI inspection for Gateway 3' }
     ],
-    stageTools: ['PolicyDrafterTool', 'EvidenceTool', 'SEATool'],
+    stageTools: ['Gateway3PackBuilder', 'Gateway3Inspector'],
     aiTools: [
-      { id: 'g3_requirements', name: 'Prescribed Requirements Checker', description: 'Requirement-by-requirement RAG with explanations.', status: 'available', launchToolId: 'PolicyDrafterTool' },
-      { id: 'g3_compliance', name: 'Statement of Compliance Drafter', description: 'Narrative for compliance with regs and requirements.', status: 'available', launchToolId: 'PolicyDrafterTool' },
-      { id: 'g3_soundness', name: 'Statement of Soundness Drafter', description: 'Draft around tests of soundness using evidence, trajectory, sites.', status: 'available', launchToolId: 'PolicyDrafterTool' },
-      { id: 'g3_readiness', name: 'Examination Readiness Statement Drafter', description: 'Short readiness statement covering logistics and maturity.', status: 'available', launchToolId: 'PolicyDrafterTool' }
+      { id: 'g3_requirements', name: 'Requirements RAG Checker', description: 'Requirement-by-requirement RAG with explanations and suggested fixes.', status: 'available', launchToolId: 'Gateway3PackBuilder' },
+      { id: 'g3_compliance', name: 'Statement of Compliance Drafter', description: 'Template-filled compliance statement grounded in RAG and evidence.', status: 'available', launchToolId: 'Gateway3PackBuilder' },
+      { id: 'g3_soundness', name: 'Statement of Soundness Drafter', description: 'Draft NPPF tests with evidence links and gap warnings.', status: 'available', launchToolId: 'Gateway3PackBuilder' },
+      { id: 'g3_readiness', name: 'Examination Readiness Note', description: 'Practical readiness note with team/logistics and inspector focus.', status: 'available', launchToolId: 'Gateway3PackBuilder' },
+      { id: 'sub_bundle', name: 'Submission Bundle Validator', description: 'Manifest validation (documents, datasets, policies map) with warnings.', status: 'available', launchToolId: 'Gateway3PackBuilder' },
+      { id: 'g3_inspector', name: 'Final AI Inspector', description: 'Pre-examination inspector-style report with topic RAG and show-stoppers.', status: 'available', launchToolId: 'Gateway3Inspector' }
     ],
-    qaNotes: ['Requirements checklist complete', 'Statements drafted with references', 'Readiness covers logistics and data availability', 'SEA/HRA compliance status documented in Statement of Compliance']
-  },
-  {
-    id: 'SUBMISSION_EXAM',
-    band: 'plan-making',
-    label: 'Examination',
-    description: 'Submission, hearings preparation, and examination rehearsal.',
-    timingNote: 'Months 30–31 (target 6 months)',
-    aim: 'Validate the bundle and rehearse soundness/legal tests with inspector-style Q&A.',
-    llmTaskId: 'plan_stage_help_submission',
-    seaHraFocus: 'Inspector SEA questions tracker; modifications trigger SEA adjustments during examination.',
-    dashboardNotes: [
-      'Hearing schedule + MIQ organiser',
-      'SEA/HRA question tracker with quick draft responses',
-      'Modifications tracker linked to SEA adjustments and timeline updates',
-    ],
-    recommendedTools: ['PolicyDrafterTool', 'EvidenceTool', 'SEATool'],
-    tasks: [
-      'Validate the submission bundle against the expected set and versions.',
-      'Run exam rehearsal tests and generate inspector-style questions.',
-      'Flag lines of cross-examination for contentious policies/sites.',
-      'Track SEA/HRA questions and required modifications.'
-    ],
-    coreTasks: [
-      'Validate submission bundle against expected set and versions.',
-      'Run exam rehearsal tests and generate inspector questions.',
-      'Flag cross-examination lines for contentious policies/sites.',
-      'Log SEA/HRA issues raised and adjust modifications accordingly.'
-    ],
-    actionsRecommended: [
-      { id: 'sub_bundle', label: 'Validate submission bundle', shortExplainer: 'Check for missing/duplicated/outdated items.', primaryToolId: 'EvidenceTool', assistantPromptHint: 'Validate the submission bundle against expected items' },
-      { id: 'sub_rehearsal', label: 'Run exam rehearsal', shortExplainer: 'Simulate inspector questions and highlight risks.', primaryToolId: 'PolicyDrafterTool', assistantPromptHint: 'Simulate inspector questions for contentious policies/sites' }
-    ],
-    stageTools: ['PolicyDrafterTool', 'EvidenceTool', 'SEATool'],
-    aiTools: [
-      { id: 'sub_bundle', name: 'Submission Bundle Validator', description: 'Check for missing/duplicated/outdated items in the bundle.', status: 'available', launchToolId: 'EvidenceTool' },
-      { id: 'sub_rehearsal', name: 'Exam Rehearsal Engine', description: 'Run tests, simulate inspector questions, highlight cross-exam lines.', status: 'available', launchToolId: 'PolicyDrafterTool' }
-    ],
-    qaNotes: ['Bundle validated with dates/versions', 'Rehearsal covers soundness/legal compliance', 'Contentious items have prep notes', 'SEA/HRA questions and adjustment triggers captured']
-  },
-  {
-    id: 'ADOPTION',
-    band: 'plan-making',
-    label: 'Adoption',
-    description: 'Adoption statement, policies map, and post-exam modifications.',
-    timingNote: 'Month 30–31',
-    aim: 'Complete adoption tasks, publish the policies map, and close out post-exam actions.',
-    llmTaskId: 'plan_stage_help_adoption',
-    seaHraFocus: 'SEA Post-Adoption Statement generator plus mitigation and monitoring plan.',
-    dashboardNotes: [
-      'Adoption status indicator with key outputs',
-      'SEA Post-Adoption Statement and mitigation plan generator',
-      'Policies map/policies update checklist',
-    ],
-    recommendedTools: ['EvidenceTool', 'PolicyDrafterTool', 'SEATool'],
-    tasks: [
-      'Complete adoption compliance checklist and map updates.',
-      'Prepare adoption statement and policies map for publication.',
-      'Capture any modifications agreed through examination.',
-      'Generate SEA Post-Adoption Statement and mitigation/monitoring plan.'
-    ],
-    coreTasks: [
-      'Complete adoption compliance checklist and map updates.',
-      'Prepare adoption statement and policies map for publication.',
-      'Generate SEA Post-Adoption Statement with mitigation/monitoring commitments.'
-    ],
-    actionsRecommended: [
-      { id: 'adopt_compliance', label: 'Check adoption compliance', shortExplainer: 'Post-adoption checklist with RAG.', primaryToolId: 'PolicyDrafterTool', assistantPromptHint: 'Run adoption compliance check' }
-    ],
-    stageTools: ['EvidenceTool', 'PolicyDrafterTool', 'SEATool'],
-    aiTools: [
-      { id: 'adopt_compliance', name: 'Adoption Compliance Check', description: 'Checklist that post-adoption tasks are complete.', status: 'available', launchToolId: 'PolicyDrafterTool' }
-    ],
-    qaNotes: ['Adoption resolution + modifications recorded', 'Policies map ready for publication', 'SEA Post-Adoption Statement and mitigation/monitoring plan prepared']
+    qaNotes: [
+      'Requirements checklist completed with RAG and officer overrides logged',
+      'Compliance, Soundness, and Readiness statements versioned with evidence references',
+      'Submission bundle manifest validated (documents, datasets, policies map) with warnings addressed',
+      'Inspector focus areas captured with mitigation where possible',
+      'SEA/HRA compliance carried through statements and manifest'
+    ]
   },
   {
     id: 'MONITORING',
     band: 'plan-making',
-    label: 'Monitoring & evaluation',
-    description: 'Annual monitoring, indicators, and year-4 evaluation.',
+    label: 'Adoption, monitoring & evaluation',
+    description: 'Adoption/Post-Adoption hand-off plus annual monitoring, indicators, and year-4 evaluation.',
     timingNote: 'Year 1 and year 4',
-    aim: 'Capture monitoring indicators and prepare the year-4 evaluation path.',
+    aim: 'Publish adoption/Post-Adoption outputs, capture monitoring indicators, and prepare the year-4 evaluation path.',
     llmTaskId: 'plan_stage_help_monitoring',
-    seaHraFocus: 'Indicators + annual monitoring with SEA/HRA measures; year-4 evaluation feeds next plan.',
+    seaHraFocus: 'Adoption/Post-Adoption statement with SEA/HRA hooks; indicators + annual monitoring; year-4 evaluation feeds the next plan.',
     dashboardNotes: [
+      'Adoption/Post-Adoption statement with SEA/HRA mitigation + monitoring hooks',
       'Monitoring dashboard (housing, delivery, flood, BNG, transport)',
       'SEA/HRA indicators and mitigation monitoring status',
       'Year-4 evaluation generator feeding next plan',
     ],
-    recommendedTools: ['EvidenceTool', 'PolicyDrafterTool', 'SEATool'],
+    recommendedTools: ['AdoptionTool', 'MonitoringBuilderTool', 'Year4EvaluationTool', 'SEATool'],
     tasks: [
-      'Propose indicators, baselines, and sources per outcome.',
-      'Draft annual monitoring narrative.',
-      'Prepare the year-4 evaluation skeleton.',
-      'Track SEA/HRA mitigation and monitoring indicators.'
+      'Complete adoption compliance checklist, statutory Adoption Statement, SEA/HRA Post-Adoption Statement, and publication log.',
+      'Configure monitoring indicators, baselines, triggers, and SEA/HRA mitigation monitoring.',
+      'Draft Annual Monitoring Report narrative with live indicator pulls, charts, and key messages.',
+      'Run the Year-4 evaluation (keep/amend/delete grid, spatial strategy effectiveness) and seed next-plan materials.',
+      'Export adoption and monitoring packs with audit/version control.'
     ],
     coreTasks: [
-      'Propose indicators, baselines, and sources per outcome.',
-      'Draft annual monitoring narrative and year-4 evaluation skeleton.',
-      'Maintain SEA/HRA mitigation and monitoring status.'
+      'Publish adoption and SEA/HRA Post-Adoption statements and confirm policies map/notifications.',
+      'Lock monitoring configuration (indicators, baselines, triggers, SEA/HRA mitigation monitoring).',
+      'Produce Annual Monitoring Report narrative with charts/maps.',
+      'Deliver Year-4 evaluation with keep/amend/delete schedule and next-plan seed pack.'
     ],
     actionsRecommended: [
-      { id: 'adopt_indicators', label: 'Suggest indicators/baselines', shortExplainer: 'Indicators, baselines, sources per outcome.', primaryToolId: 'EvidenceTool', assistantPromptHint: 'Suggest outcome indicators and baselines' },
-      { id: 'adopt_monitoring', label: 'Draft monitoring narrative', shortExplainer: 'Annual monitoring text with performance highlights.', primaryToolId: 'PolicyDrafterTool', assistantPromptHint: 'Draft annual monitoring narrative' },
-      { id: 'adopt_eval', label: 'Prepare year-4 evaluation', shortExplainer: 'Keep/amend/delete flags and evaluation skeleton.', primaryToolId: 'PolicyDrafterTool', assistantPromptHint: 'Draft a year-4 evaluation outline' }
+      { id: 'adopt_checklist', label: 'Run adoption checklist & statements', shortExplainer: 'RAG adoption actions, Adoption + SEA/HRA statements, and publication log.', primaryToolId: 'AdoptionTool', assistantPromptHint: 'Check adoption readiness and draft statutory statements' },
+      { id: 'adopt_publication', label: 'Publish policies map & notifications', shortExplainer: 'Policies map confirmation, deposit locations, notifications, archive manifest.', primaryToolId: 'AdoptionTool', assistantPromptHint: 'Confirm policies map upload and send adoption notices' },
+      { id: 'monitor_config', label: 'Configure monitoring & triggers', shortExplainer: 'Indicator registry, baselines, SEA/HRA mitigation monitoring, trigger rules.', primaryToolId: 'MonitoringBuilderTool', assistantPromptHint: 'Propose monitoring indicators, baselines, and trigger thresholds' },
+      { id: 'amr_build', label: 'Draft Annual Monitoring Report', shortExplainer: 'AMR narrative with charts/maps, key messages, and SEA/HRA effects.', primaryToolId: 'MonitoringBuilderTool', assistantPromptHint: 'Draft AMR narrative with key messages and trigger status' },
+      { id: 'year4_eval', label: 'Run Year-4 evaluation & seed next plan', shortExplainer: 'Keep/amend/delete grid, spatial strategy effectiveness, and Next-Plan Seed Pack.', primaryToolId: 'Year4EvaluationTool', assistantPromptHint: 'Generate keep/amend/delete schedule and seed pack for Gateway 1' }
     ],
-    stageTools: ['EvidenceTool', 'PolicyDrafterTool', 'SEATool'],
+    stageTools: ['AdoptionTool', 'MonitoringBuilderTool', 'Year4EvaluationTool', 'SEATool'],
     aiTools: [
-      { id: 'adopt_indicators', name: 'Outcome-Indicator Suggestion', description: 'Suggest indicators, baselines, sources per outcome.', status: 'available', launchToolId: 'EvidenceTool' },
-      { id: 'adopt_monitoring', name: 'Annual Monitoring Narrative Writer', description: 'Draft monitoring text showing delivery/performance.', status: 'available', launchToolId: 'PolicyDrafterTool' },
-      { id: 'adopt_eval', name: 'Year-4 Evaluation Assistant', description: 'Flag keep/amend/delete per policy/site with reasoning.', status: 'available', launchToolId: 'PolicyDrafterTool' }
+      { id: 'adopt_checklist', name: 'Adoption Compliance Check', description: 'RAG adoption actions and draft Adoption/SEA-HRA statements.', status: 'available', launchToolId: 'AdoptionTool' },
+      { id: 'monitor_config', name: 'Monitoring Configuration Helper', description: 'Suggest indicators, baselines, sources, and trigger thresholds.', status: 'available', launchToolId: 'MonitoringBuilderTool' },
+      { id: 'amr_build', name: 'Annual Monitoring Narrative Writer', description: 'Draft AMR text with performance highlights and SEA/HRA effects.', status: 'available', launchToolId: 'MonitoringBuilderTool' },
+      { id: 'year4_eval', name: 'Year-4 Evaluation Assistant', description: 'Keep/amend/delete grid, spatial divergence narrative, and next-plan seed pack.', status: 'available', launchToolId: 'Year4EvaluationTool' }
     ],
-    qaNotes: ['Monitoring indicators and sources agreed', 'Annual monitoring route set', 'Year-4 evaluation path noted', 'SEA/HRA mitigation and monitoring indicators tracked']
+    qaNotes: [
+      'Adoption and SEA/HRA Post-Adoption statements published with audit trail',
+      'Policies map publication and notifications logged',
+      'Monitoring indicators/baselines/triggers agreed and committed to Monitoring Engine',
+      'Annual Monitoring Report narrative drafted with SEA/HRA monitoring text',
+      'Year-4 evaluation produced with keep/amend/delete schedule and Next-Plan seed pack'
+    ]
   }
 ]
 

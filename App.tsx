@@ -13,6 +13,7 @@ import { AppPage } from './pages/AppPage';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { PlanProvider } from './contexts/PlanContext';
 import Gateway1Page from './pages/app/Gateway1';
+import MonitoringDashboardPage from './pages/app/MonitoringDashboardPage';
 
 
 // A simple component to handle scroll restoration on navigation
@@ -38,6 +39,7 @@ const AnimatedRoutes = () => {
                 <Route path="/involved" element={<InvolvedPage />} />
                 <Route path="/app" element={<AppPage />} />
                 <Route path="/app/gateway1" element={<Gateway1Page />} />
+                <Route path="/app/monitoring" element={<MonitoringDashboardPage />} />
             </Routes>
         </AnimatePresence>
     );

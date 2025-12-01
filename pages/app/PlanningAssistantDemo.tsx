@@ -15,17 +15,30 @@ export function PlanningAssistantDemo() {
     const q = new URLSearchParams(location.search);
     const tool = q.get('tool') || undefined;
     const council = q.get('c') || null;
+    const mode = q.get('mode');
+    if (council) setSelectedCouncil(council);
+
     if (tool) {
       // open spatial workspace and pass tool to it
       setSelectedMode('spatial');
       setInitialTool(tool);
       // if no council selected, pick the first available
-      if (!selectedCouncil) {
+      if (!selectedCouncil && !council) {
         const all = getAllCouncils();
         if (all && all.length) setSelectedCouncil(all[0].id);
       }
+      return;
     }
-    if (council) setSelectedCouncil(council);
+
+    if (mode === 'spatial' || mode === 'development') {
+      setSelectedMode(mode);
+      return;
+    }
+
+    // If a council is provided without mode/tool, default to spatial workspace for that authority.
+    if (council) {
+      setSelectedMode('spatial');
+    }
   }, [location.search, selectedCouncil]);
 
   const handleSelectCouncil = (councilId: string) => {

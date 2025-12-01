@@ -13,10 +13,8 @@ const STAGE_SEA_HRA_CUES: Record<string, string> = {
   CONSULTATION_1: 'Consultation 1 — SEA scope & early baseline check, “Have we captured all environmental issues?” prompt.',
   GATEWAY_2: 'Gateway 2 — Environmental Report progress review, alternatives completeness check, and risks-to-soundness warnings.',
   CONSULTATION_2: 'Consultation 2 — Full Environmental Report published; public + statutory SEA consultation status and summaries.',
-  GATEWAY_3: 'Gateway 3 — SEA compliance check within Statement of Compliance.',
-  SUBMISSION_EXAM: 'Examination — inspector SEA questions tracker; modifications trigger SEA adjustments.',
-  ADOPTION: 'Adoption — SEA Post-Adoption Statement generator plus mitigation/monitoring plan.',
-  MONITORING: 'Monitoring — indicators + annual monitoring; year-4 evaluation feeds the next plan with SEA/HRA learning.'
+  GATEWAY_3: 'Gateway 3 — Gateway 3 Pack Builder (RAG, Compliance/Soundness/Readiness statements, bundle validator) with SEA/HRA compliance carried through all outputs; adoption hand-off sits in monitoring/evaluation.',
+  MONITORING: 'Adoption/Monitoring — adoption/Post-Adoption statement with SEA/HRA hooks, indicators + annual monitoring, year-4 evaluation feeding the next plan.'
 };
 
 export function buildPrompt(promptId: string, input: Record<string, any>): string {
@@ -87,7 +85,7 @@ Task: Return JSON: { targetToolId: string, proposedAction?: string, shortAnswer?
 Input: ${JSON.stringify(input, null, 2)}
 
 Task: Return JSON only: { "suggestedStageId": "<PLAN_STAGE_ID>", "reasonText": "short reason (1-2 sentences)" }
-Valid PLAN_STAGE_ID values: ["TIMETABLE","NOTICE","SCOPING","GATEWAY_1","G1_SUMMARY","BASELINING","VISION_OUTCOMES","SITE_SELECTION","CONSULTATION_1","GATEWAY_2","CONSULTATION_2","GATEWAY_3","SUBMISSION_EXAM","ADOPTION","MONITORING"].
+Valid PLAN_STAGE_ID values: ["TIMETABLE","NOTICE","SCOPING","GATEWAY_1","G1_SUMMARY","BASELINING","VISION_OUTCOMES","SITE_SELECTION","CONSULTATION_1","GATEWAY_2","CONSULTATION_2","GATEWAY_3","MONITORING"].
 `;
 
     case 'stage_insights_v1':

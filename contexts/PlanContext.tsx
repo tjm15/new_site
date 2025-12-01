@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useMemo, useState, useEffect } from 'react'
+import React, { createContext, useContext, useMemo, useState, useEffect, useCallback } from 'react'
 import type { Plan } from '../data/types'
 import { NEW_SYSTEM_STAGES } from '../constants'
 import { STAGES, type PlanStageId } from '../data/stageMeta'
@@ -19,13 +19,41 @@ const Ctx = createContext<PlanCtx | null>(null)
 
 const legacyStageIdMap: Record<string, PlanStageId> = {
   PREP: 'TIMETABLE',
-  SUBMISSION: 'SUBMISSION_EXAM',
-  ADOPTION: 'ADOPTION',
-  ADOPTION_MONITORING: 'ADOPTION',
+  SUBMISSION: 'GATEWAY_3',
+  ADOPTION: 'GATEWAY_3',
+  ADOPTION_MONITORING: 'MONITORING',
 }
 
+const buildAdoptionDefaults = () => ({
+  readinessStatus: 'amber' as const,
+  checklist: [],
+  adoptionStatement: { versions: [] },
+  seaHraStatement: { versions: [] },
+  publication: { notificationLog: [], datasets: [], physicalDeposits: [] },
+  auditLog: []
+})
+
+const buildMonitoringDefaults = () => ({
+  mode: 'configuration' as const,
+  indicatorRegistry: [],
+  mitigationMonitoring: [],
+  profiles: [],
+  triggerRules: [],
+  configVersions: [],
+  annualReports: [],
+  variationSummary: ''
+})
+
+const buildEvaluationDefaults = () => ({
+  performance: { worked: [], notWorked: [], unexpected: [], triggerEvents: [], housingVsPlan: '' },
+  evaluationGrid: [],
+  spatialFindings: [],
+  seedPack: { evidenceRefresh: [], risks: [], strategicOptions: [], visionRefresh: '', gateway1Prep: '' },
+  reportVersions: []
+})
+
 function normalizePlan(plan: Plan): Plan {
-  if (plan.systemType !== 'new') return { ...plan, smartOutcomes: plan.smartOutcomes || [], preferredOptions: plan.preferredOptions || {}, strategyDraft: plan.strategyDraft || {}, consultationPack: plan.consultationPack || { sections: [] }, gateway2Pack: plan.gateway2Pack || { sections: [] } }
+  if (plan.systemType !== 'new') return { ...plan, smartOutcomes: plan.smartOutcomes || [], preferredOptions: plan.preferredOptions || {}, strategyDraft: plan.strategyDraft || {}, consultationPack: plan.consultationPack || { sections: [] }, gateway2Pack: plan.gateway2Pack || { sections: [] }, gateway3Pack: plan.gateway3Pack || { requirements: [], validator: { manifest: [] } }, gateway3Inspector: plan.gateway3Inspector || { matrix: [] } }
   const seaHraDefaults = {
     seaScopingStatus: 'Not started',
     seaScopingNotes: '',
@@ -42,6 +70,9 @@ function normalizePlan(plan: Plan): Plan {
     environmentalDatabase: [] as string[],
     keyRisks: [] as string[],
   }
+  const adoptionDefaults = buildAdoptionDefaults()
+  const monitoringDefaults = buildMonitoringDefaults()
+  const evaluationDefaults = buildEvaluationDefaults()
   const mappedStage = (legacyStageIdMap[plan.planStage as string] || plan.planStage || legacyStageIdMap[plan.currentStage as string] || plan.currentStage || NEW_SYSTEM_STAGES[0].id) as PlanStageId
   const milestoneMap = (plan.timetable?.milestones || []).reduce<Record<string, string>>((acc, m) => {
     if (m.stageId && m.date) acc[m.stageId] = m.date
@@ -53,10 +84,11 @@ function normalizePlan(plan: Plan): Plan {
     return acc
   }, {})
   const mergedStages = NEW_SYSTEM_STAGES.map(stage => ({
-    id: stage.id,
-    title: stage.title,
-    band: stage.band,
     ...(existingById[stage.id] || {}),
+    ...stage,
+    id: stage.id,
+    title: stage.title, // ensure latest canonical label (e.g., Gateway 3 rename) overrides stored titles
+    band: stage.band,
     targetDate: (existingById[stage.id]?.targetDate) || milestoneMap[stage.id],
   }))
   const migratedMilestones = (plan.timetable?.milestones || []).map(m => ({
@@ -70,11 +102,29 @@ function normalizePlan(plan: Plan): Plan {
     planStage: mappedStage,
     timetable: { ...(plan.timetable || { milestones: [] }), milestones: migratedMilestones },
     seaHra: { ...seaHraDefaults, ...(plan.seaHra || {}) },
+    adoptionWorkspace: { ...adoptionDefaults, ...(plan.adoptionWorkspace || {}) },
+    monitoringWorkspace: {
+      ...monitoringDefaults,
+      ...(plan.monitoringWorkspace || {}),
+      indicatorRegistry: (plan.monitoringWorkspace?.indicatorRegistry && plan.monitoringWorkspace.indicatorRegistry.length
+        ? plan.monitoringWorkspace.indicatorRegistry
+        : (plan.monitoringIndicators || []).map(ind => ({
+            id: ind.id,
+            name: ind.name,
+            baseline: ind.baseline,
+            target: ind.target,
+            source: ind.source
+          }))
+      ) || []
+    },
+    evaluationWorkspace: { ...evaluationDefaults, ...(plan.evaluationWorkspace || {}) },
     sci: { hasStrategy: false, keyStakeholders: [], methods: [], timelineNote: '', ...(plan.sci || {}) },
     smartOutcomes: plan.smartOutcomes || [],
     strategyDraft: plan.strategyDraft || {},
     consultationPack: plan.consultationPack || { sections: [] },
-    gateway2Pack: plan.gateway2Pack || { sections: [] }
+    gateway2Pack: plan.gateway2Pack || { sections: [] },
+    gateway3Pack: plan.gateway3Pack || { requirements: [], validator: { manifest: [] } },
+    gateway3Inspector: plan.gateway3Inspector || { matrix: [] }
   }
 }
 
@@ -105,7 +155,7 @@ export function PlanProvider({ children }: { children: React.ReactNode }) {
   }, [activeByCouncil])
 
   const activePlan = useMemo(() => plans.find(p => p.id === activeId), [plans, activeId])
-  const getActiveForCouncil = (councilId: string) => {
+  const getActiveForCouncil = useCallback((councilId: string) => {
     const id = activeByCouncil[councilId]
     if (id) {
       const found = plans.find(p => p.id === id)
@@ -114,9 +164,9 @@ export function PlanProvider({ children }: { children: React.ReactNode }) {
     // Fallback: first plan matching this council
     const fallback = plans.find(p => p.councilId === councilId)
     return fallback
-  }
+  }, [activeByCouncil, plans])
 
-  const createPlan: PlanCtx['createPlan'] = (partial) => {
+  const createPlan: PlanCtx['createPlan'] = useCallback((partial) => {
     const id = `plan_${Date.now()}`
     const stages = NEW_SYSTEM_STAGES.map(s => ({ id: s.id, title: s.title, band: s.band }))
     const plan: Plan = {
@@ -136,6 +186,8 @@ export function PlanProvider({ children }: { children: React.ReactNode }) {
       preferredOptions: {},
       consultationPack: { sections: [] },
       gateway2Pack: { sections: [] },
+      gateway3Pack: { requirements: [], validator: { manifest: [] } },
+      gateway3Inspector: { matrix: [] },
       // initialize SEA/HRA and SCI blanks so components can safely read
       seaHra: {
         seaScopingStatus: 'Not started',
@@ -153,6 +205,9 @@ export function PlanProvider({ children }: { children: React.ReactNode }) {
         environmentalDatabase: [],
         keyRisks: []
       },
+      adoptionWorkspace: buildAdoptionDefaults(),
+      monitoringWorkspace: buildMonitoringDefaults(),
+      evaluationWorkspace: buildEvaluationDefaults(),
       sci: { hasStrategy: false, keyStakeholders: [], methods: [], timelineNote: '' }
     }
     setPlans(prev => [...prev, plan])
@@ -161,21 +216,33 @@ export function PlanProvider({ children }: { children: React.ReactNode }) {
       setActiveByCouncil(prev => ({ ...prev, [partial.councilId!]: id }))
     }
     return plan
-  }
+  }, [setPlans, setActiveId, setActiveByCouncil])
 
-  const setActivePlan = (id: string) => setActiveId(id)
-  const setActiveForCouncil = (councilId: string, id: string) => {
-    setActiveByCouncil(prev => ({ ...prev, [councilId]: id }))
-  }
-  const updatePlan = (id: string, patch: Partial<Plan>) => {
+  const setActivePlan = useCallback((id: string) => setActiveId(id), [])
+  const setActiveForCouncil = useCallback((councilId: string, id: string) => {
+    setActiveByCouncil(prev => {
+      if (prev[councilId] === id) return prev
+      return { ...prev, [councilId]: id }
+    })
+  }, [])
+  const updatePlan = useCallback((id: string, patch: Partial<Plan>) => {
     setPlans(prev => prev.map(p => (p.id === id ? normalizePlan({ ...p, ...patch }) : p)))
-  }
+  }, [])
 
-  const setPlanStage: PlanCtx['setPlanStage'] = (id, stage) => {
+  const setPlanStage: PlanCtx['setPlanStage'] = useCallback((id, stage) => {
     setPlans(prev => prev.map(p => (p.id === id ? { ...p, planStage: stage } : p)))
-  }
+  }, [])
 
-  const value: PlanCtx = { plans, activePlan, getActiveForCouncil, createPlan, setActivePlan, setActiveForCouncil, updatePlan, setPlanStage }
+  const value: PlanCtx = useMemo(() => ({
+    plans,
+    activePlan,
+    getActiveForCouncil,
+    createPlan,
+    setActivePlan,
+    setActiveForCouncil,
+    updatePlan,
+    setPlanStage
+  }), [plans, activePlan, getActiveForCouncil, createPlan, setActivePlan, setActiveForCouncil, updatePlan, setPlanStage])
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>
 }
 

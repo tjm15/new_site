@@ -16,6 +16,9 @@ import { NoticeToCommenceTool } from './tools/NoticeToCommenceTool';
 import { PrepRiskTool } from './tools/PrepRiskTool';
 import { BaseliningTool } from './tools/BaseliningTool';
 import { ConsultationPackGeneratorTool } from './tools/ConsultationPackGeneratorTool';
+import { AdoptionTool } from './tools/AdoptionTool';
+import { MonitoringBuilderTool } from './tools/MonitoringBuilderTool';
+import { Year4EvaluationTool } from './tools/Year4EvaluationTool';
 import { STAGES } from '../../../data/stageMeta';
 import { usePlan } from '../../../contexts/PlanContext';
 import { suggestToolPrefill, runLLMTask } from '../../../utils/llmTasks';
@@ -32,6 +35,9 @@ import { MarkdownContent } from '../../../components/MarkdownContent';
 import { Gateway1Tool } from './tools/Gateway1Tool';
 import { ReportDrafterTool } from './tools/ReportDrafterTool';
 import { Gateway2ReadinessTool } from './tools/Gateway2ReadinessTool';
+import { Gateway3PackBuilder } from './tools/Gateway3PackBuilder';
+import { Gateway3Inspector } from './tools/Gateway3Inspector';
+import { Gateway3InspectorSidebar } from './tools/Gateway3InspectorSidebar';
 
 interface SpatialPlanDemoProps {
   councilData: CouncilData;
@@ -39,7 +45,7 @@ interface SpatialPlanDemoProps {
   initialTool?: string | undefined;
 }
 
-type ToolId = 'gateway1' | 'timetable' | 'notice' | 'prepRisk' | 'baselining' | 'evidence' | 'vision' | 'smartOutcomes' | 'policy' | 'strategy' | 'sites' | 'feedback' | 'sea' | 'sci' | 'consultationPack' | 'report' | 'gateway2Pack';
+type ToolId = 'gateway1' | 'timetable' | 'notice' | 'prepRisk' | 'baselining' | 'evidence' | 'vision' | 'smartOutcomes' | 'policy' | 'strategy' | 'sites' | 'feedback' | 'sea' | 'sci' | 'consultationPack' | 'report' | 'gateway2Pack' | 'gateway3Pack' | 'gateway3Inspector' | 'adoption' | 'monitoring' | 'year4';
 
 interface Tool {
   id: ToolId;
@@ -66,6 +72,11 @@ const TOOLS: Tool[] = [
   { id: 'consultationPack', label: 'Consultation Pack Generator', icon: '📑', description: 'Assemble a publishable consultation pack from vision, options, sites, evidence, and SEA scoping.' },
   { id: 'report', label: 'Report Drafter', icon: '📝', description: 'Generate a spatial strategy chapter and warnings from existing plan data.' },
   { id: 'gateway2Pack', label: 'Gateway 2 Readiness Pack', icon: '🧭', description: 'Assemble the Gateway 2 submission pack with readiness checks, risks, and workshop briefing.' },
+  { id: 'gateway3Pack', label: 'Gateway 3 Pack Builder', icon: '📦', description: 'Single workspace for requirements RAG, compliance/soundness statements, readiness note, and bundle validation.' },
+  { id: 'gateway3Inspector', label: 'Gateway 3 AI Inspector', icon: '🔎', description: 'Inspector-style pre-submission verdict with topic RAG, show-stoppers, and checklist.' },
+  { id: 'adoption', label: 'Adoption & Post-Adoption', icon: '🏛️', description: 'Checklist, statutory Adoption & SEA/HRA statements, publication and notifications.' },
+  { id: 'monitoring', label: 'Monitoring Builder', icon: '📈', description: 'Indicator registry, baselines, triggers, SEA/HRA mitigation monitoring, and AMR drafting.' },
+  { id: 'year4', label: 'Year-4 Evaluation', icon: '🔁', description: 'Keep/amend/delete grid, spatial effectiveness review, and Next-Plan seed pack.' },
 ];
 
 const SCI_STAGE_PREFILLS: Record<string, Record<string, any>> = {
@@ -155,7 +166,6 @@ const SCI_STAGE_PREFILLS: Record<string, Record<string, any>> = {
 
 export const SpatialPlanDemo: React.FC<SpatialPlanDemoProps> = ({ councilData, onBack, initialTool }) => {
   const [selectedTool, setSelectedTool] = useState<ToolId | null>(null);
-  const [planView, setPlanView] = useState<'new' | 'adopted'>('new');
   const prompts = getPrompts(councilData.id, 'spatial', councilData.name);
   const [question, setQuestion] = useState('');
   const [chatHistoryByPlan, setChatHistoryByPlan] = useState<Record<string, Array<{ role: 'user' | 'assistant'; text: string }>>>({});
@@ -182,6 +192,11 @@ export const SpatialPlanDemo: React.FC<SpatialPlanDemoProps> = ({ councilData, o
     baselining?: { autoRun?: boolean; prefill?: Record<string, any>; initialTopics?: string; initialFocusNotes?: string };
     gateway1?: { autoRun?: boolean; prefill?: Record<string, any> };
     gateway2Pack?: { autoRun?: boolean };
+    gateway3Pack?: { autoRun?: boolean };
+    gateway3Inspector?: { autoRun?: boolean };
+    adoption?: { autoRun?: boolean; prefill?: Record<string, any> };
+    monitoring?: { autoRun?: boolean; prefill?: Record<string, any> };
+    year4?: { autoRun?: boolean; prefill?: Record<string, any> };
   }>({});
   const [toolSessionsByPlan, setToolSessionsByPlan] = useState<Record<string, Record<string, any>>>({});
   const activePlan = getActiveForCouncil(councilData.id);
@@ -238,6 +253,11 @@ Sites scored: ${activePlan.sites?.length || 0}
     Gateway1Tool: 'gateway1',
     ReportDrafterTool: 'report',
     Gateway2ReadinessTool: 'gateway2Pack',
+    Gateway3PackBuilder: 'gateway3Pack',
+    Gateway3Inspector: 'gateway3Inspector',
+    AdoptionTool: 'adoption',
+    MonitoringBuilderTool: 'monitoring',
+    Year4EvaluationTool: 'year4',
   }), []);
 
   const toolById = useMemo(() => {
@@ -300,14 +320,12 @@ Sites scored: ${activePlan.sites?.length || 0}
         return repTags.length > 0;
       case 'c1_summary':
         return consultSummaries.some(c => c.stageId === 'CONSULTATION_1');
-      case 'g2_completeness':
-        return Boolean(plan.gateway2Checklist);
-      case 'g2_risks':
-        return Boolean(plan.gateway2Risks);
-      case 'g2_matters':
-        return Boolean(plan.gateway2Summary);
-      case 'g2_summary':
-        return Boolean(plan.gateway2Summary);
+      case 'g2_pack':
+        return Boolean(plan.gateway2Pack?.sections && plan.gateway2Pack.sections.some(s => s.content));
+      case 'g2_scorecard':
+        return Boolean(plan.gateway2Pack?.scorecard || plan.gateway2Pack?.readinessRag || plan.gateway2Risks);
+      case 'g2_strategy':
+        return Boolean(plan.strategyDraft?.reportMarkdown);
       case 'c2_tagger':
         return repTags.length > 0;
       case 'c2_soundness':
@@ -317,31 +335,36 @@ Sites scored: ${activePlan.sites?.length || 0}
       case 'c2_pack':
         return Boolean(plan.consultationPack?.sections && plan.consultationPack.sections.length > 0);
       case 'g3_requirements':
-        return Boolean(plan.requirementsCheck);
+        return Boolean(plan.gateway3Pack?.requirements?.some(r => r.status));
       case 'g3_compliance':
-        return Boolean(plan.statementCompliance);
+        return Boolean(plan.gateway3Pack?.compliance?.text);
       case 'g3_soundness':
-        return Boolean(plan.statementSoundness);
+        return Boolean(plan.gateway3Pack?.soundness?.text);
       case 'g3_readiness':
-        return Boolean(plan.examReadinessNote);
+        return Boolean(plan.gateway3Pack?.readiness?.text);
       case 'sub_bundle':
-        return (plan.submissionBundle || []).length > 0;
+        return Boolean(plan.gateway3Pack?.validator?.manifest?.length);
       case 'sub_rehearsal':
         return Boolean(plan.examRehearsalNotes);
-      case 'adopt_compliance':
-        return Boolean(plan.adoptionChecklist);
-      case 'adopt_indicators':
-        return (plan.monitoringIndicators || []).length > 0;
-      case 'adopt_monitoring':
-        return (plan.annualMonitoringNarratives || []).length > 0;
-      case 'adopt_eval':
-        return Boolean(plan.year4Evaluation);
+      case 'g3_inspector':
+        return Boolean(plan.gateway3Inspector && ((plan.gateway3Inspector.matrix || []).length || plan.gateway3Inspector.verdict));
+      case 'adopt_checklist':
+        return Boolean(plan.adoptionWorkspace?.checklist?.length);
+      case 'adopt_publication':
+        return Boolean(plan.adoptionWorkspace?.publication?.policiesMapPublished || plan.adoptionWorkspace?.publication?.website || (plan.adoptionWorkspace?.publication?.notificationLog || []).length);
+      case 'monitor_config':
+        return Boolean(plan.monitoringWorkspace?.indicatorRegistry?.length);
+      case 'amr_build':
+        return Boolean(plan.monitoringWorkspace?.annualReports?.length);
+      case 'year4_eval':
+        return Boolean(plan.evaluationWorkspace?.evaluationGrid?.length || plan.evaluationWorkspace?.seedPack);
       default:
         return false;
     }
   }, []);
 
   const renderAssistantPanel = () => {
+    if (selectedTool === 'gateway3Inspector') return null;
     if (!activePlan) {
       return (
         <div className="bg-[var(--color-panel)] border border-[var(--color-edge)] rounded-lg p-4">
@@ -350,9 +373,10 @@ Sites scored: ${activePlan.sites?.length || 0}
         </div>
       );
     }
+    const hideInspectorSidebar = selectedTool === 'gateway3Inspector';
     return (
       <>
-        <StageInsightsPanel plan={activePlan} stageId={currentStageId} qaNotes={stageMeta.qaNotes} />
+        {!hideInspectorSidebar && <StageInsightsPanel plan={activePlan} stageId={currentStageId} qaNotes={stageMeta.qaNotes} />}
         <div className="bg-[var(--color-panel)] border border-[var(--color-edge)] rounded-lg p-4">
           <div className="font-semibold text-[var(--color-ink)] mb-2">Plan-aware assistant (Ask anything)</div>
           <div className="text-xs text-[var(--color-muted)] mb-2">Context: {stageMeta.label}</div>
@@ -443,7 +467,39 @@ Sites scored: ${activePlan.sites?.length || 0}
 
   React.useEffect(() => {
     if (!initialTool) return;
-    const simpleMap: Record<string, ToolId> = { vision: 'vision', smart: 'smartOutcomes', smartoutcomes: 'smartOutcomes', outcomes: 'smartOutcomes', sites: 'sites', evidence: 'evidence', policy: 'policy', strategy: 'strategy', feedback: 'feedback', sea: 'sea', sci: 'sci', timetable: 'timetable', notice: 'notice', preprisk: 'prepRisk', prepRisk: 'prepRisk', baselining: 'baselining', baseline: 'baselining', gateway1: 'gateway1', g1: 'gateway1', consultationpack: 'consultationPack', consultation: 'consultationPack' };
+    const simpleMap: Record<string, ToolId> = {
+      vision: 'vision',
+      smart: 'smartOutcomes',
+      smartoutcomes: 'smartOutcomes',
+      outcomes: 'smartOutcomes',
+      sites: 'sites',
+      evidence: 'evidence',
+      policy: 'policy',
+      strategy: 'strategy',
+      feedback: 'feedback',
+      sea: 'sea',
+      sci: 'sci',
+      timetable: 'timetable',
+      notice: 'notice',
+      preprisk: 'prepRisk',
+      prepRisk: 'prepRisk',
+      baselining: 'baselining',
+      baseline: 'baselining',
+      gateway1: 'gateway1',
+      g1: 'gateway1',
+      consultationpack: 'consultationPack',
+      consultation: 'consultationPack',
+      gateway3: 'gateway3Pack',
+      g3: 'gateway3Pack',
+      submission: 'gateway3Pack',
+      inspector: 'gateway3Inspector',
+      adoption: 'adoption',
+      adopt: 'adoption',
+      monitoring: 'monitoring',
+      amr: 'monitoring',
+      year4: 'year4',
+      evaluation: 'year4'
+    };
     const picked = simpleMap[initialTool];
     if (picked) openTool(picked);
   }, [initialTool, openTool]);
@@ -672,6 +728,16 @@ Sites scored: ${activePlan.sites?.length || 0}
         return <ReportDrafterTool plan={activePlan} councilData={councilData} />;
       case 'gateway2Pack':
         return <Gateway2ReadinessTool plan={activePlan} councilData={councilData} autoRun={initialProps.gateway2Pack?.autoRun} />;
+      case 'gateway3Pack':
+        return <Gateway3PackBuilder plan={activePlan} councilData={councilData} autoRun={initialProps.gateway3Pack?.autoRun} />;
+      case 'gateway3Inspector':
+        return <Gateway3Inspector plan={activePlan} councilData={councilData} autoRun={initialProps.gateway3Inspector?.autoRun} hideSidebar />;
+      case 'adoption':
+        return <AdoptionTool plan={activePlan} councilData={councilData} />;
+      case 'monitoring':
+        return <MonitoringBuilderTool plan={activePlan} councilData={councilData} />;
+      case 'year4':
+        return <Year4EvaluationTool plan={activePlan} councilData={councilData} />;
       default:
         return null;
     }
@@ -710,18 +776,15 @@ Sites scored: ${activePlan.sites?.length || 0}
             <span className="text-sm text-[var(--color-muted)]">{activePlan ? `Plan: ${activePlan.title}` : 'No plan in progress'}</span>
           </div>
           <div className="ml-auto flex items-center gap-2">
-            <button
-              onClick={()=>setPlanView('adopted')}
-              className={`px-3 py-1.5 text-sm rounded border ${planView === 'adopted' ? 'bg-[var(--color-surface)] border-[var(--color-accent)] text-[var(--color-ink)]' : 'border-[var(--color-edge)] text-[var(--color-muted)]'}`}
+            <Link
+              to={`/app/monitoring?c=${councilData.id}`}
+              className="px-3 py-1.5 text-sm rounded border border-[var(--color-edge)] text-[var(--color-muted)] hover:border-[var(--color-accent)]"
             >
-              Adopted plan
-            </button>
-            <button
-              onClick={()=>setPlanView('new')}
-              className={`px-3 py-1.5 text-sm rounded border ${planView === 'new' ? 'bg-[var(--color-accent)] text-white border-[var(--color-accent)]' : 'border-[var(--color-edge)] text-[var(--color-muted)]'}`}
-            >
+              Monitoring Dashboard
+            </Link>
+            <span className="px-3 py-1.5 text-sm rounded border bg-[var(--color-accent)] text-white border-[var(--color-accent)]">
               New plan (CULP)
-            </button>
+            </span>
           </div>
         </div>
       </div>
@@ -881,7 +944,11 @@ Sites scored: ${activePlan.sites?.length || 0}
               </div>
             </section>
             <aside className="lg:sticky lg:top-20 space-y-3">
-              {renderAssistantPanel()}
+              {selectedTool === 'gateway3Inspector' ? (
+                <Gateway3InspectorSidebar plan={activePlan} councilData={councilData} />
+              ) : (
+                renderAssistantPanel()
+              )}
             </aside>
           </div>
         )}
@@ -940,13 +1007,20 @@ function stageDefaultSuggestions(stageId: string): string[] {
     case 'CONSULTATION_2':
       return ['Assemble the Consultation 2 pack from current content', 'Tag issues raised against policies and sites', 'Summarise likely main issues', 'Draft the Consultation 2 summary outline'];
     case 'GATEWAY_3':
-      return ['Run a prescribed requirements checklist', 'Draft a Statement of Soundness intro', 'What logistics should the readiness statement cover?'];
-    case 'SUBMISSION_EXAM':
-      return ['What is missing from the submission bundle?', 'Simulate inspector questions for a policy', 'Highlight cross-exam lines for contentious sites'];
-    case 'ADOPTION':
-      return ['Check adoption compliance items', 'Prepare adoption statement text', 'What should the policies map include?'];
+      return [
+        'Run the Gateway 3 requirements RAG with explanations',
+        'Draft the Statement of Compliance from the RAG outputs',
+        'Draft the Statement of Soundness against the NPPF tests',
+        'Prepare the Examination Readiness Note (team + logistics)',
+        'Validate the submission bundle, policies map, and manifest'
+      ];
     case 'MONITORING':
-      return ['Suggest indicators and baselines per outcome', 'What to include in the annual monitoring text?', 'How to approach the year-4 evaluation?'];
+      return [
+        'Draft adoption/Post-Adoption statement hooks',
+        'Suggest indicators and baselines per outcome',
+        'What to include in the annual monitoring text?',
+        'How to approach the year-4 evaluation?'
+      ];
     default:
       return ['What should I do next in this stage?', 'Where are the biggest risks right now?', 'Which tool should I open first?'];
   }

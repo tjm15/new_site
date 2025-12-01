@@ -117,25 +117,29 @@ export function useStageInsights(plan: Plan | undefined, stageId: PlanStageId | 
             case 'c2_summary':
               return consultSummaries.some(c => c.stageId === 'CONSULTATION_2')
             case 'g3_requirements':
-              return !!plan.requirementsCheck
+              return !!(plan.gateway3Pack?.requirements?.some(r => r.status))
             case 'g3_compliance':
-              return !!plan.statementCompliance
+              return !!plan.gateway3Pack?.compliance?.text
             case 'g3_soundness':
-              return !!plan.statementSoundness
+              return !!plan.gateway3Pack?.soundness?.text
             case 'g3_readiness':
-              return !!plan.examReadinessNote
+              return !!plan.gateway3Pack?.readiness?.text
             case 'sub_bundle':
-              return (plan.submissionBundle || []).length > 0
+              return !!(plan.gateway3Pack?.validator?.manifest?.length)
             case 'sub_rehearsal':
               return !!plan.examRehearsalNotes
-            case 'adopt_compliance':
-              return !!plan.adoptionChecklist
-            case 'adopt_indicators':
-              return (plan.monitoringIndicators || []).length > 0
-            case 'adopt_monitoring':
-              return (plan.annualMonitoringNarratives || []).length > 0
-            case 'adopt_eval':
-              return !!plan.year4Evaluation
+            case 'g3_inspector':
+              return !!(plan.gateway3Inspector && ((plan.gateway3Inspector.matrix || []).length || plan.gateway3Inspector.verdict))
+            case 'adopt_checklist':
+              return !!(plan.adoptionWorkspace?.checklist?.length)
+            case 'adopt_publication':
+              return !!(plan.adoptionWorkspace?.publication?.policiesMapPublished || plan.adoptionWorkspace?.publication?.website || (plan.adoptionWorkspace?.publication?.notificationLog || []).length)
+            case 'monitor_config':
+              return !!(plan.monitoringWorkspace?.indicatorRegistry?.length)
+            case 'amr_build':
+              return !!(plan.monitoringWorkspace?.annualReports?.length)
+            case 'year4_eval':
+              return !!(plan.evaluationWorkspace?.evaluationGrid?.length || plan.evaluationWorkspace?.seedPack)
             default:
               return false
           }
@@ -160,6 +164,15 @@ export function useStageInsights(plan: Plan | undefined, stageId: PlanStageId | 
             seaHra: plan.seaHra,
             consultationSummaries: plan.consultationSummaries,
             preferredOptions: plan.preferredOptions,
+            gateway3Pack: {
+              requirements: plan.gateway3Pack?.requirements,
+              statements: {
+                compliance: !!plan.gateway3Pack?.compliance?.text,
+                soundness: !!plan.gateway3Pack?.soundness?.text,
+                readiness: !!plan.gateway3Pack?.readiness?.text
+              },
+              validator: { manifest: plan.gateway3Pack?.validator?.manifest }
+            }
           }
         const consultationBias = stageId === 'CONSULTATION_1' || stageId === 'CONSULTATION_2'
         const prompt = [
@@ -213,7 +226,7 @@ export function useStageInsights(plan: Plan | undefined, stageId: PlanStageId | 
         pending.current.delete(key)
       }
     })()
-  }, [plan?.id, plan?.visionStatements?.length, plan?.sites?.length, plan?.timetable, plan?.gateway1SummaryText, plan?.evidenceInventory?.length, plan?.submissionBundle?.length, stageId, stageMeta?.id])
+  }, [plan?.id, plan?.visionStatements?.length, plan?.sites?.length, plan?.timetable, plan?.gateway1SummaryText, plan?.evidenceInventory?.length, plan?.gateway3Pack?.requirements?.length, plan?.gateway3Pack?.validator?.manifest?.length, plan?.gateway3Pack?.compliance?.text, plan?.gateway3Pack?.soundness?.text, plan?.gateway3Pack?.readiness?.text, plan?.gateway3Inspector?.verdict, plan?.gateway3Inspector?.matrix?.length, stageId, stageMeta?.id])
 
   return { insights: current, cache: data }
 }

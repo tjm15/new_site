@@ -6,12 +6,14 @@ import rehypeHighlight from 'rehype-highlight';
 import { normalizeLLMText } from '../utils/markdown';
 
 interface MarkdownContentProps {
-  content: string;
+  content?: string;
+  markdown?: string;
   className?: string;
 }
 
-export const MarkdownContent: React.FC<MarkdownContentProps> = ({ content, className = '' }) => {
-  const cleaned = normalizeLLMText(content || '');
+export const MarkdownContent: React.FC<MarkdownContentProps> = ({ content, markdown, className = '' }) => {
+  const source = typeof markdown === 'string' ? markdown : content || '';
+  const cleaned = normalizeLLMText(source || '');
   return (
     <div className={`markdown-body ${className}`}>
       <ReactMarkdown

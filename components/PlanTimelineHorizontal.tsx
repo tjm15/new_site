@@ -37,8 +37,9 @@ export const PlanTimelineHorizontal: React.FC<Props> = ({ plan, currentStageId, 
 
   const ordered = NEW_SYSTEM_STAGES.map(def => {
     const fromPlan = stageMap[def.id] || {}
-    const targetDate = fromPlan.targetDate
-    return { ...def, ...fromPlan, targetDate }
+    const targetDate = fromPlan.targetDate || def.targetDate
+    // Stage definitions should always control the label/title; plan data can add dates/status.
+    return { ...fromPlan, ...def, targetDate }
   })
 
   const stageOrder = ordered.map(s => s.id)

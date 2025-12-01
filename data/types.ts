@@ -125,8 +125,6 @@ export type PlanStageId =
   | 'GATEWAY_2'
   | 'CONSULTATION_2'
   | 'GATEWAY_3'
-  | 'SUBMISSION_EXAM'
-  | 'ADOPTION'
   | 'MONITORING'
 
 export interface PlanStage {
@@ -284,6 +282,251 @@ export interface Gateway2Pack {
   generatedAt?: string
 }
 
+export type RagStatus = 'red' | 'amber' | 'green'
+
+export interface Gateway3Requirement {
+  id: string
+  title: string
+  description?: string
+  status?: RagStatus
+  explanation?: string
+  suggestedFix?: string
+  sources?: string[]
+  lastUpdated?: string
+  overrideNote?: string
+}
+
+export interface Gateway3StatementVersion {
+  id: string
+  text: string
+  createdAt: string
+  summary?: string
+}
+
+export interface Gateway3Statement {
+  title: string
+  text?: string
+  versions?: Gateway3StatementVersion[]
+  lastGeneratedAt?: string
+}
+
+export interface Gateway3ManifestItem {
+  id: string
+  title: string
+  required?: boolean
+  status?: 'present' | 'missing' | 'outdated'
+  version?: string
+  hash?: string
+  warning?: string
+}
+
+export interface Gateway3Validator {
+  manifest?: Gateway3ManifestItem[]
+  warnings?: string[]
+  notes?: string
+  lastValidatedAt?: string
+  summary?: string
+}
+
+export interface Gateway3Pack {
+  requirements?: Gateway3Requirement[]
+  compliance?: Gateway3Statement
+  soundness?: Gateway3Statement
+  readiness?: Gateway3Statement
+  validator?: Gateway3Validator
+  summary?: string
+  inspectorFocus?: string[]
+  updatedAt?: string
+}
+
+export interface Gateway3InspectorTopic {
+  id: string
+  title: string
+  rag?: RagStatus
+  severity?: 'low' | 'medium' | 'high'
+  summary?: string
+  issues?: string[]
+  showstoppers?: string[]
+}
+
+export interface Gateway3InspectorReport {
+  verdict?: string
+  matrix?: Gateway3InspectorTopic[]
+  crossCutting?: Array<{ title: string; detail?: string; severity?: 'low' | 'medium' | 'high' }>
+  checklist?: Array<{ item: string; status: 'pass' | 'risk' | 'fail'; note?: string }>
+  actions?: string[]
+  hearingTopics?: string[]
+  examinerQuestions?: string[]
+  finalNote?: string
+  generatedAt?: string
+}
+
+export interface AdoptionChecklistItem {
+  id: string
+  title: string
+  status: RagStatus
+  owner?: string
+  dueDate?: string
+  notes?: string
+  attachments?: string[]
+  aiHint?: string
+  lastUpdated?: string
+}
+
+export interface StatementVersionEntry {
+  id: string
+  title?: string
+  content: string
+  createdAt: string
+  status?: 'draft' | 'final'
+  type?: 'adoption' | 'sea_hra'
+  author?: string
+}
+
+export interface AdoptionStatementWorkspace {
+  readinessStatus?: RagStatus
+  checklist?: AdoptionChecklistItem[]
+  adoptionStatement?: {
+    metadata?: {
+      planName?: string
+      area?: string
+      adoptionDate?: string
+      planPeriod?: string
+      inspectorSummary?: string
+      modificationSummary?: string
+      inspectionDate?: string
+      whereInspect?: string[]
+    }
+    currentDraft?: string
+    easyRead?: string
+    versions?: StatementVersionEntry[]
+    markedFinalId?: string
+  }
+  seaHraStatement?: {
+    sections?: Record<string, string>
+    currentDraft?: string
+    monitoringHooks?: string
+    versions?: StatementVersionEntry[]
+  }
+  publication?: {
+    website?: boolean
+    policiesMapPublished?: boolean
+    datasets?: string[]
+    notificationLog?: Array<{ audience: string; channel?: string; status?: string; sentAt?: string }>
+    physicalDeposits?: string[]
+    legalAdvert?: string
+    archiveManifest?: string
+    publicationNotes?: string
+  }
+  adoptionPackExport?: string
+  auditLog?: Array<{ id: string; action: string; at: string; user?: string }>
+}
+
+export interface MonitoringIndicatorDefinition {
+  id: string
+  name: string
+  category?: string
+  policyRefs?: string[]
+  relatedSites?: string[]
+  frequency?: string
+  baseline?: string
+  target?: string
+  source?: string
+  trigger?: string
+  direction?: 'increase' | 'decrease' | 'stable'
+  seaHraRelevant?: boolean
+  notes?: string
+  difficulty?: IndicatorDifficulty
+  status?: 'draft' | 'approved'
+}
+
+export interface MonitoringProfile {
+  id: string
+  name: string
+  type?: 'AMR' | 'SEA_HRA' | 'YEAR4' | 'custom'
+  indicators: string[]
+  schedule?: string
+  outputs?: string[]
+  notes?: string
+}
+
+export interface TriggerRule {
+  id: string
+  title: string
+  condition: string
+  response?: string
+  status?: 'watch' | 'breach' | 'ok'
+}
+
+export interface MonitoringReportDraft {
+  year: string
+  narratives: Record<string, string>
+  keyMessages?: string[]
+  housingSupplyNote?: string
+  triggerStatus?: string
+  exportHtml?: string
+  status?: 'draft' | 'final'
+  generatedAt?: string
+}
+
+export interface MonitoringWorkspace {
+  mode?: 'configuration' | 'reporting'
+  indicatorRegistry?: MonitoringIndicatorDefinition[]
+  mitigationMonitoring?: Array<{ effect: string; indicators: string[]; team?: string; coverage?: 'strong' | 'weak' | 'gap'; note?: string }>
+  profiles?: MonitoringProfile[]
+  triggerRules?: TriggerRule[]
+  configVersions?: Array<{ id: string; summary: string; createdAt: string }>
+  annualReports?: MonitoringReportDraft[]
+  variationSummary?: string
+  lastCommittedAt?: string
+}
+
+export type EvaluationClassification = 'keep' | 'amend' | 'remove' | 'replace'
+
+export interface EvaluationGridItem {
+  id: string
+  refType: 'policy' | 'site' | 'sea' | 'objective'
+  name: string
+  classification?: EvaluationClassification
+  rationale?: string
+  evidence?: string
+  indicatorSignals?: string[]
+  officerOverride?: string
+  status?: RagStatus
+}
+
+export interface EvaluationPerformanceSummary {
+  worked?: string[]
+  notWorked?: string[]
+  unexpected?: string[]
+  triggerEvents?: string[]
+  housingVsPlan?: string
+}
+
+export interface EvaluationSpatialFinding {
+  id: string
+  theme: string
+  observation: string
+  evidence?: string
+  severity?: 'low' | 'medium' | 'high'
+}
+
+export interface NextPlanSeedPack {
+  visionRefresh?: string
+  evidenceRefresh?: string[]
+  strategicOptions?: string[]
+  risks?: string[]
+  gateway1Prep?: string
+}
+
+export interface EvaluationWorkspace {
+  performance?: EvaluationPerformanceSummary
+  evaluationGrid?: EvaluationGridItem[]
+  spatialFindings?: EvaluationSpatialFinding[]
+  seedPack?: NextPlanSeedPack
+  reportVersions?: Array<{ id: string; title?: string; content: string; createdAt: string; status?: 'draft' | 'final' }>
+}
+
 export interface Plan {
   id: string
   title: string
@@ -334,6 +577,9 @@ export interface Plan {
   gateway2Checklist?: string
   gateway2Risks?: string
   gateway2Summary?: string
+  gateway3Pack?: Gateway3Pack
+  gateway3Inspector?: Gateway3InspectorReport
+  // Legacy Gateway 3 single-field storage (kept for backwards compatibility)
   requirementsCheck?: string
   statementCompliance?: string
   statementSoundness?: string
@@ -354,6 +600,9 @@ export interface Plan {
   monitoringIndicators?: Array<{ id: string; name: string; baseline?: string; source?: string; target?: string }>
   annualMonitoringNarratives?: string[]
   year4Evaluation?: string
+  adoptionWorkspace?: AdoptionStatementWorkspace
+  monitoringWorkspace?: MonitoringWorkspace
+  evaluationWorkspace?: EvaluationWorkspace
   // SEA / HRA baseline and scoping data
   seaHra?: {
     seaScopingStatus?: 'Not started' | 'Drafted' | 'Consulted'
