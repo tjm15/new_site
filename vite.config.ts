@@ -5,7 +5,13 @@ import { callLLM } from './utils/llmClient'
 import type { ViteDevServer } from 'vite'
 
 export default defineConfig(({ mode }) => {
+    // Load .env files for the current mode without requiring VITE_ prefix
     const env = loadEnv(mode, '.', '');
+
+    // Ensure the Node process (Vite dev server and middleware) can see the key.
+    // Vite's loadEnv does NOT populate process.env automatically.
+    if (!process.env.GEMINI_API_KEY && env.GEMINI_API_KEY) process.env.GEMINI_API_KEY = env.GEMINI_API_KEY;
+    if (!process.env.API_KEY && env.GEMINI_API_KEY) process.env.API_KEY = env.GEMINI_API_KEY;
     return {
       server: {
         port: 3000,
@@ -48,8 +54,6 @@ export default defineConfig(({ mode }) => {
         }
       ],
       define: {
-        'process.env.API_KEY': JSON.stringify(env.GEMINI_API_KEY),
-        'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY),
         // Expose Ollama toggle to the client so status indicators match the backend choice.
         'import.meta.env.USE_OLLAMA': JSON.stringify(env.USE_OLLAMA || ''),
         'import.meta.env.VITE_USE_OLLAMA': JSON.stringify(env.VITE_USE_OLLAMA || env.USE_OLLAMA || '')
