@@ -18,11 +18,18 @@ import MonitoringDashboardPage from './pages/app/MonitoringDashboardPage';
 
 // A simple component to handle scroll restoration on navigation
 const ScrollToTop = () => {
-    const { pathname } = useLocation();
+    const { pathname, search } = useLocation();
 
     React.useEffect(() => {
-        window.scrollTo(0, 0);
-    }, [pathname]);
+        // The app uses a custom scroll container; reset it on navigation so
+        // deep tool views don't leave other pages scrolled past the content.
+        const container = document.getElementById('app-scroll-container');
+        if (container && typeof (container as HTMLElement).scrollTo === 'function') {
+            (container as HTMLElement).scrollTo({ top: 0, left: 0 });
+        } else {
+            window.scrollTo({ top: 0, left: 0 });
+        }
+    }, [pathname, search]);
 
     return null;
 }

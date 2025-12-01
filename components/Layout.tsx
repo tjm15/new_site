@@ -21,7 +21,7 @@ export function Layout({ children }: LayoutProps) {
       
       <div className="relative z-10 h-screen flex flex-col" style={{ scrollBehavior: "smooth" }}>
         <Header />
-        <main className="flex-1 overflow-auto">
+        <main id="app-scroll-container" className="flex-1 overflow-auto">
           {children}
         </main>
         <Footer />

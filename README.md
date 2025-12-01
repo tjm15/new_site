@@ -30,7 +30,7 @@ The application provides interactive demonstrations for multiple councils (Camde
   - Otherwise use Google Gemini (requires `GEMINI_API_KEY`).
 - **Ollama Client**: `utils/ollama.ts` calls the local Ollama HTTP API (`/api/generate`) and supports streaming/structured reasoning in dev tools.
 - **Gemini Client**: `utils/gemini.ts` uses `@google/genai` with `gemini-flash-latest`.
-- **Optional Node Proxy**: `server/llmProxy.js` exposes `POST /api/llm` on a separate port (default `3003`) if you prefer running an external proxy instead of Vite’s dev middleware.
+**Production Server**: `server/index.js` serves the built SPA and exposes `POST /api/llm` for Cloud Run. It reads `GEMINI_API_KEY` from Secret Manager via `--set-secrets`.
 
 ## Run Locally
 
@@ -80,13 +80,7 @@ GEMINI_API_KEY=your_key_here
 ```
 Run `npm run dev` and the app will call Gemini unless `USE_OLLAMA`/`VITE_USE_OLLAMA` is set.
 
-### Optional: standalone LLM proxy
-
-If you prefer an external proxy instead of Vite’s dev middleware:
-```bash
-LLM_PROXY_PORT=3003 USE_OLLAMA=1 OLLAMA_MODEL=gpt-oss:20b npm run start:llm-proxy
-```
-This exposes `POST http://localhost:3003/api/llm`. You can reverse-proxy it behind your dev server if needed.
+ 
 
 ## Project Structure
 
@@ -97,7 +91,7 @@ This exposes `POST http://localhost:3003/api/llm`. You can reverse-proxy it behi
 - `/prompts` - AI prompt templates for different planning scenarios
 - `/utils` - Utility functions (LLM client/router, Gemini+Ollama, PDF generation)
 - `/hooks` - React hooks for responsive design and animations
-- `/server` - Optional Node proxy for `POST /api/llm` in non-Vite setups
+- `/server` - Production Node server (`index.js`) serving static files and `/api/llm`
 
 ## Local Dev Flags
 
@@ -105,7 +99,7 @@ This exposes `POST http://localhost:3003/api/llm`. You can reverse-proxy it behi
 - `VITE_OLLAMA_HOST` / `OLLAMA_HOST`: default `http://localhost:11434`.
 - `VITE_OLLAMA_MODEL` / `OLLAMA_MODEL`: default `gpt-oss:20b`.
 - `GEMINI_API_KEY` (or `API_KEY`): required for Gemini.
-- `LLM_PROXY_PORT`: port for `server/llmProxy.js` (default `3003`).
+ 
 
 Vite reads `VITE_*` variables into the client bundle; non-`VITE_*` variables are read server-side (dev middleware/proxy).
 
