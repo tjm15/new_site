@@ -1,114 +1,79 @@
-
 # The Planner's Assistant
 
-An open-source environment for spatial planning — built to restore coherence, capacity, and trust in how decisions about place are made. This application brings evidence, policy, and spatial data into one unified workspace, helping planning officers and policy teams reason clearly across strategy and development management.
+An interactive environment for spatial planning and development management. The app runs entirely in the browser, keeps demo data in local storage, and lets you explore Local Plan and decision-workflow tools across Camden, Cornwall, and Manchester.
 
-## What It Does
+## Workspaces
 
-The Planner's Assistant is designed for use inside government, strengthening professional judgement rather than replacing it. It supports:
-
-- **Development Management**: AI-assisted planning application assessment with policy analysis, evidence gathering, and reasoning support
-- **Spatial Planning**: Interactive tools for plan-making, strategy modeling, site assessment, and policy drafting
-- **Transparent Decision Making**: Clear links between national policy, local plans, and individual planning decisions
-
-The application provides interactive demonstrations for multiple councils (Camden, Cornwall, Manchester) showcasing both spatial planning and development management workflows.
+- **Spatial Plan workspace**: New-system Local Plan flow with stage timeline, Gateway 1/2/3 packs, SEA/HRA, engagement/SCI, timetable + notice, evidence base, vision + concept imagery (via Gemini Imagen when available), SMART outcomes, policy drafter, strategy modeler, site assessments with MapLibre layers, consultation pack generator, adoption, monitoring, and year-4 evaluation. Stage tools auto-suggest prefills and QA checks from the current plan state.
+- **Development Management workspace**: Stage-based decision room for sample applications (overview, documents, context, reasoning board, conditions/S106, decision/report, audit). Includes map overlays, auto-extraction/summary prompts, and a copilot panel scoped to the chosen stage.
+- **Monitoring dashboard**: AMR + year-4 evaluation overview with links back into the plan tools for the selected authority.
+- **Plan-aware assistant**: Uses local retrieval (`@xenova/transformers`) over saved plans, outcomes, SEA/SCI notes, and council policies to ground answers.
+- **Fixtures**: `data/` seeds plan context, policies, geojson layers, and mock application documents for the three authorities.
 
 ## Tech Stack
 
-- **Frontend**: React 19 with TypeScript
-- **Routing**: React Router with hash-based navigation
-- **UI**: Framer Motion for animations, Lucide React for icons
-- **AI**: Google Gemini API or local Ollama via HTTP API
-- **Build Tool**: Vite
-- **Styling**: Custom CSS variables with responsive design
+- React 19 + TypeScript, React Router v7 (`HashRouter`), Vite 6
+- Styling: Tailwind CSS v4 tokens plus custom CSS variables; Framer Motion; Lucide icons
+- Maps: MapLibre GL (no API token required)
+- AI: Gemini via `@google/genai` or local Ollama HTTP; optional Imagen for concept images; local QA embeddings via `@xenova/transformers`
+- Server: `server/index.js` Express host for `dist/` plus `POST /api/llm`; dev middleware mirrors the same endpoint
 
-## Architecture
+## Getting Started
 
-- **Client + Dev Server**: Vite serves the React app on `http://localhost:3000` in development. A dev-only middleware handles `POST /api/llm` so the browser can call a same-origin endpoint without CORS.
-- **LLM Selection**: `utils/llmClient.ts` chooses the backend at runtime:
-  - Use Ollama when `USE_OLLAMA=1` or `VITE_USE_OLLAMA=1` is set.
-  - Otherwise use Google Gemini (requires `GEMINI_API_KEY`).
-- **Ollama Client**: `utils/ollama.ts` calls the local Ollama HTTP API (`/api/generate`) and supports streaming/structured reasoning in dev tools.
-- **Gemini Client**: `utils/gemini.ts` uses `@google/genai` with `gemini-flash-latest`.
-**Production Server**: `server/index.js` serves the built SPA and exposes `POST /api/llm` for Cloud Run. It reads `GEMINI_API_KEY` from Secret Manager via `--set-secrets`.
+Prereqs: Node 20+ and npm.
 
-## Run Locally
+1. Create `.env.local` (or export env vars) to pick your LLM backend:
 
-**Prerequisites:** Node.js
+   ```ini
+   # Gemini (default)
+   GEMINI_API_KEY=your_key_here
 
-1. Install dependencies:
-   ```bash
-   npm install
+   # Or local Ollama
+   VITE_USE_OLLAMA=1
+   VITE_OLLAMA_HOST=http://localhost:11434
+   VITE_OLLAMA_MODEL=gpt-oss:20b
+   # Server-side equivalents: USE_OLLAMA / OLLAMA_HOST / OLLAMA_MODEL
    ```
 
-2. Choose your LLM backend:
-   - Gemini (hosted): set `GEMINI_API_KEY` in `.env.local`.
-   - Ollama (local): install and run Ollama, then set the flags below.
+2. Install deps and run the dev server:
 
-3. Run the app:
    ```bash
+   npm install
    npm run dev
    ```
 
-4. Open your browser at http://localhost:3000
+The app is served on http://localhost:3000 with a dev-only `/api/llm` proxy. The first plan-aware assistant call will download the `@xenova/transformers` model in-browser (expect a short delay).
 
-### Using Ollama locally (recommended for offline/dev)
+## Production
 
-1. Install Ollama and pull a model, e.g.:
-   ```bash
-   curl -fsSL https://ollama.com/install.sh | sh
-   ollama pull gpt-oss:20b
-   # or: ollama pull llama3.1:8b / qwen2.5:14b / mistral:7b
-   ```
-2. Create `.env.local` with:
-   ```ini
-   VITE_USE_OLLAMA=true
-   VITE_OLLAMA_HOST=http://localhost:11434
-   VITE_OLLAMA_MODEL=gpt-oss:20b
-   ```
-3. Start dev server: `npm run dev`
+- Build: `npm run build` (outputs to `dist/`)
+- Serve: `npm start` (Express server on port 8080 by default) — set `GEMINI_API_KEY` or `USE_OLLAMA=1` (+ optional `OLLAMA_HOST`/`OLLAMA_MODEL`) in the environment before starting.
+- Docker: multi-stage `Dockerfile` builds the static assets and runs `server/index.js`.
+- Cloud Run: `deploy-cloud-run.sh` and `deploy-secure.sh` deploy the container and wire `GEMINI_API_KEY` via Secret Manager.
 
-Notes:
-- You can use non-Vite variants (`USE_OLLAMA`, `OLLAMA_HOST`, `OLLAMA_MODEL`) when running server-side code or the standalone proxy.
-- When Ollama is enabled, the Vite dev server handles `POST /api/llm` and calls the local Ollama API server-side; no browser CORS issues.
+## Data, Storage, and Routing
 
-### Using Gemini
-
-Create `.env.local` with:
-```ini
-GEMINI_API_KEY=your_key_here
-```
-Run `npm run dev` and the app will call Gemini unless `USE_OLLAMA`/`VITE_USE_OLLAMA` is set.
-
- 
+- Plan state is stored only in the browser (`plans.v1`, `plans.activeId`, `plans.activeByCouncil` in `localStorage`); no backend persistence.
+- Councils, policies, mock applications, and geojson layers live under `data/`.
+- Deep links: `?c=camden|cornwall|manchester`, `mode=spatial|development`, and `tool=evidence|vision|policy|strategy|sites|feedback|sea|sci|timetable|notice|preprisk|baselining|gateway1|consultationpack|gateway3|inspector|adoption|monitoring|year4` open a specific authority/mode/tool.
+- Hash-based routing means static hosting can serve the built assets without server-side route handling.
 
 ## Project Structure
 
-- `/components` - Reusable UI components (Layout, Header, Footer, etc.)
-- `/pages` - Main application pages and routing
-- `/pages/app` - Interactive planning demos (spatial and development management)
-- `/data` - Mock data for different councils
-- `/prompts` - AI prompt templates for different planning scenarios
-- `/utils` - Utility functions (LLM client/router, Gemini+Ollama, PDF generation)
-- `/hooks` - React hooks for responsive design and animations
-- `/server` - Production Node server (`index.js`) serving static files and `/api/llm`
-
-## Local Dev Flags
-
-- `VITE_USE_OLLAMA` / `USE_OLLAMA`: enable Ollama when `true` or `1`.
-- `VITE_OLLAMA_HOST` / `OLLAMA_HOST`: default `http://localhost:11434`.
-- `VITE_OLLAMA_MODEL` / `OLLAMA_MODEL`: default `gpt-oss:20b`.
-- `GEMINI_API_KEY` (or `API_KEY`): required for Gemini.
- 
-
-Vite reads `VITE_*` variables into the client bundle; non-`VITE_*` variables are read server-side (dev middleware/proxy).
+- `components/` shared UI (layout, headers, timelines, map frame, markdown renderer)
+- `pages/` marketing pages and the app workspaces (`app/` for spatial + DM demos, monitoring dashboard)
+- `contexts/` shared state (`PlanContext`, `ThemeContext`)
+- `data/` seeded plans, policies, applications, geojson layers, stage metadata
+- `utils/` LLM clients (`llmClient`, `gemini`, `ollama`), prompts, local retrieval (`lib/localQa.ts`), PDF export
+- `server/` production Express host with `/api/llm`
+- `deploy-*.sh` Cloud Run helper scripts; `Dockerfile` for container builds
 
 ## Troubleshooting
 
-- Ollama enabled but no output: verify `ollama serve` is running and `OLLAMA_HOST` is reachable; confirm the model name exists (`ollama list`).
-- Gemini errors about API key: ensure `GEMINI_API_KEY` is set in `.env.local` and restart the dev server.
-- 404 on `/api/llm`: ensure you are using `npm run dev` (Vite middleware active) or start the standalone proxy.
+- No AI responses: ensure `GEMINI_API_KEY` is set or Ollama is running at `OLLAMA_HOST`. The dev proxy and server both respect `USE_OLLAMA`/`VITE_USE_OLLAMA`.
+- Slow first assistant answer: model download from `@xenova/transformers` happens on first use; subsequent calls are fast.
+- Map tiles blank: MapLibre runs fully offline; check `data/geojsonLayers.ts` for the loaded layers per authority.
 
 ## License
 
-Open source - built for the public good. AGPLv3
+Open source – intended for public-good use (AGPLv3).

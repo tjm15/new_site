@@ -49,9 +49,13 @@ export function AmbientNetwork({ className = "" }: { className?: string }) {
       const w = cv.width / DPR, h = cv.height / DPR;
       ctx.clearRect(0,0,w,h);
       
-      // Grid - lighter grey lines on black background in dark mode
-      const gridOpacity = currentTheme === 'dark' ? 0.4 : 0.5;
-      ctx.strokeStyle = `rgba(${rEdge},${gEdge},${bEdge},${gridOpacity})`;
+      const isDark = currentTheme === 'dark';
+      const gridOpacity = isDark ? 0.20 : 0.5;
+      const gridColor = isDark
+        ? { r: 255 - rEdge, g: 255 - gEdge, b: 255 - bEdge }
+        : { r: rEdge, g: gEdge, b: bEdge };
+      // Invert the grid colour in dark mode to keep the lattice visible against the dark surface.
+      ctx.strokeStyle = `rgba(${gridColor.r},${gridColor.g},${gridColor.b},${gridOpacity})`;
       ctx.lineWidth = 1;
       for (let gx = 0; gx < w; gx += 40) { ctx.beginPath(); ctx.moveTo(gx,0); ctx.lineTo(gx,h); ctx.stroke(); }
       for (let gy = 0; gy < h; gy += 40) { ctx.beginPath(); ctx.moveTo(0,gy); ctx.lineTo(w,gy); ctx.stroke(); }

@@ -3,13 +3,27 @@ import { DemoLanding } from './DemoLanding';
 import { SpatialPlanDemo } from './spatial/SpatialPlanDemo';
 import { DevManagementDemo } from './development/DevManagementDemo';
 import { getCouncilData, getAllCouncils } from '../../data';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 export function PlanningAssistantDemo() {
   const [selectedCouncil, setSelectedCouncil] = useState<string | null>(null);
   const [selectedMode, setSelectedMode] = useState<'spatial' | 'development' | null>(null);
   const [initialTool, setInitialTool] = useState<string | undefined>(undefined);
   const location = useLocation();
+  const navigate = useNavigate();
+
+  const updateSearchParams = (updater: (params: URLSearchParams) => void) => {
+    const params = new URLSearchParams(location.search);
+    updater(params);
+    const searchString = params.toString();
+    navigate(
+      {
+        pathname: location.pathname,
+        search: searchString ? `?${searchString}` : ''
+      },
+      { replace: true }
+    );
+  };
 
   useEffect(() => {
     const q = new URLSearchParams(location.search);
@@ -52,8 +66,17 @@ export function PlanningAssistantDemo() {
   const handleBack = () => {
     if (selectedMode) {
       setSelectedMode(null);
+      updateSearchParams(params => {
+        params.delete('mode');
+        params.delete('tool');
+      });
     } else if (selectedCouncil) {
       setSelectedCouncil(null);
+      updateSearchParams(params => {
+        params.delete('c');
+        params.delete('mode');
+        params.delete('tool');
+      });
     }
   };
 
