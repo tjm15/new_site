@@ -1,3 +1,5 @@
+export type ArchitectureCategory = 'application' | 'orchestration' | 'senses' | 'governance';
+
 export type ArchitectureModuleId =
   | 'policy'
   | 'spatialAnalysis'
@@ -14,7 +16,30 @@ export interface ArchitectureModule {
   title: string;
   description: string;
   modalContent?: string;
+  category: ArchitectureCategory;
 }
+
+export const ARCHITECTURE_GROUPS: Record<
+  ArchitectureCategory,
+  { label: string; description: string }
+> = {
+  application: {
+    label: 'Applications',
+    description: 'User-facing workspaces where planners model scenarios, assess cases, and see explainable outputs.',
+  },
+  orchestration: {
+    label: 'Orchestration',
+    description: 'The reasoning engine and connective tissue that coordinate agents, prompts, and external systems.',
+  },
+  senses: {
+    label: 'Senses',
+    description: 'Evidence and perception layers that interpret policy, spatial data, visuals, and live feeds.',
+  },
+  governance: {
+    label: 'Governance',
+    description: 'Assurance, auditability, and operational resilience that keep the stack accountable and safe.',
+  },
+};
 
 const POLICY_KNOWLEDGE_BASE_CONTENT = `
 ## Policy & Knowledge Base — Technical Architecture Overview
@@ -119,6 +144,7 @@ export const ARCHITECTURE_MODULES: ArchitectureModule[] = [
     title: 'Policy & Knowledge Base',
     description: 'Stores and structures the content of plans, guidance, and strategies — showing which policies apply and why.',
     modalContent: POLICY_KNOWLEDGE_BASE_CONTENT,
+    category: 'senses',
   },
   {
     id: 'spatialAnalysis',
@@ -229,6 +255,7 @@ The Spatial Analysis Engine is a **geospatial-compute substrate** that merges ve
 - Consistent, interpretable constraint/opportunity profiles across LPAs.  
 - A foundation for **agentic spatial judgement**: geometry becomes a reasoning object, not just a polygon.
     `,
+    category: 'senses',
   },
   {
     id: 'scenarioWorkspace',
@@ -341,6 +368,7 @@ The Scenario Workspace is a **multi-model decision surface** that fuses policy s
 - A shared surface for decision-makers where scenarios become **computable objects**, not static PDFs.  
 - A stepping stone toward **agentic planning strategy** — modelling judgement, not just geometry.
     `,
+    category: 'application',
   },
   {
     id: 'assessmentSupport',
@@ -480,6 +508,7 @@ Every application is treated as a **live reasoning object**:
 - Casework where **policy, spatial evidence, and precedent** are always in view, not scattered.  
 - An AI system that behaves like an **assistant planning officer**: structured, explainable, and responsive to negotiation — not just a static text generator.
     `,
+    category: 'application',
   },
   {
     id: 'visualContext',
@@ -621,6 +650,7 @@ The Visual Context Layer is a **multimodal vision–planning pipeline** that tur
 - Design reviews backed by **vision-based evidence**, not just text.  
 - Visual reasoning that complements spatial and policy reasoning, enabling richer, traceable assessment of design intent and contextual fit.
     `,
+    category: 'senses',
   },
   {
     id: 'interfaceAudit',
@@ -759,9 +789,10 @@ The Interface & Audit Layer is a **forensic reasoning surface**: every panel, sc
 ### What This Enables
 
 - A UI where **no conclusion is a black box** — everything is tied to evidence and a reasoning trail.
-- Decision support that can withstand **legal challenge, inspector scrutiny, and public complaints**, because the reasoning is **replayable, attributable, and properly documented**.
+- Decision support that can withstand **legal challenge, inspector scrutiny, and public complaints**, because the reasoning is **replayable, attributable, and properly documented**.  
 - A planning AI that behaves like a careful officer keeping a file: structured notes, clear sources, and a defensible trail from input → reasoning → decision.
     `,
+    category: 'governance',
   },
   {
     id: 'integrationLayer',
@@ -817,6 +848,7 @@ It ensures that everything happening inside the system stays in sync with **BOPS
 - Zero “copy/paste admin” for officers.  
 - A planning AI that is **embedded in the real operational stack**, not a standalone toy.
     `,
+    category: 'orchestration',
   },
   {
     id: 'agenticConductor',
@@ -884,6 +916,7 @@ It turns raw data into **coherent, multi-step planning reasoning** by running sp
 - Modular, extensible intelligence — new agents can be added without redesigning the system.  
 - A stable execution layer that behaves like a **conductor for a planning-AI orchestra**.
     `,
+    category: 'orchestration',
   },
   {
     id: 'deploymentScaler',
@@ -951,5 +984,6 @@ The Deployment Scaler packages the entire system for **secure, resilient, scalab
 - Councils can adopt it confidently because it’s **scalable, monitorable, and version-controlled**.  
 - A smooth path from local demo → pilot → production with **no architectural rewrites**.
     `,
+    category: 'governance',
   },
 ];
