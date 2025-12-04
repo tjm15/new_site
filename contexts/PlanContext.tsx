@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useMemo, useState, useEffect, useCallback } from 'react'
+import React, { createContext, useContext, useMemo, useState, useEffect, useCallback, useRef } from 'react'
 import type { Plan } from '../data/types'
 import { NEW_SYSTEM_STAGES } from '../constants'
 import { STAGES, type PlanStageId } from '../data/stageMeta'
@@ -53,9 +53,8 @@ const buildEvaluationDefaults = () => ({
 })
 
 function normalizePlan(plan: Plan): Plan {
-  if (plan.systemType !== 'new') return { ...plan, smartOutcomes: plan.smartOutcomes || [], preferredOptions: plan.preferredOptions || {}, strategyDraft: plan.strategyDraft || {}, consultationPack: plan.consultationPack || { sections: [] }, gateway2Pack: plan.gateway2Pack || { sections: [] }, gateway3Pack: plan.gateway3Pack || { requirements: [], validator: { manifest: [] } }, gateway3Inspector: plan.gateway3Inspector || { matrix: [] } }
   const seaHraDefaults = {
-    seaScopingStatus: 'Not started',
+    seaScopingStatus: 'Not started' as const,
     seaScopingNotes: '',
     hraBaselineSummary: '',
     baselineGrid: {},
@@ -73,6 +72,23 @@ function normalizePlan(plan: Plan): Plan {
   const adoptionDefaults = buildAdoptionDefaults()
   const monitoringDefaults = buildMonitoringDefaults()
   const evaluationDefaults = buildEvaluationDefaults()
+
+  if (plan.systemType !== 'new') {
+    return {
+      ...plan,
+      smartOutcomes: plan.smartOutcomes || [],
+      preferredOptions: plan.preferredOptions || {},
+      strategyDraft: plan.strategyDraft || {},
+      consultationPack: plan.consultationPack || { sections: [] },
+      gateway2Pack: plan.gateway2Pack || { sections: [] },
+      gateway3Pack: plan.gateway3Pack || { requirements: [], validator: { manifest: [] } },
+      gateway3Inspector: plan.gateway3Inspector || { matrix: [] },
+      seaHra: { ...seaHraDefaults, ...(plan.seaHra || {}) },
+      adoptionWorkspace: { ...adoptionDefaults, ...(plan.adoptionWorkspace || {}) },
+      monitoringWorkspace: { ...monitoringDefaults, ...(plan.monitoringWorkspace || {}) },
+      evaluationWorkspace: { ...evaluationDefaults, ...(plan.evaluationWorkspace || {}) },
+    }
+  }
   const mappedStage = (legacyStageIdMap[plan.planStage as string] || plan.planStage || legacyStageIdMap[plan.currentStage as string] || plan.currentStage || NEW_SYSTEM_STAGES[0].id) as PlanStageId
   const milestoneMap = (plan.timetable?.milestones || []).reduce<Record<string, string>>((acc, m) => {
     if (m.stageId && m.date) acc[m.stageId] = m.date
@@ -129,13 +145,7 @@ function normalizePlan(plan: Plan): Plan {
 }
 
 export function PlanProvider({ children }: { children: React.ReactNode }) {
-  const [plans, setPlans] = useState<Plan[]>(() => {
-    const raw = localStorage.getItem('plans.v1')
-    const parsed = raw ? JSON.parse(raw) : []
-    if (Array.isArray(parsed) && parsed.length) return parsed.map(normalizePlan)
-    // Seed default demo plans if none saved
-    return Object.values(PLAN_SEEDS).map(normalizePlan)
-  })
+  const [plans, setPlans] = useState<Plan[]>(() => loadPlansFromStorage())
   const [activeId, setActiveId] = useState<string | undefined>(() => {
     return localStorage.getItem('plans.activeId') || undefined
   })
@@ -144,9 +154,22 @@ export function PlanProvider({ children }: { children: React.ReactNode }) {
     return raw ? JSON.parse(raw) : {}
   })
 
+  const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const scheduleSave = useCallback((nextPlans: Plan[]) => {
+    if (saveTimer.current) clearTimeout(saveTimer.current)
+    saveTimer.current = setTimeout(() => {
+      try {
+        localStorage.setItem('plans.v1', JSON.stringify(nextPlans))
+      } catch (e) {
+        // eslint-disable-next-line no-console
+        console.warn('Failed to persist plans', e)
+      }
+    }, 250)
+  }, [])
+
   useEffect(() => {
-    localStorage.setItem('plans.v1', JSON.stringify(plans))
-  }, [plans])
+    scheduleSave(plans)
+  }, [plans, scheduleSave])
   useEffect(() => {
     if (activeId) localStorage.setItem('plans.activeId', activeId)
   }, [activeId])
@@ -250,4 +273,16 @@ export function usePlan() {
   const ctx = useContext(Ctx)
   if (!ctx) throw new Error('usePlan must be used within PlanProvider')
   return ctx
+}
+
+function loadPlansFromStorage(): Plan[] {
+  try {
+    const raw = localStorage.getItem('plans.v1')
+    const parsed = raw ? JSON.parse(raw) : []
+    if (Array.isArray(parsed) && parsed.length) return parsed.map(normalizePlan)
+  } catch (e) {
+    // eslint-disable-next-line no-console
+    console.warn('Failed to load plans from storage', e)
+  }
+  return Object.values(PLAN_SEEDS).map(normalizePlan)
 }

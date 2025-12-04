@@ -687,7 +687,7 @@ Sites scored: ${activePlan.sites?.length || 0}
           onSessionChange={(session)=> setToolSessionsByPlan(s=> ({ ...s, [activePlanKey]: { ...(s[activePlanKey]||{}), feedback: session } }))}
         />;
       case 'sea':
-        return <SEATool councilData={councilData} autoRun={initialProps.sea?.autoRun} initialData={initialProps.sea?.prefill} onSaved={() => { /* noop */ }} />;
+        return <SEATool councilData={councilData} autoRun={initialProps.sea?.autoRun} initialData={initialProps.sea?.prefill} />;
       case 'sci':
         return <SCITool councilData={councilData} autoRun={initialProps.sci?.autoRun} initialData={initialProps.sci?.prefill} onSaved={() => { /* noop */ }} />;
       case 'consultationPack':

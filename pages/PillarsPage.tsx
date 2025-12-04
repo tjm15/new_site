@@ -290,8 +290,8 @@ export function PillarsPage() {
         </div>
       </section>
 
-      <section className="mx-auto w-full max-w-6xl px-4 sm:px-6 pb-16 mt-12 border-t border-slate-200 pt-12">
-        <h3 className="text-sm font-bold uppercase tracking-widest text-slate-400 mb-6">Next Steps</h3>
+      <section className="mx-auto w-full max-w-6xl px-4 sm:px-6 pb-16 mt-12 border-t border-[var(--color-edge)] pt-12">
+        <h3 className="text-sm font-bold uppercase tracking-widest text-[var(--color-muted)] mb-6">Next Steps</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <Link to="/app" className="group relative p-6 bg-[var(--color-panel)] rounded-xl border border-[var(--color-edge)] shadow-sm hover:shadow-md hover:border-[var(--color-accent)] transition-all">
             <div className="text-[var(--color-accent)] mb-3">
@@ -322,7 +322,7 @@ export function PillarsPage() {
               <ArrowRight size={24} />
             </div>
             <h4 className="font-bold text-white mb-1">Join the Mission</h4>
-            <p className="text-xs text-slate-400 leading-relaxed">Partner with us to pilot the system.</p>
+            <p className="text-xs text-[var(--color-muted)] leading-relaxed">Partner with us to pilot the system.</p>
           </Link>
         </div>
       </section>

@@ -8,6 +8,8 @@ type PlanLike = {
   visionStatements?: Array<{ id: string; text: string }>
   smartOutcomes?: Array<{ id: string; outcomeStatement?: string; text?: string; theme?: string; measurable?: string }>
   sites?: Array<{ id: string; name: string; notes?: string; suitability?: string; availability?: string; achievability?: string }>
+  stages?: Array<{ id: string; title?: string; targetDate?: string }>
+  timetable?: { milestones?: Array<{ stageId?: string; date?: string }> }
   // include SEA/HRA and SCI summary fields for retrieval
   seaHra?: { seaScopingStatus?: string; seaScopingNotes?: string; hraBaselineSummary?: string }
   sci?: { hasStrategy?: boolean; keyStakeholders?: string[]; methods?: string[]; timelineNote?: string }
@@ -22,6 +24,7 @@ type CouncilLike = { id?: string; policies?: Array<{ reference: string; title: s
 
 let modelPromise: Promise<any> | null = null
 const planCache: Record<string, { texts: string[]; meta: RetrievedChunk[]; embeddings?: Float32Array[]; signature: string }> = {}
+const EMBED_STORAGE_PREFIX = 'plan.embeddings.v1:'
 
 async function getModel() {
   if (!modelPromise) {
@@ -87,91 +90,78 @@ function buildTexts(plan: PlanLike, council?: CouncilLike): { texts: string[]; m
   const texts: string[] = []
   const meta: RetrievedChunk[] = []
   let chunkCounter = 0
+  const addChunk = (text: string, source: string, field: string, chunkIndex: number) => {
+    if (!text) return
+    texts.push(text)
+    meta.push({ id: `chunk_${chunkCounter++}`, text, source, field, chunkIndex })
+  }
   // Outcomes
   for (const o of plan.visionStatements || []) {
-    const t = `Outcome: ${o.text}`
-    texts.push(t)
-    meta.push({ id: `chunk_${chunkCounter++}`, text: t, source: 'outcome', field: 'visionStatements', chunkIndex: 0 })
+    addChunk(`Outcome: ${o.text}`, 'outcome', 'visionStatements', 0)
   }
   for (const o of plan.smartOutcomes || []) {
-    const t = `SMART outcome (${o.theme || 'general'}): ${o.outcomeStatement || o.text} — measure: ${o.measurable || ''}`.trim()
-    texts.push(t)
-    meta.push({ id: `chunk_${chunkCounter++}`, text: t, source: 'outcome', field: 'smartOutcomes', chunkIndex: 0 })
+    addChunk(`SMART outcome (${o.theme || 'general'}): ${o.outcomeStatement || o.text} — measure: ${o.measurable || ''}`.trim(), 'outcome', 'smartOutcomes', 0)
   }
   // SEA / HRA
   if (plan.seaHra) {
     const s = plan.seaHra
     if (s.seaScopingStatus) {
-      const t = `SEA scoping status: ${s.seaScopingStatus}`
-      texts.push(t)
-      meta.push({ id: `chunk_${chunkCounter++}`, text: t, source: 'sea', field: 'seaHra', chunkIndex: 0 })
+      addChunk(`SEA scoping status: ${s.seaScopingStatus}`, 'sea', 'seaHra', 0)
     }
     if (s.seaScopingNotes) {
-      const t = `SEA scoping notes: ${s.seaScopingNotes}`
-      texts.push(t)
-      meta.push({ id: `chunk_${chunkCounter++}`, text: t, source: 'sea', field: 'seaHra', chunkIndex: 1 })
+      addChunk(`SEA scoping notes: ${s.seaScopingNotes}`, 'sea', 'seaHra', 1)
     }
     if (s.hraBaselineSummary) {
-      const t = `HRA baseline summary: ${s.hraBaselineSummary}`
-      texts.push(t)
-      meta.push({ id: `chunk_${chunkCounter++}`, text: t, source: 'hra', field: 'seaHra', chunkIndex: 2 })
+      addChunk(`HRA baseline summary: ${s.hraBaselineSummary}`, 'hra', 'seaHra', 2)
     }
     if (s.baselineGrid) {
       Object.entries(s.baselineGrid).forEach(([k, v]) => {
         if (!v) return
-        const t = `SEA baseline (${k}): ${v}`
-        texts.push(t)
-        meta.push({ id: `chunk_${chunkCounter++}`, text: t, source: 'sea', field: `seaHra.${k}`, chunkIndex: 0 })
+        addChunk(`SEA baseline (${k}): ${v}`, 'sea', `seaHra.${k}`, 0)
       })
     }
     if (Array.isArray(s.keyRisks)) {
-      const t = `SEA/HRA risks: ${s.keyRisks.join('; ')}`
-      texts.push(t)
-      meta.push({ id: `chunk_${chunkCounter++}`, text: t, source: 'sea', field: 'seaHra.keyRisks', chunkIndex: 0 })
+      addChunk(`SEA/HRA risks: ${s.keyRisks.join('; ')}`, 'sea', 'seaHra.keyRisks', 0)
     }
     if (Array.isArray(s.mitigationIdeas)) {
-      const t = `SEA/HRA mitigation ideas: ${s.mitigationIdeas.join('; ')}`
-      texts.push(t)
-      meta.push({ id: `chunk_${chunkCounter++}`, text: t, source: 'sea', field: 'seaHra.mitigationIdeas', chunkIndex: 0 })
+      addChunk(`SEA/HRA mitigation ideas: ${s.mitigationIdeas.join('; ')}`, 'sea', 'seaHra.mitigationIdeas', 0)
     }
     if (s.cumulativeEffects) {
-      const t = `Cumulative effects: ${s.cumulativeEffects}`
-      texts.push(t)
-      meta.push({ id: `chunk_${chunkCounter++}`, text: t, source: 'sea', field: 'seaHra.cumulativeEffects', chunkIndex: 0 })
+      addChunk(`Cumulative effects: ${s.cumulativeEffects}`, 'sea', 'seaHra.cumulativeEffects', 0)
     }
   }
   // SCI / engagement
   if (plan.sci) {
     const c = plan.sci
     if (typeof c.hasStrategy === 'boolean') {
-      const t = `Has engagement strategy: ${c.hasStrategy ? 'Yes' : 'No'}`
-      texts.push(t)
-      meta.push({ id: `chunk_${chunkCounter++}`, text: t, source: 'sci', field: 'sci.hasStrategy', chunkIndex: 0 })
+      addChunk(`Has engagement strategy: ${c.hasStrategy ? 'Yes' : 'No'}`, 'sci', 'sci.hasStrategy', 0)
     }
     if (c.keyStakeholders && c.keyStakeholders.length) {
-      const t = `Key stakeholders: ${c.keyStakeholders.join(', ')}`
-      texts.push(t)
-      meta.push({ id: `chunk_${chunkCounter++}`, text: t, source: 'sci', field: 'sci.keyStakeholders', chunkIndex: 0 })
+      addChunk(`Key stakeholders: ${c.keyStakeholders.join(', ')}`, 'sci', 'sci.keyStakeholders', 0)
     }
     if (c.methods && c.methods.length) {
-      const t = `Engagement methods: ${c.methods.join(', ')}`
-      texts.push(t)
-      meta.push({ id: `chunk_${chunkCounter++}`, text: t, source: 'sci', field: 'sci.methods', chunkIndex: 0 })
+      addChunk(`Engagement methods: ${c.methods.join(', ')}`, 'sci', 'sci.methods', 0)
     }
     if (c.timelineNote) {
-      const t = `Engagement timeline note: ${c.timelineNote}`
-      texts.push(t)
-      meta.push({ id: `chunk_${chunkCounter++}`, text: t, source: 'sci', field: 'sci.timelineNote', chunkIndex: 0 })
+      addChunk(`Engagement timeline note: ${c.timelineNote}`, 'sci', 'sci.timelineNote', 0)
+    }
+  }
+  // Stage targets and timetable cues
+  for (const st of plan.stages || []) {
+    if (st.targetDate) {
+      addChunk(`Stage ${st.id} (${st.title || ''}) target date: ${st.targetDate}`, 'timetable', `stages.${st.id}`, 0)
+    }
+  }
+  for (const ms of plan.timetable?.milestones || []) {
+    if (ms.stageId && ms.date) {
+      addChunk(`Milestone ${ms.stageId} due ${ms.date}`, 'timetable', `timetable.${ms.stageId}`, 0)
     }
   }
   // Sites
   for (const s of plan.sites || []) {
     const rag = [s.suitability, s.availability, s.achievability].filter(Boolean).join('/')
     const t = `Site ${s.name}: notes ${s.notes || ''} RAG ${rag}`.trim()
-    if (t) {
-      texts.push(t)
-      meta.push({ id: `chunk_${chunkCounter++}`, text: t, source: 'site', field: `sites.${s.id}`, chunkIndex: 0 })
-    }
+    if (t) addChunk(t, 'site', `sites.${s.id}`, 0)
   }
   // Chunked readiness and narrative data
   const readiness = (plan as any).readinessAssessment
@@ -179,53 +169,32 @@ function buildTexts(plan: PlanLike, council?: CouncilLike): { texts: string[]; m
     for (const area of readiness.areas) {
       const chunks = chunkText(area.summary || '')
       chunks.forEach((c, idx) => {
-        const t = `Readiness (${area.id || 'area'}) [${idx + 1}]: ${c}`
-        texts.push(t)
-        meta.push({ id: `chunk_${chunkCounter++}`, text: t, source: 'readiness', field: `readiness.${area.id || 'area'}`, chunkIndex: idx })
+        addChunk(`Readiness (${area.id || 'area'}) [${idx + 1}]: ${c}`, 'readiness', `readiness.${area.id || 'area'}`, idx)
       })
     }
   }
   if ((plan as any).baselineNarrative) {
     chunkText((plan as any).baselineNarrative).forEach((c, idx) => {
-      const t = `Baseline narrative [${idx + 1}]: ${c}`
-      texts.push(t)
-      meta.push({ id: `chunk_${chunkCounter++}`, text: t, source: 'baseline', field: 'baselineNarrative', chunkIndex: idx })
+      addChunk(`Baseline narrative [${idx + 1}]: ${c}`, 'baseline', 'baselineNarrative', idx)
     })
   }
   // Preferred options snapshot
   const prefs = plan.preferredOptions
   if (prefs?.strategy) {
-    const t = `Preferred strategy: ${prefs.strategy.label || 'Unnamed'} — ${prefs.strategy.analysis || ''}`.trim()
-    texts.push(t)
-    meta.push({ id: `chunk_${chunkCounter++}`, text: t, source: 'strategy', field: 'preferredOptions.strategy', chunkIndex: 0 })
+    addChunk(`Preferred strategy: ${prefs.strategy.label || 'Unnamed'} — ${prefs.strategy.analysis || ''}`.trim(), 'strategy', 'preferredOptions.strategy', 0)
   }
   if (prefs?.policy) {
-    const t = `Preferred policy (${prefs.policy.topicLabel || 'topic'}): ${prefs.policy.draft || ''}`.trim()
-    texts.push(t)
-    meta.push({ id: `chunk_${chunkCounter++}`, text: t, source: 'policy', field: 'preferredOptions.policy', chunkIndex: 0 })
+    addChunk(`Preferred policy (${prefs.policy.topicLabel || 'topic'}): ${prefs.policy.draft || ''}`.trim(), 'policy', 'preferredOptions.policy', 0)
   }
   if (prefs?.site) {
-    const t = `Preferred site: ${prefs.site.name || prefs.site.id || 'site'} — ${prefs.site.rationale || prefs.site.appraisal || ''}`.trim()
-    texts.push(t)
-    meta.push({ id: `chunk_${chunkCounter++}`, text: t, source: 'site_preferred', field: 'preferredOptions.site', chunkIndex: 0 })
+    addChunk(`Preferred site: ${prefs.site.name || prefs.site.id || 'site'} — ${prefs.site.rationale || prefs.site.appraisal || ''}`.trim(), 'site_preferred', 'preferredOptions.site', 0)
   }
   if (prefs?.evidence) {
-    const t = `Preferred evidence: ${prefs.evidence.title || ''} — ${prefs.evidence.content || ''}`.trim()
-    texts.push(t)
-    meta.push({ id: `chunk_${chunkCounter++}`, text: t, source: 'evidence', field: 'preferredOptions.evidence', chunkIndex: 0 })
+    addChunk(`Preferred evidence: ${prefs.evidence.title || ''} — ${prefs.evidence.content || ''}`.trim(), 'evidence', 'preferredOptions.evidence', 0)
   }
-  // Whole-plan JSON chunks for QA (capped to avoid dominance)
-  const planJson = JSON.stringify(plan, null, 2)
-  chunkText(planJson, 520).slice(0, 6).forEach((c, idx) => {
-    const t = `Plan object chunk [${idx + 1}]: ${c}`
-    texts.push(t)
-    meta.push({ id: `chunk_${chunkCounter++}`, text: t, source: 'plan_json', field: 'plan', chunkIndex: idx })
-  })
   // Policies (summaries)
   for (const p of council?.policies || []) {
-    const t = `Policy ${p.reference} ${p.title}: ${p.summary}`
-    texts.push(t)
-    meta.push({ id: `chunk_${chunkCounter++}`, text: t, source: 'policy', field: `policy.${p.reference}`, chunkIndex: 0 })
+    addChunk(`Policy ${p.reference} ${p.title}: ${p.summary}`, 'policy', `policy.${p.reference}`, 0)
   }
   return { texts, meta }
 }
@@ -243,6 +212,8 @@ export async function retrieveContext(
   let cache = planCache[cacheKey]
   if (!cache || cache.signature !== planSignature) {
     cache = { ...buildTexts(plan, council), signature: planSignature }
+    const stored = tryLoadEmbeddings(cacheKey, planSignature, cache.texts.length)
+    if (stored) cache.embeddings = stored
     planCache[cacheKey] = cache
   }
   // Fallback: simple keyword scoring if the model cannot be loaded.
@@ -259,6 +230,7 @@ export async function retrieveContext(
 
   if (!cache.embeddings) {
     cache.embeddings = await embedAll(model, cache.texts)
+    persistEmbeddings(cacheKey, planSignature, cache.embeddings)
   }
   const qemb = (await model(question, { pooling: 'mean', normalize: true })).data as Float32Array
   const scored = cache.embeddings.map((e, i) => ({ i, score: cosine(qemb, e) }))
@@ -266,6 +238,30 @@ export async function retrieveContext(
   const filtered = scored.filter(s => s.score >= minScore).slice(0, topK)
   return filtered.map(({ i, score }) => ({ ...cache!.meta[i], score }))
 }
+function tryLoadEmbeddings(cacheKey: string, signature: string, expectedCount: number): Float32Array[] | null {
+  try {
+    const raw = localStorage.getItem(`${EMBED_STORAGE_PREFIX}${cacheKey}`)
+    if (!raw) return null
+    const parsed = JSON.parse(raw)
+    if (parsed.signature !== signature || !Array.isArray(parsed.embeddings)) return null
+    if (parsed.embeddings.length !== expectedCount) return null
+    return parsed.embeddings.map((arr: number[]) => Float32Array.from(arr))
+  } catch {
+    return null
+  }
+}
+
+function persistEmbeddings(cacheKey: string, signature: string, embeddings: Float32Array[]) {
+  // Keep storage reasonable: only persist if small-ish
+  if (embeddings.length > 300) return
+  try {
+    const serialised = embeddings.map(e => Array.from(e))
+    localStorage.setItem(`${EMBED_STORAGE_PREFIX}${cacheKey}`, JSON.stringify({ signature, embeddings: serialised }))
+  } catch {
+    // ignore storage failures
+  }
+}
+
 // Polyfill esbuild helper when it isn't injected (seen in browser bundles with transformers)
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 ;(globalThis as any).__publicField = (globalThis as any).__publicField || ((obj: any, key: any, value: any) => {

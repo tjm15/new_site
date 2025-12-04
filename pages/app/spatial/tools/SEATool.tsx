@@ -129,6 +129,7 @@ export const SEATool: React.FC<SEAToolProps> = ({ councilData, onSaved, initialD
   const [reportDraft, setReportDraft] = useState('')
   const [aiLoading, setAiLoading] = useState(false)
   const [saving, setSaving] = useState(false)
+  const [savedAt, setSavedAt] = useState<number | null>(null)
   const [error, setError] = useState<string | null>(null)
   const stageMeta = useMemo(() => STAGES.find(s => s.id === activePlan?.planStage), [activePlan?.planStage])
   const areaName = useMemo(() => activePlan?.area || councilData?.name || 'Local Plan area', [activePlan?.area, councilData?.name])
@@ -308,6 +309,7 @@ export const SEATool: React.FC<SEAToolProps> = ({ councilData, onSaved, initialD
           reportDraft
         }
       } as any)
+      setSavedAt(Date.now())
       if (onSaved) onSaved()
     } catch (e: any) {
       setError(e?.message || 'Failed to save SEA/HRA')
@@ -390,14 +392,17 @@ export const SEATool: React.FC<SEAToolProps> = ({ councilData, onSaved, initialD
               <p className="text-xs text-[var(--color-muted)]">Prefill, generate scoping report, and save back to the plan.</p>
             </div>
             <div className="flex gap-2">
-              <button onClick={handleQuickFill} disabled={aiLoading} className="px-3 py-2 text-sm rounded border border-[var(--color-edge)] bg-[var(--color-surface)] hover:border-[var(--color-accent)]">
+              <button type="button" onClick={handleQuickFill} disabled={aiLoading} className="px-3 py-2 text-sm rounded border border-[var(--color-edge)] bg-[var(--color-surface)] hover:border-[var(--color-accent)]">
                 {aiLoading ? 'Generating…' : 'AI quick-fill'}
               </button>
-              <button onClick={handleGenerateReport} className="px-3 py-2 text-sm rounded border border-[var(--color-edge)] bg-[var(--color-surface)] hover:border-[var(--color-accent)]">Generate scoping report</button>
-              <button onClick={save} disabled={saving} className="px-3 py-2 text-sm rounded bg-[var(--color-accent)] text-white">{saving ? 'Saving…' : 'Save'}</button>
+              <button type="button" onClick={handleGenerateReport} className="px-3 py-2 text-sm rounded border border-[var(--color-edge)] bg-[var(--color-surface)] hover:border-[var(--color-accent)]">Generate scoping report</button>
+              <button type="button" onClick={save} disabled={saving || !activePlan} className="px-3 py-2 text-sm rounded bg-[var(--color-accent)] text-white disabled:opacity-60 disabled:cursor-not-allowed">{saving ? 'Saving…' : 'Save'}</button>
             </div>
           </div>
           {error && <div className="mt-2 text-xs text-red-700 bg-red-50 border border-red-200 rounded p-2">Error: {error}</div>}
+          {savedAt && !error && (
+            <div className="mt-2 text-xs text-[var(--color-muted)]">Saved to plan at {new Date(savedAt).toLocaleTimeString()}</div>
+          )}
           <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-3">
             <div>
               <label className="text-sm font-semibold text-[var(--color-ink)]">SEA scoping notes</label>
