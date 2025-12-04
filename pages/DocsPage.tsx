@@ -18,7 +18,7 @@ export function DocsPage() {
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -20 }}
       transition={{ duration: 0.4, ease: 'easeInOut' }}
-      className="bg-[#f5f6fb] text-slate-900"
+      className="bg-transparent text-[var(--color-ink)]"
     >
       <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 pb-20 pt-14 space-y-12">
         {/* Hero */}
@@ -86,7 +86,7 @@ export function DocsPage() {
           </div>
           <div className="grid gap-4 md:grid-cols-2">
             {CONCEPTS.map((concept) => (
-              <div key={concept.title} className="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-200">
+              <div key={concept.title} className="rounded-2xl bg-[var(--color-panel)] p-4 shadow-sm ring-1 ring-[var(--color-edge)]">
                 <h3 className="text-base font-semibold text-[#1b1f23]">{concept.title}</h3>
                 <p className="mt-1 text-sm text-[#4b5563]">{concept.body}</p>
               </div>
@@ -130,19 +130,19 @@ export function DocsPage() {
               href="https://github.com/the-planners-assistant"
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center rounded-full bg-white px-4 py-2 text-sm font-semibold text-[#1b1f23] shadow-sm ring-1 ring-slate-200 hover:bg-slate-50"
+              className="inline-flex items-center rounded-full bg-[var(--color-panel)] px-4 py-2 text-sm font-semibold text-[var(--color-ink)] shadow-sm ring-1 ring-[var(--color-edge)] hover:bg-[var(--color-surface)]"
             >
               Visit the GitHub repository →
             </a>
             <Link
               to="/architecture"
-              className="inline-flex items-center rounded-full bg-white px-4 py-2 text-sm font-semibold text-[#329c85] shadow-sm ring-1 ring-[#329c85]/30 hover:bg-[#f0fdf4]"
+              className="inline-flex items-center rounded-full bg-[var(--color-panel)] px-4 py-2 text-sm font-semibold text-[var(--color-accent)] shadow-sm ring-1 ring-[var(--color-accent)]/30 hover:bg-[var(--color-surface)]"
             >
               Explore the architecture docs →
             </Link>
             <Link
               to="/research"
-              className="inline-flex items-center rounded-full bg-white px-4 py-2 text-sm font-semibold text-[#329c85] shadow-sm ring-1 ring-[#329c85]/30 hover:bg-[#f0fdf4]"
+              className="inline-flex items-center rounded-full bg-[var(--color-panel)] px-4 py-2 text-sm font-semibold text-[var(--color-accent)] shadow-sm ring-1 ring-[var(--color-accent)]/30 hover:bg-[var(--color-surface)]"
             >
               Track changes and releases →
             </Link>
@@ -163,7 +163,7 @@ type DocCardProps = {
 
 function DocCard({ title, lead, body, cta, href }: DocCardProps) {
   return (
-    <div className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200 h-full flex flex-col gap-3">
+    <div className="rounded-2xl bg-[var(--color-panel)] p-6 shadow-sm ring-1 ring-[var(--color-edge)] h-full flex flex-col gap-3">
       <div>
         <p className="text-xs font-semibold uppercase tracking-wide text-[#6b7280]">{lead}</p>
         <h3 className="mt-1 text-lg font-semibold text-[#1b1f23]">{title}</h3>

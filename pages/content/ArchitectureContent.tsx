@@ -105,9 +105,9 @@ export function ArchitectureContent() {
         viewport={{ once: true }}
         className="mt-12 relative"
       >
-        <div className="absolute inset-0 bg-slate-50 -skew-y-1 rounded-3xl -z-10 transform scale-105" />
+        <div className="absolute inset-0 bg-[var(--color-panel)]/60 -skew-y-1 rounded-3xl -z-10 transform scale-105" />
 
-        <div className="bg-white border border-slate-200 rounded-2xl p-8 shadow-xl ring-1 ring-slate-100 relative overflow-hidden">
+        <div className="bg-[var(--color-panel)] border border-[var(--color-edge)] rounded-2xl p-8 shadow-xl ring-1 ring-[var(--color-edge)]/60 relative overflow-hidden">
           <div className="absolute top-0 right-0 p-8 opacity-5 pointer-events-none">
             <ShieldCheck size={120} />
           </div>
@@ -127,15 +127,15 @@ export function ArchitectureContent() {
               <button
                 key={module.id}
                 onClick={() => setActiveModuleId(module.id)}
-                className="text-left group hover:bg-slate-50 p-4 rounded-xl transition-colors border border-transparent hover:border-slate-200"
+                className="text-left group hover:bg-[var(--color-surface)] p-4 rounded-xl transition-colors border border-transparent hover:border-[var(--color-edge)]"
               >
-                <h4 className="font-bold text-slate-800 mb-1 group-hover:text-blue-600 transition-colors flex items-center gap-2">
+                <h4 className="font-bold text-[var(--color-ink)] mb-1 group-hover:text-[var(--color-accent)] transition-colors flex items-center gap-2">
                   {module.title}
                   <span className="opacity-0 group-hover:opacity-100 transition-opacity text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">
                     View
                   </span>
                 </h4>
-                <p className="text-sm text-slate-500">{module.description}</p>
+                <p className="text-sm text-[var(--color-muted)]">{module.description}</p>
               </button>
             ))}
           </div>

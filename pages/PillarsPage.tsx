@@ -222,36 +222,36 @@ export function PillarsPage() {
   const currentTool = TOOLS_MAP[activeBranch][activeStep];
 
   return (
-    <main className="min-h-screen bg-[#f8f9fa] text-slate-900 font-sans pb-20">
+    <main className="min-h-screen bg-transparent text-[var(--color-ink)] font-sans pb-20">
       <motion.section
         className="mx-auto w-full max-w-6xl px-6 pt-16 pb-10"
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
       >
-        <p className="mb-3 text-xs font-bold tracking-[0.2em] text-[#329c85] uppercase">System Capabilities</p>
-        <h1 className="text-4xl font-bold tracking-tight sm:text-5xl md:text-6xl text-[#1b1f23] mb-6">
+        <p className="mb-3 text-xs font-bold tracking-[0.2em] text-[var(--color-accent)] uppercase">System Capabilities</p>
+        <h1 className="text-4xl font-bold tracking-tight sm:text-5xl md:text-6xl text-[var(--color-ink)] mb-6">
           Three intelligences.
           <br />
           One civic reasoning engine.
         </h1>
-        <p className="max-w-2xl text-lg leading-relaxed text-[#64748b]">
+        <p className="max-w-2xl text-lg leading-relaxed text-[var(--color-muted)]">
           The Planner&apos;s Assistant expresses a single reasoning spine in three ways: spatial strategy, casework, and monitoring.
-          <span className="font-medium text-[#1b1f23]"> Interact with the model below</span> to understand the rationale behind each capability.
+          <span className="font-medium text-[var(--color-ink)]"> Interact with the model below</span> to understand the rationale behind each capability.
         </p>
       </motion.section>
 
       <section className="mx-auto w-full max-w-5xl px-4 sm:px-6 pb-8">
         <div className="flex flex-col shadow-xl rounded-2xl">
-          <div className="z-20 relative bg-white rounded-t-2xl">
-            <EngineDiagram activeBranch={activeBranch} onChange={setActiveBranch} accentMap={ACCENT_MAP} />
+          <div className="z-20 relative bg-[var(--color-panel)] rounded-t-2xl">
+             <EngineDiagram activeBranch={activeBranch} onChange={setActiveBranch} accentMap={ACCENT_MAP} />
           </div>
           <div className="z-10 relative -mt-1">
-            <div className="bg-white rounded-b-2xl border border-t-0 border-slate-200 p-1 pt-4 shadow-sm relative">
+            <div className="bg-[var(--color-panel)] rounded-b-2xl border border-t-0 border-[var(--color-edge)] p-1 pt-4 shadow-sm relative">
               <FlowStepper activeStep={activeStep} onStepChange={setActiveStep} accentColor={activeAccent} />
             </div>
           </div>
 
-          <div className="bg-slate-50 p-8 rounded-b-2xl border-t border-slate-200">
+          <div className="bg-[var(--color-panel)]/80 p-8 rounded-b-2xl border-t border-[var(--color-edge)]">
             <AnimatePresence mode="wait">
               <motion.div
                 key={`${activeBranch}-${activeStep}`}
@@ -262,24 +262,24 @@ export function PillarsPage() {
                 className="flex flex-col md:flex-row gap-8 items-start"
               >
                 <div className="flex-shrink-0">
-                  <div className="w-16 h-16 rounded-2xl flex items-center justify-center shadow-sm" style={{ backgroundColor: activeAccent }}>
-                    {React.createElement(currentTool.icon, { size: 32, color: 'white' })}
+            <div className="w-16 h-16 rounded-2xl flex items-center justify-center shadow-sm" style={{ backgroundColor: activeAccent }}>
+                    {React.createElement(currentTool.icon, { size: 32, color: '#0b0f14' })}
                   </div>
                 </div>
 
                 <div className="flex-1">
                   <div className="flex items-center gap-3 mb-2">
-                    <span className="text-xs font-bold uppercase tracking-wider text-slate-400">{activeStep} Phase</span>
-                    <span className="w-1 h-1 rounded-full bg-slate-300" />
+                    <span className="text-xs font-bold uppercase tracking-wider text-[var(--color-muted)]">{activeStep} Phase</span>
+                    <span className="w-1 h-1 rounded-full bg-[var(--color-edge)]" />
                     <span className="text-xs font-bold uppercase tracking-wider" style={{ color: activeAccent }}>
                       {activeBranch === 'dm' ? 'Development Management' : activeBranch === 'spatial' ? 'Spatial Strategy' : 'Monitoring & Delivery'}
                     </span>
                   </div>
 
-                  <h3 className="text-2xl font-bold text-slate-900 mb-3">{currentTool.title}</h3>
-                  <p className="text-lg text-slate-600 leading-relaxed max-w-3xl">{currentTool.description}</p>
+                  <h3 className="text-2xl font-bold text-[var(--color-ink)] mb-3">{currentTool.title}</h3>
+                  <p className="text-lg text-[var(--color-muted)] leading-relaxed max-w-3xl">{currentTool.description}</p>
 
-                  <div className="mt-6 pt-6 border-t border-slate-200 flex items-center gap-2 text-sm font-medium text-slate-500">
+                  <div className="mt-6 pt-6 border-t border-[var(--color-edge)] flex items-center gap-2 text-sm font-medium text-[var(--color-muted)]">
                     <Search size={16} />
                     <span>Technology: {currentTool.context}</span>
                   </div>
@@ -293,28 +293,28 @@ export function PillarsPage() {
       <section className="mx-auto w-full max-w-6xl px-4 sm:px-6 pb-16 mt-12 border-t border-slate-200 pt-12">
         <h3 className="text-sm font-bold uppercase tracking-widest text-slate-400 mb-6">Next Steps</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <Link to="/app" className="group relative p-6 bg-white rounded-xl border border-slate-200 shadow-sm hover:shadow-md hover:border-[#329c85] transition-all">
-            <div className="text-[#329c85] mb-3">
+          <Link to="/app" className="group relative p-6 bg-[var(--color-panel)] rounded-xl border border-[var(--color-edge)] shadow-sm hover:shadow-md hover:border-[var(--color-accent)] transition-all">
+            <div className="text-[var(--color-accent)] mb-3">
               <Activity size={24} />
             </div>
-            <h4 className="font-bold text-slate-900 mb-1 group-hover:text-[#329c85] transition-colors">Try the Demo</h4>
-            <p className="text-xs text-slate-500 leading-relaxed">Explore all three intelligences in the live sandbox.</p>
+            <h4 className="font-bold text-[var(--color-ink)] mb-1 group-hover:text-[var(--color-accent)] transition-colors">Try the Demo</h4>
+            <p className="text-xs text-[var(--color-muted)] leading-relaxed">Explore all three intelligences in the live sandbox.</p>
           </Link>
 
-          <Link to="/architecture" className="group relative p-6 bg-white rounded-xl border border-slate-200 shadow-sm hover:shadow-md hover:border-[#f5c315] transition-all">
+          <Link to="/architecture" className="group relative p-6 bg-[var(--color-panel)] rounded-xl border border-[var(--color-edge)] shadow-sm hover:shadow-md hover:border-[#f5c315] transition-all">
             <div className="text-[#f5c315] mb-3">
               <Layers size={24} />
             </div>
-            <h4 className="font-bold text-slate-900 mb-1 group-hover:text-[#f5c315] transition-colors">The Architecture</h4>
-            <p className="text-xs text-slate-500 leading-relaxed">Deep dive into the reasoning engine&apos;s technical design.</p>
+            <h4 className="font-bold text-[var(--color-ink)] mb-1 group-hover:text-[#f5c315] transition-colors">The Architecture</h4>
+            <p className="text-xs text-[var(--color-muted)] leading-relaxed">Deep dive into the reasoning engine&apos;s technical design.</p>
           </Link>
 
-          <Link to="/foundations" className="group relative p-6 bg-white rounded-xl border border-slate-200 shadow-sm hover:shadow-md hover:border-[#3b5bdb] transition-all">
+          <Link to="/foundations" className="group relative p-6 bg-[var(--color-panel)] rounded-xl border border-[var(--color-edge)] shadow-sm hover:shadow-md hover:border-[#3b5bdb] transition-all">
             <div className="text-[#3b5bdb] mb-3">
               <BookOpen size={24} />
             </div>
-            <h4 className="font-bold text-slate-900 mb-1 group-hover:text-[#3b5bdb] transition-colors">Research Agenda</h4>
-            <p className="text-xs text-slate-500 leading-relaxed">Read the foundational papers behind the system.</p>
+            <h4 className="font-bold text-[var(--color-ink)] mb-1 group-hover:text-[#3b5bdb] transition-colors">Research Agenda</h4>
+            <p className="text-xs text-[var(--color-muted)] leading-relaxed">Read the foundational papers behind the system.</p>
           </Link>
 
           <Link to="/involved" className="group relative p-6 bg-slate-900 rounded-xl border border-slate-900 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all">

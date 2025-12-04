@@ -9,15 +9,15 @@ export function ArchitecturePage() {
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -20 }}
       transition={{ duration: 0.4, ease: 'easeInOut' }}
-      className="bg-[#f5f6fb] text-slate-900"
+      className="bg-transparent text-[var(--color-ink)]"
     >
       <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 pb-20 pt-14 space-y-10">
         <section className="space-y-4 max-w-4xl">
-          <p className="text-xs font-semibold tracking-[0.2em] text-[#329c85] uppercase">Reasoning architecture</p>
-          <h1 className="text-3xl font-bold tracking-tight sm:text-4xl md:text-5xl text-[#1b1f23]">
+          <p className="text-xs font-semibold tracking-[0.2em] text-[var(--color-accent)] uppercase">Reasoning architecture</p>
+          <h1 className="text-3xl font-bold tracking-tight sm:text-4xl md:text-5xl text-[var(--color-ink)]">
             One civic reasoning spine, expressed across planning.
           </h1>
-          <p className="text-lg leading-relaxed text-[#4b5563]">
+          <p className="text-lg leading-relaxed text-[var(--color-muted)]">
             The Planner’s Assistant runs on a layered cognitive stack. Evidence flows up from the Senses, through
             Orchestration, into Applications, anchored by Governance. Explore each component below to see how the system
             stays explainable, auditable, and connected.

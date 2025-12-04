@@ -9,7 +9,7 @@ export function DocsPlannerPage() {
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -20 }}
       transition={{ duration: 0.4, ease: 'easeInOut' }}
-      className="bg-[#f5f6fb] text-slate-900"
+      className="bg-transparent text-[var(--color-ink)]"
     >
       <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 pb-20 pt-14 space-y-12">
         {/* Hero */}
@@ -147,21 +147,21 @@ export function DocsPlannerPage() {
         </section>
 
         {/* Final note */}
-        <section className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200 space-y-3 max-w-4xl">
-          <p className="text-base leading-relaxed text-[#4b5563]">
+        <section className="rounded-2xl bg-[var(--color-panel)] p-6 shadow-sm ring-1 ring-[var(--color-edge)] space-y-3 max-w-4xl">
+          <p className="text-base leading-relaxed text-[var(--color-muted)]">
             The Assistant is a support system. It should make planning work faster, clearer, and more defensible — never less
             accountable. If you have concerns or want to trial it on real cases, we’d like to hear from you.
           </p>
           <div className="flex flex-wrap gap-3">
             <a
               href="mailto:hello@theplannersassistant.uk?subject=Planner%27s%20guide%20feedback"
-              className="inline-flex items-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-semibold text-[#329c85] shadow-sm ring-1 ring-[#329c85]/30 hover:bg-[#f0fdf4]"
+              className="inline-flex items-center gap-2 rounded-full bg-[var(--color-panel)] px-4 py-2 text-sm font-semibold text-[var(--color-accent)] shadow-sm ring-1 ring-[var(--color-accent)]/30 hover:bg-[var(--color-surface)]"
             >
               Send feedback →
             </a>
             <Link
               to="/involved"
-              className="inline-flex items-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-semibold text-[#1b1f23] shadow-sm ring-1 ring-slate-200 hover:bg-slate-50"
+              className="inline-flex items-center gap-2 rounded-full bg-[var(--color-panel)] px-4 py-2 text-sm font-semibold text-[var(--color-ink)] shadow-sm ring-1 ring-[var(--color-edge)] hover:bg-[var(--color-surface)]"
             >
               Partner with us →
             </Link>
@@ -179,7 +179,7 @@ type CapabilityCardProps = {
 
 function CapabilityCard({ title, bullets }: CapabilityCardProps) {
   return (
-    <div className="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200 h-full">
+    <div className="rounded-2xl bg-[var(--color-panel)] p-5 shadow-sm ring-1 ring-[var(--color-edge)] h-full">
       <h3 className="text-lg font-semibold text-[#1b1f23] mb-3">{title}</h3>
       <ul className="space-y-2 text-sm text-[#4b5563]">
         {bullets.map((item) => (

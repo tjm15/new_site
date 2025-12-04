@@ -57,7 +57,7 @@ export function InvolvedPage() {
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -20 }}
       transition={{ duration: 0.4, ease: 'easeInOut' }}
-      className="bg-[#f5f6fb] text-slate-900"
+      className="bg-transparent text-[var(--color-ink)]"
     >
       <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 pb-20 pt-14 space-y-12">
         {/* Hero */}
@@ -95,7 +95,7 @@ export function InvolvedPage() {
           </div>
           <div className="grid gap-6 md:grid-cols-2">
             {TRACKS.map((track) => (
-              <div key={track.title} className="h-full rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200 flex flex-col gap-4">
+              <div key={track.title} className="h-full rounded-2xl bg-[var(--color-panel)] p-6 shadow-sm ring-1 ring-[var(--color-edge)] flex flex-col gap-4">
                 <div className="space-y-1">
                   <h3 className="text-lg font-semibold text-[#1b1f23]">{track.title}</h3>
                   <p className="text-sm text-[#6b7280]">{track.subtitle}</p>
@@ -157,8 +157,8 @@ export function InvolvedPage() {
         </section>
 
         {/* Final call */}
-        <section className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200 space-y-3">
-          <p className="text-base leading-relaxed text-[#4b5563]">
+        <section className="rounded-2xl bg-[var(--color-panel)] p-6 shadow-sm ring-1 ring-[var(--color-edge)] space-y-3">
+          <p className="text-base leading-relaxed text-[var(--color-muted)]">
             If you would like to help shape an AI system that treats planning and governance as serious public work, not a market
             niche, you are warmly invited to get in touch.
           </p>
@@ -171,7 +171,7 @@ export function InvolvedPage() {
             </a>
             <Link
               to="/research"
-              className="inline-flex items-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-semibold text-[#329c85] shadow-sm ring-1 ring-[#329c85]/30 hover:bg-[#f0fdf4]"
+              className="inline-flex items-center gap-2 rounded-full bg-[var(--color-panel)] px-4 py-2 text-sm font-semibold text-[var(--color-accent)] shadow-sm ring-1 ring-[var(--color-accent)]/30 hover:bg-[var(--color-surface)]"
             >
               View the research agenda →
             </Link>
@@ -179,7 +179,7 @@ export function InvolvedPage() {
               href="https://github.com/the-planners-assistant"
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-semibold text-[#1b1f23] shadow-sm ring-1 ring-slate-200 hover:bg-slate-50"
+              className="inline-flex items-center gap-2 rounded-full bg-[var(--color-panel)] px-4 py-2 text-sm font-semibold text-[var(--color-ink)] shadow-sm ring-1 ring-[var(--color-edge)] hover:bg-[var(--color-surface)]"
             >
               Visit the GitHub repository →
             </a>
