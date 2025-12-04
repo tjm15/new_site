@@ -9,6 +9,8 @@ import { FoundationsPage } from './pages/FoundationsPage';
 import { PillarsPage } from './pages/PillarsPage';
 import { ArchitecturePage } from './pages/ArchitecturePage';
 import { InvolvedPage } from './pages/InvolvedPage';
+import { DocsPage } from './pages/DocsPage';
+import { ResearchPage } from './pages/ResearchPage';
 import { AppPage } from './pages/AppPage';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { PlanProvider } from './contexts/PlanContext';
@@ -40,10 +42,16 @@ const AnimatedRoutes = () => {
         <AnimatePresence mode="wait">
             <Routes location={location} key={location.pathname}>
                 <Route path="/" element={<HomePage />} />
+                <Route path="/about" element={<FoundationsPage />} />
                 <Route path="/foundations" element={<FoundationsPage />} />
+                <Route path="/capabilities" element={<PillarsPage />} />
                 <Route path="/pillars" element={<PillarsPage />} />
+                <Route path="/reasoning-architecture" element={<ArchitecturePage />} />
                 <Route path="/architecture" element={<ArchitecturePage />} />
+                <Route path="/research" element={<ResearchPage />} />
+                <Route path="/research/:slug" element={<ResearchPage />} />
                 <Route path="/involved" element={<InvolvedPage />} />
+                <Route path="/docs" element={<DocsPage />} />
                 <Route path="/app" element={<AppPage />} />
                 <Route path="/app/gateway1" element={<Gateway1Page />} />
                 <Route path="/app/monitoring" element={<MonitoringDashboardPage />} />

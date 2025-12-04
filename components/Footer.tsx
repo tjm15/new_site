@@ -5,10 +5,12 @@ import { Logo } from './Logo';
 import { useTheme } from '../contexts/ThemeContext';
 
 const navLinks = [
-    { to: "/foundations", label: "Foundations" },
-    { to: "/pillars", label: "Pillars" },
-    { to: "/architecture", label: "Architecture" },
+    { to: "/about", label: "About" },
+    { to: "/capabilities", label: "Capabilities" },
+    { to: "/reasoning-architecture", label: "Reasoning Architecture" },
+    { to: "/research", label: "Research" },
     { to: "/involved", label: "Get Involved" },
+    { to: "/docs", label: "Docs" },
 ];
 
 export function Footer() {

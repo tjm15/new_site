@@ -14,7 +14,7 @@ export function FoundationsPage() {
         {/* Page title */}
         <header className="mb-8">
           <h1 className="text-3xl font-semibold tracking-tight text-[var(--color-ink)] sm:text-4xl">
-            Foundations
+            About
           </h1>
           <p className="mt-2 max-w-3xl text-[var(--color-muted)]">
             Why the Planner’s Assistant exists — and the design choices that make it trustworthy in public decision‑making.

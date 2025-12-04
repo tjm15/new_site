@@ -1,115 +1,331 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Page } from '../components/Page';
+import {
+  Database,
+  Activity,
+  Radar,
+  Route,
+  Scale,
+  ClipboardCheck,
+  FileText,
+  FileBarChart,
+  Map,
+  AlertCircle,
+  Layers,
+  PenTool,
+  TrendingUp,
+  Search,
+  ArrowRight,
+  Zap,
+  BookOpen,
+} from 'lucide-react';
 
-const pillarsData = {
+import { EngineDiagram } from '../components/EngineDiagram';
+import { FlowStepper, FlowStepId } from '../components/FlowStepper';
+
+type BranchId = 'spatial' | 'dm' | 'monitoring';
+
+const ACCENT_MAP: Record<BranchId, string> = {
+  spatial: '#329c85',
+  dm: '#f5c315',
+  monitoring: '#3b5bdb',
+};
+
+const BRANCHES = [
+  { id: 'spatial', label: 'Spatial Strategy', description: 'Plan-making & Allocations' },
+  { id: 'dm', label: 'Development Management', description: 'Casework & Decisions' },
+  { id: 'monitoring', label: 'Monitoring & Delivery', description: 'Feedback Loops' },
+];
+
+const TOOLS_MAP: Record<
+  BranchId,
+  Record<
+    FlowStepId,
+    {
+      title: string;
+      description: string;
+      icon: any;
+      context: string;
+      relatedCapabilities?: string[];
+    }
+  >
+> = {
   spatial: {
-    id: 'spatial',
-    icon: '🧭',
-    title: 'Spatial Plan Intelligence',
-    subtitle: 'Tools for plan-making, strategy, and foresight.',
-    intro: 'The Spatial Plan Intelligence suite brings together everything needed to build and test spatial strategies — from assembling the evidence base to drafting policy text. Each tool works independently but becomes more powerful when used together, creating a continuous workflow from data to decision.',
-    subFeatures: [
-      { title: 'Evidence Base', description: 'Build your foundation by connecting maps, datasets, and documents in one place.', details: 'The Evidence Base lets planners query planning documents, explore geospatial data, and layer indicators such as housing need, transport accessibility, and environmental constraints. It turns dispersed evidence into a coherent, searchable foundation for plan-making.' },
-      { title: 'Vision & Concepts', description: 'Translate evidence into spatial ideas.', details: 'This module helps planners explore alternative spatial visions — generating schematic visuals, diagrams, and scenario maps that express possible futures. It supports early-stage design thinking and communication with communities and stakeholders.' },
-      { title: 'Policy Drafter', description: 'Draft, refine, and validate planning policy.', details: 'The Policy Drafter analyses existing plans, suggests cross-references, checks alignment with national policy, and helps structure new policies consistently. Every recommendation is explained and traceable, supporting officers as they write and review plan text.' },
-      { title: 'Strategy Modeler', description: 'Explore the long-term implications of different spatial strategies.', details: 'The Strategy Modeler links growth options to indicators such as housing delivery, transport demand, and infrastructure capacity. It enables planners to compare scenarios quantitatively and qualitatively, supporting informed, evidence-led choices.' },
-      { title: 'Site Assessment', description: 'Conduct detailed, map-based site assessments.', details: 'Upload site boundaries or select locations to generate instant constraint summaries and opportunity analyses. The module integrates local datasets, designations, and policy layers to produce clear, consistent site reports.' },
-      { title: 'Feedback Analysis', description: 'Synthesise consultation responses and stakeholder input.', details: 'The Feedback Analysis tool analyses written submissions, identifying themes, sentiment, and actionable issues. It helps planners understand public priorities and refine policies with transparency and efficiency.' },
-    ],
-    conclusion: 'These six tools form the analytical core of Spatial Plan Intelligence — linking data, policy, and place into one coherent environment for planning strategy and evidence-based decision-making.'
+    evidence: {
+      title: 'Unified Baselining',
+      description:
+        'Planning evidence is often trapped in static PDF topic papers. The engine ingests live geospatial layers, census data, and housing needs assessments into a single, queryable baseline—allowing planners to spot constraints and opportunities instantly.',
+      icon: Database,
+      context: 'Powered by Evidence & Baselining Tool',
+      relatedCapabilities: ['Geospatial Query', 'Demographic Trend Analysis', 'Constraint Stacking'],
+    },
+    context: {
+      title: 'Risk & Readiness Triage',
+      description:
+        'Before a plan commences, the engine assesses the critical path: governance structures, resourcing levels, and political decision gates. It acts as a “Gateway 1” diagnostic to ensure the plan is deliverable before the 30-month clock starts.',
+      icon: Activity,
+      context: 'Powered by Prep Risk & Timetable Tool',
+      relatedCapabilities: ['Governance Audit', 'Resource Modeling', 'Critical Path Analysis'],
+    },
+    patterns: {
+      title: 'Visioning & Theme Extraction',
+      description:
+        'Visioning is often abstract. The engine grounds it in data by clustering thousands of consultation responses into dominant themes. It then generates visual concept models (densities, typologies) to test how the vision lands physically, allowing members to debate concrete “what-if” futures rather than abstract goals.',
+      icon: Radar,
+      context: 'Powered by Feedback Analysis & Vision Tool',
+      relatedCapabilities: ['Sentiment Clustering', 'Typology Scanner', 'Concept Generation'],
+    },
+    options: {
+      title: 'Strategic Modeling & Alternatives',
+      description:
+        'The core of the strategy. Instead of one static map, the engine models multiple growth scenarios (e.g., “Transport Hubs” vs “Dispersed Growth”). It quantifies the trade-offs of each option—measuring housing yield, infrastructure load, and green belt impact—forming the robust evidence trail needed for “Reasonable Alternatives”.',
+      icon: Route,
+      context: 'Powered by Strategy Modeler',
+      relatedCapabilities: ['Scenario Builder', 'Capacity Tester', 'Infrastructure Loading'],
+    },
+    tests: {
+      title: 'Continuous Sustainability',
+      description:
+        'Sustainability Appraisal (SA/SEA) often happens too late to shape design. The engine runs continuous environmental checks against emerging site allocations, flagging risks to biodiversity or air quality while the strategy is still fluid.',
+      icon: Scale,
+      context: 'Powered by SEA/HRA Tool',
+      relatedCapabilities: ['SEA Scoring', 'HRA Screening', 'Carbon Impact Check'],
+    },
+    judgement: {
+      title: 'Pre-Submission Inspection',
+      description:
+        'The “AI Inspector” simulates a PINS examination before submission. It stress-tests the draft plan against NPPF soundness tests, highlighting evidence gaps or policy conflicts that could cause the plan to fail.',
+      icon: ClipboardCheck,
+      context: 'Powered by Gateway 3 Inspector',
+      relatedCapabilities: ['Soundness Test', 'Legal Compliance Check', 'Evidence Gap Detection'],
+    },
+    explanation: {
+      title: 'Policy Drafting & Justification',
+      description:
+        'Drafting robust policy is time-consuming. The engine translates spatial decisions and evidence directly into NPPF-compliant policy wording, ensuring every clause is traceable back to the specific evidence that justifies it.',
+      icon: FileText,
+      context: 'Powered by Policy Drafter',
+      relatedCapabilities: ['Clause Generation', 'Justification Trace', 'NPPF Alignment'],
+    },
   },
-  development: {
-    id: 'development',
-    icon: '🏗️',
-    title: 'Development Management Intelligence',
-    subtitle: 'From small household extensions to nationally significant infrastructure projects.',
-    intro: 'It provides structured support for professional judgement — connecting policy, context, and reasoning in one continuous process.',
-    subFeatures: [
-      { title: 'Application Intake', description: 'The starting point for assessment.', details: 'It organises plans, drawings, and supporting documents into a structured workspace, automatically identifying the relevant site boundary, applicable policies, and linked spatial layers. Every piece of evidence is traceable from the outset, creating a clear foundation for the case officer’s review.' },
-      { title: 'Context & Policy Analysis', description: 'A situational overview that combines location, policy, and precedent.', details: 'The Assistant maps key constraints, cross-references adopted and emerging policy, and retrieves comparable cases or appeal decisions. This establishes a transparent context for assessing compliance and identifying material considerations.' },
-      { title: 'Reasoning Workspace', description: 'Where professional judgement is developed and recorded.', details: 'The system synthesises relevant factors — policy tests, site conditions, consultation responses — into a structured reasoning chain. Officers can refine, edit, or challenge each point, ensuring that the emerging report reflects human expertise supported by explainable analysis.' },
-      { title: 'Report & Recommendation', description: 'The outcome of the process.', details: 'An officer-style report is generated with full traceability: sources cited, reasoning steps visible, and any uncertainties flagged. Reports can be exported, reviewed, or compared across cases, creating a consistent and auditable decision record.' },
-    ],
-    conclusion: 'Together, these stages form Development Management Intelligence — a disciplined workflow that strengthens rather than replaces discretion, ensuring that decisions are faster, clearer, and demonstrably sound.'
-  }
-};
-
-const PillarTab = ({ isActive, onClick, icon, title, subtitle }) => {
-  return (
-    <motion.button
-      onClick={onClick}
-      className={`w-full text-left p-4 md:p-6 rounded-2xl border transition-all duration-300 ${isActive ? 'bg-[var(--color-panel)] shadow-md' : 'bg-transparent hover:bg-[var(--color-surface)]'}`}
-      style={{ borderBottom: `4px solid ${isActive ? 'var(--accent)' : 'var(--edge)'}`}}
-      role="tab"
-      aria-selected={isActive}
-    >
-      <div className="text-2xl mb-2">{icon}</div>
-      <h2 className="text-lg md:text-xl font-semibold text-[var(--color-ink)]">{title}</h2>
-      <p className="mt-1 text-sm text-[var(--color-muted)] hidden sm:block">{subtitle}</p>
-    </motion.button>
-  );
-};
-
-const SubFeatureCard = ({ title, description, details, index }) => {
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5, delay: index * 0.1 }}
-      className="bg-[var(--color-panel)] border border-[var(--color-edge)] rounded-xl p-5"
-    >
-      <h3 className="font-semibold text-[var(--color-ink)]">{title}</h3>
-      <p className="text-sm text-[var(--color-accent)] font-medium mt-1">{description}</p>
-      <p className="text-[var(--color-muted)] mt-3">{details}</p>
-    </motion.div>
-  );
-};
-
-const PillarContent = ({ data }) => {
-  return (
-    <div className="bg-transparent border border-[var(--color-edge)] rounded-2xl p-6 md:p-8" role="tabpanel">
-      <p className="max-w-prose">{data.intro}</p>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 mt-6">
-        {data.subFeatures.map((sub, index) => (
-          <SubFeatureCard key={sub.title} index={index} {...sub} />
-        ))}
-      </div>
-      <p className="mt-6 font-medium text-[var(--color-ink)] max-w-prose">{data.conclusion}</p>
-    </div>
-  );
+  dm: {
+    evidence: {
+      title: 'Intake & Auto-Extraction',
+      description:
+        'Validation is a bottleneck. The engine reads incoming application documents (DAS, Transport Statements, Forms) and automatically extracts key metrics like unit mix, tenure split, and height, populating the case file instantly.',
+      icon: FileBarChart,
+      context: 'Powered by Application Intake',
+      relatedCapabilities: ['PDF Parsing', 'Metric Extraction', 'Validation Check'],
+    },
+    context: {
+      title: 'Context Analyzer',
+      description:
+        'Every site has a story. The engine instantly compiles a “site history” including prior refusals, appeal precedents, and active constraints (TPOs, flood zones), giving the case officer immediate situational awareness.',
+      icon: Map,
+      context: 'Powered by Context Analyzer',
+    },
+    patterns: {
+      title: 'Material Consideration Triage',
+      description:
+        'The engine scans the proposal against local and national policy to identify the key material considerations. It flags high-risk conflicts early—such as heritage harm or flood risk—so specialist consultees can be engaged immediately.',
+      icon: AlertCircle,
+      context: 'Powered by Risk Triage',
+    },
+    options: {
+      title: 'Negotiation Workspace',
+      description:
+        'As schemes are amended during the application process, the engine tracks changes against the original concerns. It helps officers verify if the requested amendments (e.g., “reduce height by 2m”) have actually been delivered.',
+      icon: Layers,
+      context: 'Powered by Negotiation Workspace',
+    },
+    tests: {
+      title: 'Condition Drafter',
+      description:
+        'Weak conditions lead to enforcement issues. The engine suggests precise, enforceable conditions linked directly to the technical harms identified, ensuring mitigation is robust and lawful.',
+      icon: PenTool,
+      context: 'Powered by Condition Drafter',
+    },
+    judgement: {
+      title: 'Planning Balance',
+      description:
+        'The core of the job. The engine provides a structured workspace for weighing public benefits against harms. It ensures the “Golden Thread” of reasoning is visible and that the recommendation is defensible at appeal.',
+      icon: Scale,
+      context: 'Powered by Planning Balance',
+    },
+    explanation: {
+      title: 'Report Generation',
+      description:
+        'Writing the committee report takes days. The engine automates the drafting of standard sections (site description, policy framework) and structures the assessment argument, citing every piece of evidence used.',
+      icon: FileText,
+      context: 'Powered by Report Generator',
+    },
+  },
+  monitoring: {
+    evidence: {
+      title: 'Live Data Connectors',
+      description:
+        'AMRs are often 18 months out of date. The engine connects directly to completions, appeals, and S106 systems to keep the evidence base live, creating a real-time feedback loop between “plan” and “reality”.',
+      icon: Activity,
+      context: 'Powered by Monitoring Connectors',
+    },
+    context: {
+      title: 'Adoption Baseline',
+      description:
+        'To measure change, you need a fixed point. The engine locks the policies map and key metrics at the point of adoption, creating a secure baseline against which all future divergence is measured.',
+      icon: Database,
+      context: 'Powered by Adoption Tool',
+    },
+    patterns: {
+      title: 'Trend Detection',
+      description:
+        'Is the plan working? The engine monitors divergence in key metrics—housing delivery, employment floorspace, appeal overturns—and flags trends that suggest a policy is failing or becoming obsolete.',
+      icon: TrendingUp,
+      context: 'Powered by Trend Analysis',
+    },
+    options: {
+      title: 'Intervention Triggers',
+      description:
+        'Don’t wait for a failed plan review. The engine suggests specific interventions (e.g., “Trigger Action Plan”) when environmental or delivery thresholds are breached, allowing for agile plan maintenance.',
+      icon: Route,
+      context: 'Powered by Trigger Engine',
+    },
+    tests: {
+      title: '5-Year Supply Check',
+      description:
+        'Housing supply is dynamic. The engine runs continuous automated testing of deliverable sites against the trajectory and NPPF buffers, providing an always-on “5 Year Land Supply” status.',
+      icon: ClipboardCheck,
+      context: 'Powered by Supply Checker',
+    },
+    judgement: {
+      title: 'Year-4 Evaluation',
+      description:
+        'The formal review decision. Based on the accumulated data, should we Keep, Amend, or Delete policies? The engine structures this evaluation to seed the evidence base for the next Local Plan.',
+      icon: Scale,
+      context: 'Powered by Year-4 Evaluation Tool',
+    },
+    explanation: {
+      title: 'AMR Automation',
+      description:
+        'The engine drafts the Annual Monitoring Report narrative automatically from the live data feeds, transforming a statutory burden into a useful strategic health-check.',
+      icon: FileText,
+      context: 'Powered by Monitoring Builder',
+    },
+  },
 };
 
 export function PillarsPage() {
-  const [activeTab, setActiveTab] = React.useState('spatial');
+  const [activeBranch, setActiveBranch] = useState<BranchId>('spatial');
+  const [activeStep, setActiveStep] = useState<FlowStepId>('evidence');
+
+  const activeAccent = ACCENT_MAP[activeBranch];
+  const currentTool = TOOLS_MAP[activeBranch][activeStep];
 
   return (
-    <Page title="Pillars of the Assistant">
-      <div className="grid grid-cols-2 gap-4 mb-8" role="tablist" aria-label="Pillars">
-        <PillarTab
-          isActive={activeTab === 'spatial'}
-          onClick={() => setActiveTab('spatial')}
-          {...pillarsData.spatial}
-        />
-        <PillarTab
-          isActive={activeTab === 'development'}
-          onClick={() => setActiveTab('development')}
-          {...pillarsData.development}
-        />
-      </div>
+    <main className="min-h-screen bg-[#f8f9fa] text-slate-900 font-sans pb-20">
+      <motion.section
+        className="mx-auto w-full max-w-6xl px-6 pt-16 pb-10"
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+      >
+        <p className="mb-3 text-xs font-bold tracking-[0.2em] text-[#329c85] uppercase">System Capabilities</p>
+        <h1 className="text-4xl font-bold tracking-tight sm:text-5xl md:text-6xl text-[#1b1f23] mb-6">
+          Three intelligences.
+          <br />
+          One civic reasoning engine.
+        </h1>
+        <p className="max-w-2xl text-lg leading-relaxed text-[#64748b]">
+          The Planner&apos;s Assistant expresses a single reasoning spine in three ways: spatial strategy, casework, and monitoring.
+          <span className="font-medium text-[#1b1f23]"> Interact with the model below</span> to understand the rationale behind each capability.
+        </p>
+      </motion.section>
 
-      <AnimatePresence mode="wait">
-        <motion.div
-          key={activeTab}
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -20 }}
-          transition={{ duration: 0.4, ease: 'easeInOut' }}
-        >
-          {activeTab === 'spatial' && <PillarContent data={pillarsData.spatial} />}
-          {activeTab === 'development' && <PillarContent data={pillarsData.development} />}
-        </motion.div>
-      </AnimatePresence>
-    </Page>
+      <section className="mx-auto w-full max-w-5xl px-4 sm:px-6 pb-8">
+        <div className="flex flex-col shadow-xl rounded-2xl">
+          <div className="z-20 relative bg-white rounded-t-2xl">
+            <EngineDiagram activeBranch={activeBranch} onChange={setActiveBranch} accentMap={ACCENT_MAP} />
+          </div>
+          <div className="z-10 relative -mt-1">
+            <div className="bg-white rounded-b-2xl border border-t-0 border-slate-200 p-1 pt-4 shadow-sm relative">
+              <FlowStepper activeStep={activeStep} onStepChange={setActiveStep} accentColor={activeAccent} />
+            </div>
+          </div>
+
+          <div className="bg-slate-50 p-8 rounded-b-2xl border-t border-slate-200">
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={`${activeBranch}-${activeStep}`}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.2 }}
+                className="flex flex-col md:flex-row gap-8 items-start"
+              >
+                <div className="flex-shrink-0">
+                  <div className="w-16 h-16 rounded-2xl flex items-center justify-center shadow-sm" style={{ backgroundColor: activeAccent }}>
+                    {React.createElement(currentTool.icon, { size: 32, color: 'white' })}
+                  </div>
+                </div>
+
+                <div className="flex-1">
+                  <div className="flex items-center gap-3 mb-2">
+                    <span className="text-xs font-bold uppercase tracking-wider text-slate-400">{activeStep} Phase</span>
+                    <span className="w-1 h-1 rounded-full bg-slate-300" />
+                    <span className="text-xs font-bold uppercase tracking-wider" style={{ color: activeAccent }}>
+                      {activeBranch === 'dm' ? 'Development Management' : activeBranch === 'spatial' ? 'Spatial Strategy' : 'Monitoring & Delivery'}
+                    </span>
+                  </div>
+
+                  <h3 className="text-2xl font-bold text-slate-900 mb-3">{currentTool.title}</h3>
+                  <p className="text-lg text-slate-600 leading-relaxed max-w-3xl">{currentTool.description}</p>
+
+                  <div className="mt-6 pt-6 border-t border-slate-200 flex items-center gap-2 text-sm font-medium text-slate-500">
+                    <Search size={16} />
+                    <span>Technology: {currentTool.context}</span>
+                  </div>
+                </div>
+              </motion.div>
+            </AnimatePresence>
+          </div>
+        </div>
+      </section>
+
+      <section className="mx-auto w-full max-w-6xl px-4 sm:px-6 pb-16 mt-12 border-t border-slate-200 pt-12">
+        <h3 className="text-sm font-bold uppercase tracking-widest text-slate-400 mb-6">Next Steps</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <Link to="/app" className="group relative p-6 bg-white rounded-xl border border-slate-200 shadow-sm hover:shadow-md hover:border-[#329c85] transition-all">
+            <div className="text-[#329c85] mb-3">
+              <Activity size={24} />
+            </div>
+            <h4 className="font-bold text-slate-900 mb-1 group-hover:text-[#329c85] transition-colors">Try the Demo</h4>
+            <p className="text-xs text-slate-500 leading-relaxed">Explore all three intelligences in the live sandbox.</p>
+          </Link>
+
+          <Link to="/architecture" className="group relative p-6 bg-white rounded-xl border border-slate-200 shadow-sm hover:shadow-md hover:border-[#f5c315] transition-all">
+            <div className="text-[#f5c315] mb-3">
+              <Layers size={24} />
+            </div>
+            <h4 className="font-bold text-slate-900 mb-1 group-hover:text-[#f5c315] transition-colors">The Architecture</h4>
+            <p className="text-xs text-slate-500 leading-relaxed">Deep dive into the reasoning engine&apos;s technical design.</p>
+          </Link>
+
+          <Link to="/foundations" className="group relative p-6 bg-white rounded-xl border border-slate-200 shadow-sm hover:shadow-md hover:border-[#3b5bdb] transition-all">
+            <div className="text-[#3b5bdb] mb-3">
+              <BookOpen size={24} />
+            </div>
+            <h4 className="font-bold text-slate-900 mb-1 group-hover:text-[#3b5bdb] transition-colors">Research Agenda</h4>
+            <p className="text-xs text-slate-500 leading-relaxed">Read the foundational papers behind the system.</p>
+          </Link>
+
+          <Link to="/involved" className="group relative p-6 bg-slate-900 rounded-xl border border-slate-900 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all">
+            <div className="text-white mb-3">
+              <ArrowRight size={24} />
+            </div>
+            <h4 className="font-bold text-white mb-1">Join the Mission</h4>
+            <p className="text-xs text-slate-400 leading-relaxed">Partner with us to pilot the system.</p>
+          </Link>
+        </div>
+      </section>
+    </main>
   );
 }

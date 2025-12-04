@@ -85,23 +85,23 @@ const MobileInfoSection = () => {
     return (
         <div ref={sectionRef} className="mt-8 rounded-2xl bg-[var(--color-panel)] border border-[var(--color-edge)] shadow-sm px-4">
             <AccordionItem
-                title="Foundations"
-                isOpen={openItem === 'Foundations'}
-                onToggle={() => handleToggle('Foundations')}
+                title="About"
+                isOpen={openItem === 'About'}
+                onToggle={() => handleToggle('About')}
             >
                 <FoundationsContent />
             </AccordionItem>
             <AccordionItem
-                title="Pillars"
-                isOpen={openItem === 'Pillars'}
-                onToggle={() => handleToggle('Pillars')}
+                title="Capabilities"
+                isOpen={openItem === 'Capabilities'}
+                onToggle={() => handleToggle('Capabilities')}
             >
                 <PillarsContent />
             </AccordionItem>
             <AccordionItem
-                title="Architecture"
-                isOpen={openItem === 'Architecture'}
-                onToggle={() => handleToggle('Architecture')}
+                title="Reasoning Architecture"
+                isOpen={openItem === 'Reasoning Architecture'}
+                onToggle={() => handleToggle('Reasoning Architecture')}
             >
                 <ArchitectureContent />
             </AccordionItem>
@@ -134,7 +134,7 @@ export function HomePage() {
                     <div className="flex flex-wrap items-center gap-4">
                       <Link to="/app" className="px-5 py-3 rounded-2xl bg-[var(--color-accent)] text-white font-medium shadow-md hover:shadow-lg focus:outline-none focus:[box-shadow:var(--ring)] transition-shadow">Demo</Link>
                       <a href="https://github.com/tjm15" target="_blank" rel="noopener noreferrer" className="px-5 py-3 rounded-2xl border border-[var(--color-accent)] text-[var(--color-accent)] font-medium hover:bg-[var(--color-accent)]/10 transition-colors">GitHub</a>
-                      <Link to="/foundations" className="text-[var(--color-muted)] hover:text-[var(--color-ink)] transition-colors font-medium">Learn more →</Link>
+                      <Link to="/about" className="text-[var(--color-muted)] hover:text-[var(--color-ink)] transition-colors font-medium">Learn more →</Link>
                     </div>
                   ) : (
                     <div className="w-full">
