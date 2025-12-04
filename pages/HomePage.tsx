@@ -133,12 +133,12 @@ export function HomePage() {
                   {isDesktop ? (
                     <div className="flex flex-wrap items-center gap-4">
                       <Link to="/app" className="px-5 py-3 rounded-2xl bg-[var(--color-accent)] text-white font-medium shadow-md hover:shadow-lg focus:outline-none focus:[box-shadow:var(--ring)] transition-shadow">Demo</Link>
-                      <a href="https://github.com/tjm15" target="_blank" rel="noopener noreferrer" className="px-5 py-3 rounded-2xl border border-[var(--color-accent)] text-[var(--color-accent)] font-medium hover:bg-[var(--color-accent)]/10 transition-colors">GitHub</a>
+                      <a href="https://github.com/the-planners-assistant" target="_blank" rel="noopener noreferrer" className="px-5 py-3 rounded-2xl border border-[var(--color-accent)] text-[var(--color-accent)] font-medium hover:bg-[var(--color-accent)]/10 transition-colors">GitHub</a>
                       <Link to="/about" className="text-[var(--color-muted)] hover:text-[var(--color-ink)] transition-colors font-medium">Learn more →</Link>
                     </div>
                   ) : (
                     <div className="w-full">
-                        <a href="https://github.com/tjm15" target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center w-full px-5 py-3 rounded-2xl border border-[var(--color-accent)] text-[var(--color-accent)] font-medium">GitHub</a>
+                        <a href="https://github.com/the-planners-assistant" target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center w-full px-5 py-3 rounded-2xl border border-[var(--color-accent)] text-[var(--color-accent)] font-medium">GitHub</a>
                         <p className="text-sm text-[var(--color-muted)] mt-4 text-center">The interactive demo is available on desktop.</p>
                         <MobileInfoSection />
                     </div>
