@@ -176,7 +176,7 @@ export function InvolvedPage() {
               View the research agenda →
             </Link>
             <a
-              href="https://github.com/"
+              href="https://github.com/the-planners-assistant"
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-semibold text-[#1b1f23] shadow-sm ring-1 ring-slate-200 hover:bg-slate-50"

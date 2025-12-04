@@ -10,6 +10,7 @@ import { PillarsPage } from './pages/PillarsPage';
 import { ArchitecturePage } from './pages/ArchitecturePage';
 import { InvolvedPage } from './pages/InvolvedPage';
 import { DocsPage } from './pages/DocsPage';
+import { DocsPlannerPage } from './pages/DocsPlannerPage';
 import { ResearchPage } from './pages/ResearchPage';
 import { AppPage } from './pages/AppPage';
 import { ThemeProvider } from './contexts/ThemeContext';
@@ -52,6 +53,7 @@ const AnimatedRoutes = () => {
                 <Route path="/research/:slug" element={<ResearchPage />} />
                 <Route path="/involved" element={<InvolvedPage />} />
                 <Route path="/docs" element={<DocsPage />} />
+                <Route path="/docs/planner" element={<DocsPlannerPage />} />
                 <Route path="/app" element={<AppPage />} />
                 <Route path="/app/gateway1" element={<Gateway1Page />} />
                 <Route path="/app/monitoring" element={<MonitoringDashboardPage />} />
