@@ -5,6 +5,7 @@ import { callLLM } from '../../../../utils/llmClient'
 import { LoadingSpinner } from '../../shared/LoadingSpinner'
 import { MarkdownContent } from '../../../../components/MarkdownContent'
 import { usePlan } from '../../../../contexts/PlanContext'
+import { summarizeSeaHra } from '../../../../utils/seaHra'
 
 type DraftResponse = { reportMarkdown: string; warningsMarkdown: string }
 
@@ -41,17 +42,19 @@ function buildPlanStateMarkdown(plan: Plan, council: CouncilData): string {
     return `### ${s.name}\n${s.notes || s.description || 'No summary'}\nRAG: ${rag || 'n/a'}\nCapacity: ${s.capacityEstimate || s.capacity || 'n/a'}\nDecision: ${decision?.decision || 'undecided'}\nReasons: ${decision?.rationale || 'n/a'}`
   }).join('\n\n') || 'No site records.'
 
-  const seaHraText = plan.seaHra
-    ? [
-        plan.seaHra.seaScopingStatus ? `SEA scoping: ${plan.seaHra.seaScopingStatus}` : '',
-        plan.seaHra.seaScopingNotes ? `SEA notes: ${plan.seaHra.seaScopingNotes}` : '',
-        plan.seaHra.hraBaselineSummary ? `HRA summary: ${plan.seaHra.hraBaselineSummary}` : '',
-        plan.seaHra.mitigationIdeas?.length ? `Mitigations: ${plan.seaHra.mitigationIdeas.join('; ')}` : '',
-        plan.seaHra.cumulativeEffects ? `Cumulative effects: ${plan.seaHra.cumulativeEffects}` : ''
-      ].filter(Boolean).join('\n')
-    : 'No SEA/HRA narrative.'
+  const seaSummary = summarizeSeaHra(plan)
+  const seaHraText = [
+    seaSummary.statusLine,
+    `Baseline: ${seaSummary.baseline}`,
+    `HRA: ${seaSummary.hra}`,
+    `Consultation: ${seaSummary.consultation}`,
+    `Mitigation: ${seaSummary.mitigation}`,
+    `Risks: ${seaSummary.risks}`,
+    `Cumulative: ${seaSummary.cumulative}`,
+    `Datasets: ${seaSummary.environmentalDatabase}`
+  ].join('\n')
 
-  const cumulativeMarkdown = plan.seaHra?.cumulativeEffects || 'No cumulative impacts summary.'
+  const cumulativeMarkdown = seaSummary.cumulative || 'No cumulative impacts summary.'
 
   return [
     '[VISION]\n' + visionMarkdown,

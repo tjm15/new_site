@@ -3,6 +3,7 @@ import { AnimatePresence, motion } from 'framer-motion'
 import { CouncilData, Gateway2Pack, Gateway2PackSection, Gateway2SectionStatus, Plan } from '../../../../data/types'
 import { usePlan } from '../../../../contexts/PlanContext'
 import { callLLM } from '../../../../utils/llmClient'
+import { summarizeSeaHra } from '../../../../utils/seaHra'
 import { LoadingSpinner } from '../../shared/LoadingSpinner'
 import { MarkdownContent } from '../../../../components/MarkdownContent'
 
@@ -93,15 +94,16 @@ function buildPlanSnapshot(plan?: Plan, council?: CouncilData) {
     return `- ${s.name}: ${s.notes || s.description || 'No summary'} | RAG ${[s.suitability, s.availability, s.achievability].filter(Boolean).join('/') || 'n/a'} | Decision: ${decision?.decision || 'undecided'}`
   }).join('\n') || 'No site records.'
   const evidence = (plan.evidenceInventory || []).map(ev => `- ${ev.title}${ev.status ? ` [${ev.status}]` : ''}${ev.year ? ` (${ev.year})` : ''}${ev.core ? ' • core' : ''}${ev.seaHraRelevant ? ' • SEA/HRA' : ''}`).join('\n') || 'No evidence logged.'
-  const seaHra = plan.seaHra
-    ? [
-        plan.seaHra.seaScopingStatus ? `SEA scoping: ${plan.seaHra.seaScopingStatus}` : '',
-        plan.seaHra.seaScopingNotes ? `SEA notes: ${plan.seaHra.seaScopingNotes}` : '',
-        plan.seaHra.hraBaselineSummary ? `HRA: ${plan.seaHra.hraBaselineSummary}` : '',
-        plan.seaHra.cumulativeEffects ? `Cumulative: ${plan.seaHra.cumulativeEffects}` : '',
-        plan.seaHra.mitigationIdeas?.length ? `Mitigations: ${plan.seaHra.mitigationIdeas.join('; ')}` : ''
-      ].filter(Boolean).join('\n')
-    : 'No SEA/HRA text.'
+  const seaSummary = summarizeSeaHra(plan)
+  const seaHra = [
+    seaSummary.statusLine,
+    `Baseline: ${seaSummary.baseline}`,
+    `HRA: ${seaSummary.hra}`,
+    `Mitigation: ${seaSummary.mitigation}`,
+    `Risks: ${seaSummary.risks}`,
+    `Consultation: ${seaSummary.consultation}`,
+    `Cumulative: ${seaSummary.cumulative}`
+  ].join('\n')
   const consultations = (plan.consultationSummaries || []).map(c => `- ${c.stageId}: ${c.who} | ${c.when} | ${c.how} | Issues: ${(c.mainIssues || []).join('; ')}`).join('\n') || 'No consultation summaries captured.'
   const timetable = (plan.timetable?.milestones || []).map(m => `- ${m.stageId}: ${m.date}`).join('\n') || 'No timetable recorded.'
   const risks = plan.gateway2Risks || plan.prepRiskAssessment?.overallComment || 'No Gateway 2 risks recorded.'

@@ -240,7 +240,7 @@ export const BaseliningTool: React.FC<BaseliningProps> = ({ councilData, autoRun
   const [loading, setLoading] = useState<Record<string, boolean>>({});
   const [status, setStatus] = useState<string | null>(null);
   const [lastTouched, setLastTouched] = useState<number>(Date.now());
-  const [filtersOpen, setFiltersOpen] = useState<boolean>(false);
+  const [filtersOpen, setFiltersOpen] = useState<boolean>(true);
   const autoRanRef = useRef(false);
 
   useEffect(() => {
@@ -466,11 +466,16 @@ export const BaseliningTool: React.FC<BaseliningProps> = ({ councilData, autoRun
       return acc;
     }, { strengths: [], weaknesses: [], opportunities: [], threats: [] } as Record<SwotQuadrant, string[]>);
     const narrativeText = combineNarrativeSections(narrativeSections);
+    const seaHraDatasets = datasetItems.filter(d => d.seaHraRelevant || matchTheme(d.topic) === 'environment').map(d => d.title || d.id || '').filter(Boolean)
     updatePlan(activePlan.id, {
       evidenceInventory: datasetItems,
       baselineTrends: trendSummaries,
       swot: swotPayload,
       baselineNarrative: narrativeText,
+      seaHra: {
+        ...(activePlan.seaHra || {}),
+        environmentalDatabase: seaHraDatasets
+      }
     });
     setStatus('Saved outputs to plan.');
     setLastTouched(Date.now());

@@ -4,6 +4,7 @@ import { usePlan } from '../../../../contexts/PlanContext'
 import { callLLM } from '../../../../utils/llmClient'
 import { LoadingSpinner } from '../../shared/LoadingSpinner'
 import { MarkdownContent } from '../../../../components/MarkdownContent'
+import { summarizeSeaHra } from '../../../../utils/seaHra'
 
 type TabId = 'requirements' | 'compliance' | 'soundness' | 'readiness' | 'validator'
 type StatementKey = 'compliance' | 'soundness' | 'readiness'
@@ -115,15 +116,16 @@ function buildPlanSnapshot(plan?: Plan, council?: CouncilData, pack?: Gateway3Pa
   }).join('\n') || 'No site records.'
   const evidence = (plan.evidenceInventory || []).map(ev => `- ${ev.title}${ev.status ? ` [${ev.status}]` : ''}${ev.year ? ` (${ev.year})` : ''}${ev.core ? ' • core' : ''}${ev.seaHraRelevant ? ' • SEA/HRA' : ''}`).join('\n') || 'No evidence logged.'
   const consultations = (plan.consultationSummaries || []).map(c => `- ${c.stageId}: ${c.who} | ${c.when} | ${c.how} | Issues: ${(c.mainIssues || []).join('; ')}`).join('\n') || 'No consultation summaries captured.'
-  const seaHra = plan.seaHra
-    ? [
-        plan.seaHra.seaScopingStatus ? `SEA scoping: ${plan.seaHra.seaScopingStatus}` : '',
-        plan.seaHra.seaScopingNotes ? `SEA notes: ${plan.seaHra.seaScopingNotes}` : '',
-        plan.seaHra.hraBaselineSummary ? `HRA: ${plan.seaHra.hraBaselineSummary}` : '',
-        plan.seaHra.cumulativeEffects ? `Cumulative: ${plan.seaHra.cumulativeEffects}` : '',
-        plan.seaHra.mitigationIdeas?.length ? `Mitigations: ${plan.seaHra.mitigationIdeas.join('; ')}` : ''
-      ].filter(Boolean).join('\n')
-    : 'No SEA/HRA text.'
+  const seaSummary = summarizeSeaHra(plan)
+  const seaHra = [
+    seaSummary.statusLine,
+    `Baseline: ${seaSummary.baseline}`,
+    `HRA: ${seaSummary.hra}`,
+    `Mitigation: ${seaSummary.mitigation}`,
+    `Risks: ${seaSummary.risks}`,
+    `Consultation: ${seaSummary.consultation}`,
+    `Cumulative: ${seaSummary.cumulative}`
+  ].join('\n')
   const timetable = (plan.timetable?.milestones || []).map(m => `- ${m.stageId}: ${m.date}`).join('\n') || 'No timetable recorded.'
   const g2 = plan.gateway2Pack
     ? `Gateway 2 readiness: ${plan.gateway2Pack.readinessRag || 'n/a'} | Sections with content: ${(plan.gateway2Pack.sections || []).filter(s => s.content).length}`

@@ -4,6 +4,7 @@ import { CouncilData, Gateway3InspectorReport, Plan } from '../../../../data/typ
 import { callLLM } from '../../../../utils/llmClient'
 import { MarkdownContent } from '../../../../components/MarkdownContent'
 import { LoadingSpinner } from '../../shared/LoadingSpinner'
+import { summarizeSeaHra } from '../../../../utils/seaHra'
 
 function statusBadge(val?: string) {
   const base = 'px-2 py-0.5 text-[11px] rounded-full border'
@@ -27,13 +28,16 @@ function buildPlanSnapshot(plan?: Plan, council?: CouncilData) {
   }).join('\n') || 'No sites recorded.'
   const evidence = (plan.evidenceInventory || []).map(ev => `${ev.title}${ev.status ? ` [${ev.status}]` : ''}${ev.year ? ` (${ev.year})` : ''}`).join('; ') || 'Evidence not logged.'
   const consultations = (plan.consultationSummaries || []).map(c => `${c.stageId}: ${c.mainIssues?.join(', ') || 'no issues recorded'}`).join('; ') || 'No consultation summaries.'
-  const seaHra = plan.seaHra
-    ? [
-        plan.seaHra.seaScopingStatus ? `SEA scoping: ${plan.seaHra.seaScopingStatus}` : '',
-        plan.seaHra.hraBaselineSummary ? `HRA: ${plan.seaHra.hraBaselineSummary}` : '',
-        plan.seaHra.cumulativeEffects ? `Cumulative: ${plan.seaHra.cumulativeEffects}` : ''
-      ].filter(Boolean).join('; ')
-    : 'No SEA/HRA text.'
+  const seaSummary = summarizeSeaHra(plan)
+  const seaHra = [
+    seaSummary.statusLine,
+    `Baseline: ${seaSummary.baseline}`,
+    `HRA: ${seaSummary.hra}`,
+    `Mitigation: ${seaSummary.mitigation}`,
+    `Risks: ${seaSummary.risks}`,
+    `Consultation: ${seaSummary.consultation}`,
+    `Cumulative: ${seaSummary.cumulative}`
+  ].join('; ')
   return [
     `Authority: ${council.name}`,
     `Plan: ${plan.title} | Stage: ${plan.planStage || 'unknown'}`,

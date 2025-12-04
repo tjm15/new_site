@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import type { CouncilData, Plan } from '../../../../data/types'
 import { usePlan } from '../../../../contexts/PlanContext'
+import { summarizeSeaHra } from '../../../../utils/seaHra'
 import { callLLM } from '../../../../utils/llmClient'
 import { MarkdownContent } from '../../../../components/MarkdownContent'
 import { LoadingSpinner } from '../../shared/LoadingSpinner'
@@ -81,12 +82,16 @@ function buildPlanContext(plan: Plan, councilData: CouncilData): string {
     plan.baselineTrends ? Object.entries(plan.baselineTrends).map(([k, v]) => `- ${k}: ${v}`).join('\n') : '',
     (plan.evidenceInventory || []).map(ev => `- ${ev.title}${ev.status ? ` [${ev.status}]` : ''}${ev.topic ? ` | topic: ${ev.topic}` : ''}`).join('\n')
   ].filter(Boolean).join('\n') || 'Evidence summaries not captured.'
-  const sea = plan.seaHra ? [
-    plan.seaHra.seaScopingStatus ? `SEA scoping: ${plan.seaHra.seaScopingStatus}` : '',
-    plan.seaHra.seaScopingNotes ? `SEA notes: ${plan.seaHra.seaScopingNotes}` : '',
-    plan.seaHra.hraBaselineSummary ? `HRA summary: ${plan.seaHra.hraBaselineSummary}` : '',
-    plan.seaHra.cumulativeEffects ? `Cumulative: ${plan.seaHra.cumulativeEffects}` : ''
-  ].filter(Boolean).join('\n') : 'No SEA/HRA text yet.'
+  const seaSummary = summarizeSeaHra(plan)
+  const sea = [
+    seaSummary.statusLine,
+    `Baseline: ${seaSummary.baseline}`,
+    `HRA: ${seaSummary.hra}`,
+    `Mitigation: ${seaSummary.mitigation}`,
+    `Risks: ${seaSummary.risks}`,
+    `Consultation: ${seaSummary.consultation}`,
+    `Cumulative: ${seaSummary.cumulative}`
+  ].join('\n')
   const consultations = (plan.consultationSummaries || []).map(c => `- ${c.stageId}: ${c.who} (${c.when}) via ${c.how} | issues: ${(c.mainIssues || []).join('; ')}`).join('\n') || 'No consultation summaries logged.'
   const milestone = (plan.timetable?.milestones || []).find(m => m.stageId === 'CONSULTATION_1')?.date
   const timeline = milestone ? `Proposed Consultation 1 dates: ${milestone}` : 'Consultation dates not set.'
@@ -199,7 +204,26 @@ export const ConsultationPackGeneratorTool: React.FC<{ plan: Plan | undefined; c
       setSummary(initialData.summaryMarkdown || '')
       setEasyRead(initialData.easyReadMarkdown || '')
     } else {
-      setSections(DEFAULT_SECTIONS)
+      const base = alignSections()
+      if (plan.seaHra) {
+        const seaSummary = summarizeSeaHra(plan)
+        const idx = base.findIndex(s => s.id === 'sea')
+        if (idx >= 0) {
+          base[idx] = {
+            ...base[idx],
+            content: [
+              seaSummary.statusLine,
+              `Baseline: ${seaSummary.baseline}`,
+              `HRA: ${seaSummary.hra}`,
+              `Mitigation: ${seaSummary.mitigation}`,
+              `Risks: ${seaSummary.risks}`,
+              `Consultation: ${seaSummary.consultation}`,
+              `Cumulative: ${seaSummary.cumulative}`
+            ].join('\n')
+          }
+        }
+      }
+      setSections(base)
       setWarnings('')
       setSummary('')
       setEasyRead('')
@@ -216,12 +240,21 @@ export const ConsultationPackGeneratorTool: React.FC<{ plan: Plan | undefined; c
 
   const dataPalette = useMemo(() => {
     if (!plan) return []
+    const seaSummary = summarizeSeaHra(plan)
     return [
       { title: 'Vision & outcomes', body: `${(plan.visionStatements || []).map(v => `- ${v.text}`).join('\n') || 'No vision yet.'}\n${(plan.smartOutcomes || []).map(o => `- ${o.outcomeStatement}`).join('\n') || ''}`.trim() },
       { title: 'Spatial options', body: (councilData.strategies || []).map(s => `${s.label}: ${s.desc}`).join('\n') || 'No options listed.' },
       { title: 'Evidence & trends', body: plan.baselineNarrative || Object.entries(plan.baselineTrends || {}).map(([k, v]) => `${k}: ${v}`).join('\n') || 'No evidence summary.' },
       { title: 'Sites (early view)', body: (plan.sites || []).map(s => `${s.name}: ${s.description || s.notes || 'No notes'}`).join('\n') || 'No sites yet.' },
-      { title: 'SEA / HRA', body: plan.seaHra?.seaScopingNotes || plan.seaHra?.cumulativeEffects || 'No SEA/HRA notes.' },
+      { title: 'SEA / HRA', body: [
+        seaSummary.statusLine,
+        `Baseline: ${seaSummary.baseline}`,
+        `HRA: ${seaSummary.hra}`,
+        `Mitigation: ${seaSummary.mitigation}`,
+        `Risks: ${seaSummary.risks}`,
+        `Consultation: ${seaSummary.consultation}`,
+        `Cumulative: ${seaSummary.cumulative}`
+      ].join('\n') },
       { title: 'Consultations so far', body: (plan.consultationSummaries || []).map(c => `${c.stageId}: ${c.who} (${c.when})`).join('\n') || 'No consultation log.' }
     ]
   }, [plan, councilData])
