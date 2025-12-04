@@ -64,6 +64,6 @@ const distPath = path.resolve(__dirname, '..', 'dist')
 
 app.use(express.static(distPath))
 app.get('/healthz', (_req, res) => res.send('ok'))
-app.get('*', (_req, res) => res.sendFile(path.join(distPath, 'index.html')))
+app.get('/*', (_req, res) => res.sendFile(path.join(distPath, 'index.html')))
 
 app.listen(port, () => console.log(`Web server listening on http://0.0.0.0:${port}`))
