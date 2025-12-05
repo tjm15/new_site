@@ -7,6 +7,9 @@ import { GoogleGenAI } from '@google/genai'
 const app = express()
 const port = Number(process.env.PORT || 8080)
 
+// Enable trust proxy for proper IP detection behind reverse proxies
+app.set('trust proxy', true)
+
 app.use(express.json({ limit: '1mb' }))
 
 const parseFlag = (val) => {
@@ -140,7 +143,19 @@ function recordUpstream429(req) {
   }
 }
 
-// Periodic cleanup of stale client state (every 5 minutes)
+// Check if an error indicates a rate limit was hit
+function isRateLimitError(error) {
+  if (!error) return false
+  if (error.status === 429) return true
+  
+  const message = String(error.message || error).toLowerCase()
+  return message.includes('429') || 
+         message.includes('rate limit') || 
+         message.includes('quota') ||
+         message.includes('too many requests')
+}
+
+// Periodic cleanup of stale client state (every 2 minutes to match stale threshold)
 setInterval(() => {
   const now = Date.now()
   const staleThreshold = now - RATE_LIMIT_WINDOW_MS * 2
@@ -154,7 +169,7 @@ setInterval(() => {
       clientState.delete(ip)
     }
   }
-}, 5 * 60 * 1000)
+}, 2 * 60 * 1000)
 
 app.post('/api/llm', async (req, res) => {
   try {
@@ -216,13 +231,13 @@ app.post('/api/llm', async (req, res) => {
     console.error('LLM error', e)
     
     // Check for rate limit errors from Gemini
-    const errorMessage = String(e?.message || e)
-    if (e?.status === 429 || errorMessage.includes('429') || errorMessage.toLowerCase().includes('rate limit') || errorMessage.toLowerCase().includes('quota')) {
+    if (isRateLimitError(e)) {
       recordUpstream429(req)
       res.set('Retry-After', '60')
       return res.status(429).json({ error: 'Upstream rate limit exceeded. Please try again later.', retryAfter: 60 })
     }
     
+    const errorMessage = String(e?.message || e)
     return res.status(500).json({ error: errorMessage })
   }
 })
