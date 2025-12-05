@@ -8,7 +8,7 @@ const app = express()
 const port = Number(process.env.PORT || 8080)
 
 // Enable trust proxy for proper IP detection behind reverse proxies
-app.set('trust proxy', true)
+app.set('trust proxy', 'loopback')
 
 app.use(express.json({ limit: '1mb' }))
 

@@ -3,6 +3,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeRaw from 'rehype-raw';
 import rehypeHighlight from 'rehype-highlight';
+import rehypeSanitize from 'rehype-sanitize';
 import { normalizeLLMText } from '../utils/markdown';
 
 interface MarkdownContentProps {
@@ -18,7 +19,7 @@ export const MarkdownContent: React.FC<MarkdownContentProps> = ({ content, markd
     <div className={`markdown-body ${className}`}>
       <ReactMarkdown
         remarkPlugins={[remarkGfm]}
-        rehypePlugins={[rehypeRaw, rehypeHighlight]}
+        rehypePlugins={[rehypeRaw, rehypeSanitize, rehypeHighlight]}
         skipHtml={false}
       >
         {cleaned}
