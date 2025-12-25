@@ -1,8 +1,12 @@
-# Planning Exploration & Structuring Environment (PESE)
+---
+title: Planning Exploration & Structuring Environment (PESE)
+date: 2025-12-10
+summary: A shared institutional workspace for collective reasoning in pre-application planning negotiation.
+---
 
-\*Operationalised in practice as the \****Planning Exploration Studio***
+*Operationalised in practice as the **Planning Exploration Studio***
 
-## 1. Positioning and Scope
+## **1. Positioning and Scope**
 
 The Planning Exploration & Structuring Environment (PESE) is advanced as a **third institutional digital pillar** within contemporary planning systems, operating alongside—but analytically, epistemically, and functionally distinct from—established modes of **plan‑making** and **development management (DM)** workflow assistance. It is proposed not as an incremental enhancement to existing tools, but as a qualitatively different form of digital infrastructure addressing a domain of planning practice that has thus far remained weakly formalised and poorly supported.
 
@@ -14,7 +18,7 @@ PESE is neither a workflow engine, nor a decision system, nor an optimisation ap
 
 ---
 
-## 2. The Institutional Gap
+## **2. The Institutional Gap**
 
 Despite sustained investment in digital planning systems, a significant institutional gap remains between formal procedural workflows and the lived cognitive practice of planning. Current tools provide limited support for the forms of reasoning that dominate the early and intermediate stages of planning work, including:
 
@@ -30,7 +34,7 @@ The cumulative effect is a planning process that often converges slowly, expends
 
 ---
 
-## 3. Core Function: Structuring Pre‑Application Negotiation
+## **3. Core Function: Structuring Pre-Application Negotiation**
 
 At the core of PESE lies the capacity to **structure pre‑application negotiation itself**, rather than merely to process planning artefacts. While documents, drawings, and datasets remain important inputs, PESE is fundamentally oriented toward the *interactive, dialogic, and iterative* nature of pre‑application engagement, where positions, expectations, and proposals are formed through negotiation rather than through fixed submissions.
 
@@ -56,7 +60,7 @@ This inferred structure is explicitly provisional, situational, and contestable,
 
 ---
 
-## 4. The Design–Reasoning Space
+## **4. The Design–Reasoning Space**
 
 Internally, PESE maintains what is here termed a **design–reasoning space**: a dynamic, evolving representation of feasible configurations and their associated reasoning consequences. This space functions as a shared cognitive substrate in which design, policy, and economic considerations are brought into explicit relation.
 
@@ -74,11 +78,11 @@ This space constitutes the shared substrate upon which all subsequent exploratio
 
 ---
 
-## 5. Interaction Surfaces
+## **5. Interaction Surfaces**
 
 The design–reasoning space is made accessible through four integrated yet analytically distinct interaction surfaces. These should be understood not as separate tools or modules, but as alternative analytical lenses applied to the same underlying structure, each foregrounding a different mode of reasoning.
 
-### 5.1 Planning Surface
+### **5.1 Planning Surface**
 
 The planning surface supports early strategic reasoning by enabling:
 
@@ -87,7 +91,7 @@ The planning surface supports early strategic reasoning by enabling:
 - identification of internal policy tensions, trade‑offs, and unrealistic expectations;
 - structured feedback of insights into formal plan‑making processes and evidence bases.
 
-### 5.2 Design Exploration Surface
+### **5.2 Design Exploration Surface**
 
 The design exploration surface facilitates:
 
@@ -96,7 +100,7 @@ The design exploration surface facilitates:
 - systematic exploration of mitigation strategies, spatial responses, and design alternatives;
 - iterative collaboration between planners, designers, engineers, and technical specialists.
 
-### 5.3 Negotiation Surface
+### **5.3 Negotiation Surface**
 
 The negotiation surface is oriented toward constructive convergence, enabling:
 
@@ -105,7 +109,7 @@ The negotiation surface is oriented toward constructive convergence, enabling:
 - real‑time testing of adjustments and alternative configurations;
 - reduction in reliance on repeated reports and procedurally redundant meetings.
 
-### 5.4 Viability Surface
+### **5.4 Viability Surface**
 
 The viability surface treats economic material as structured and contestable claims rather than as exogenous vetoes. It supports:
 
@@ -116,7 +120,7 @@ The viability surface treats economic material as structured and contestable cla
 
 ---
 
-## 6. Role of AI within PESE
+## **6. Role of AI within PESE**
 
 Within PESE, artificial intelligence operates in two complementary roles:
 
@@ -127,7 +131,7 @@ In this configuration, the AI system proposes provisional structure, supports ch
 
 ---
 
-## 7. Relationship to Pre‑Application, Plan‑Making, and Development Management Workflows
+## **7. Relationship to Pre-Application, Plan-Making, and Development Management Workflows**
 
 PESE is explicitly designed to complement rather than supplant existing planning workflows, with a particular emphasis on strengthening the **pre‑application stage** as a site of constructive negotiation rather than informal risk management. In particular, it:
 
@@ -139,7 +143,7 @@ By relocating critical reasoning activity earlier in the planning process, PESE 
 
 ---
 
-## 8. Research Contributions and Implications
+## **8. Research Contributions and Implications**
 
 The concept of PESE advances several contributions to planning research and practice:
 
@@ -153,7 +157,7 @@ More broadly, PESE provides a lens through which to reconsider how planning inst
 
 ---
 
-## 9. Conclusion
+## **9. Conclusion**
 
 The Planning Exploration & Structuring Environment constitutes an attempt to provide planning institutions with a shared space for collective reasoning prior to the crystallisation of positions and the proliferation of formal documentation. By rendering structure explicit, provisional, and open to contestation, PESE supports more robust judgement without automating decisions, and more timely convergence without suppressing disagreement.
 
